@@ -43,6 +43,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
+            cookiecutter --config-file .circleci/cookiecutter.yml .
             true
       #
       # - store_artifacts:
