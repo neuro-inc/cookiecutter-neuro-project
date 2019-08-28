@@ -9,7 +9,7 @@ Install `cookiecutter` command line: `pip install cookiecutter`
 
 Usage
 -----
-Generate a new Cookiecutter template layout: `cookiecutter gh:anayden/neuromation-template`    
+Generate a new Cookiecutter template layout: `cookiecutter gh:neuromation/neuromation-template`    
 
 License
 -------
