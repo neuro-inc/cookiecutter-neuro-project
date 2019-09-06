@@ -37,7 +37,7 @@ setup:
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
-		'tail -f /dev/null'
+		'sleep 1h'
 	neuro cp -r $(REQUIREMENTS_PATH) $(REQUIREMENTS_PATH_STORAGE)
 	# For some reason the second command fails:
 	# neuro exec $(SETUP_NAME) 'apt-get update'
