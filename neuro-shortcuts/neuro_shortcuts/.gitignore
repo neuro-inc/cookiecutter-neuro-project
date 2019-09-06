@@ -1,0 +1,10 @@
+/.env/
+/venv/
+/build/
+pip-wheel-metadata
+*.swo
+*.egg-info
+**/__pycache__
+.eggs
+.tmontmp
+.testmondata

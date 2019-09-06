@@ -1,4 +1,3 @@
-import inspect
 import logging
 import re
 import shlex
@@ -9,22 +8,10 @@ from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
 from time import sleep
-from uuid import uuid4
 
 
 OUT_DIRECTORY_NAME = "out"
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
-
-DEFAULT_TIMEOUT = 5 * 60
-
-SysCap = namedtuple("SysCap", "out err")
-
-
-job_id_pattern = re.compile(
-    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"(job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
-    re.IGNORECASE,
-)
 
 
 def get_submitted_jobs_file() -> Path:
@@ -35,21 +22,18 @@ def get_submitted_jobs_file() -> Path:
 
 SUBMITTED_JOBS_FILE = get_submitted_jobs_file()
 
+
+DEFAULT_TIMEOUT = 5 * 60
+
+SysCap = namedtuple("SysCap", "out err")
+
 log = logging.getLogger(__name__)
 
-
-def split_command(cmd: str) -> t.List[str]:
-    return shlex.split(cmd)
-
-
-def random_str(length: int) -> str:
-    assert 0 <= length <= 32, length
-    return uuid4().hex[:length]
-
-
-def generate_job_name() -> str:
-    postfix = f"-{random_str(4)}"
-    return inspect.stack()[1].function.replace("_", "-") + postfix
+job_id_pattern = re.compile(
+    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
+    r"(job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+    re.IGNORECASE,
+)
 
 
 @contextmanager
