@@ -1,43 +1,93 @@
+import abc
+from dataclasses import dataclass
+
 from .utils import run
 
 
-CODE_PATH = "__test_project"
-DATA_PATH = "data"
-NOTEBOOKS_PATH = "notebooks"
-REQUIREMENTS_PATH = "requirements"
-RESULTS_PATH = "results"
-PROJECT_PATH_STORAGE = "storage:__test_project"  # TODO : <- change htis value
-CODE_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{CODE_PATH}"
-DATA_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{DATA_PATH}"
-NOTEBOOKS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{NOTEBOOKS_PATH}"
-REQUIREMENTS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{REQUIREMENTS_PATH}"
-RESULTS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{RESULTS_PATH}"
+class Project(abc.ABC):
+    @abc.abstractmethod
+    def root(self) -> str:
+        pass
 
-PROJECT_PATH_ENV = "/project"
-CODE_PATH_ENV = f"{PROJECT_PATH_ENV}/{CODE_PATH}"
-DATA_PATH_ENV = f"{PROJECT_PATH_ENV}/{DATA_PATH}"
-NOTEBOOKS_PATH_ENV = f"{PROJECT_PATH_ENV}/{NOTEBOOKS_PATH}"
-REQUIREMENTS_PATH_ENV = f"{PROJECT_PATH_ENV}/{REQUIREMENTS_PATH}"
-RESULTS_PATH_ENV = f"{PROJECT_PATH_ENV}/{RESULTS_PATH}"
+    @property
+    def data(self) -> str:
+        return f"{self.root}/data"
+    @property
+    def code(self) -> str:
+        return f"{self.root}/code"
+    @property
+    def notebooks(self) -> str:
+        return f"{self.root}/notebooks"
+    @property
+    def requirements(self) -> str:
+        return f"{self.root}/requirements"
+    @property
+    def results(self) -> str:
+        return f"{self.root}/results"
 
-SETUP_NAME = "setup"
-TRAINING_NAME = "training"
-JUPYTER_NAME = "jupyter"
-TENSORBOARD_NAME = "tensorboard"
-FILEBROWSER_NAME = "filebrowser"
 
-BASE_ENV_NAME = "image:neuro/base"
-CUSTOM_ENV_NAME = "image:neuro/custom"
+class StorageProject(Project):
+    def __init__(self, project_name: str) -> None:
+        self._project_name = project_name
+
+    def root(self) -> str:
+        return f"storage:{self._project_name}"
+
+class LocalProject(Project):
+    def __init__(self):
+        # TODO (artem) remember `pwd` as `self._project_path`
+        pass
+    def root(self) -> str:
+        # TODO: return self._project_path
+        raise NotImplemented()
+    
+class ContainerProject(Project):
+    def root(self) -> str:
+        # TODO: always in the root?
+        return "/project"
+
+@dataclass
+class Config:
+    local_project: LocalProject
+    storage_project: LocalProject
+    container_project: LocalProject
+    
+    SETUP_NAME = "setup"
+    TRAINING_NAME = "training"
+    JUPYTER_NAME = "jupyter"
+    TENSORBOARD_NAME = "tensorboard"
+    FILEBROWSER_NAME = "filebrowser"
+    BASE_ENV_NAME = "image:neuro/base"
+    CUSTOM_ENV_NAME = "image:neuro/custom"
+
+# CODE_PATH = "__test_project"
+# DATA_PATH = "data"
+# NOTEBOOKS_PATH = "notebooks"
+# REQUIREMENTS_PATH = "requirements"
+# RESULTS_PATH = "results"
+# PROJECT_PATH_STORAGE = "storage:__test_project"
+# CODE_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{CODE_PATH}"
+# DATA_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{DATA_PATH}"
+# NOTEBOOKS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{NOTEBOOKS_PATH}"
+# REQUIREMENTS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{REQUIREMENTS_PATH}"
+# RESULTS_PATH_STORAGE = f"{PROJECT_PATH_STORAGE}/{RESULTS_PATH}"
+#
+# PROJECT_PATH_ENV = "/project"
+# CODE_PATH_ENV = f"{PROJECT_PATH_ENV}/{CODE_PATH}"
+# DATA_PATH_ENV = f"{PROJECT_PATH_ENV}/{DATA_PATH}"
+# NOTEBOOKS_PATH_ENV = f"{PROJECT_PATH_ENV}/{NOTEBOOKS_PATH}"
+# REQUIREMENTS_PATH_ENV = f"{PROJECT_PATH_ENV}/{REQUIREMENTS_PATH}"
+# RESULTS_PATH_ENV = f"{PROJECT_PATH_ENV}/{RESULTS_PATH}"
 
 
 ##### SETUP #####
 
 
-def setup():
+def setup(cfg: Config):
     run(f"neuro kill {SETUP_NAME}")
     cmd = (
         f"neuro run --name {SETUP_NAME} --preset cpu-small --detach "
-        f"--volume {PROJECT_PATH_STORAGE}:{PROJECT_PATH_ENV}:ro "
+        f"--volume {storage_project.root}:{container_project.root}:ro "
         f"{BASE_ENV_NAME} 'tail -f /dev/null'"  # TODO: must be 'sleep 1h'
     )
     run(cmd)
