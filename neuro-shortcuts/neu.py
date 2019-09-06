@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 PROJECT_NAME = "{{cookiecutter.project_slug}}"
 
 CODE_PATH = PROJECT_NAME
@@ -214,8 +216,11 @@ def ps() -> None:
 
 #  ############################# INTERNALS BELOW ##############################
 
+RESERVED_ACTION_NAMES = ("run", "main")
+
 
 def run(cmd: str, check_return_code: bool = True) -> None:
+    # local import so that only user-defined actions are declared in this file
     import shlex
     import subprocess
     import sys
@@ -241,12 +246,11 @@ def run(cmd: str, check_return_code: bool = True) -> None:
 
 
 def main() -> None:
+    # local import so that only user-defined actions are declared in this file
     from argparse import ArgumentParser
     import importlib
     import sys
     import typing as t
-
-    RESERVED_ACTION_NAMES = ("run", "main")
 
     def collect_entrypoints(module_name: str) -> t.Dict[str, t.Callable[[], None]]:
         """ collect all callable object from module `module_name`
