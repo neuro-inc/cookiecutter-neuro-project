@@ -84,8 +84,8 @@ clean: clean_code clean_data clean_notebooks
 
 ##### JOBS #####
 
-.PHONY: run_training
-run_training:
+.PHONY: training
+training:
 	neuro run \
 		--name $(TRAINING_NAME) \
 		--preset gpu-small \
@@ -103,8 +103,8 @@ kill_training:
 connect_training:
 	neuro exec $(TRAINING_NAME) bash
 
-.PHONY: run_jupyter
-run_jupyter:
+.PHONY: jupyter
+jupyter:
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
@@ -121,8 +121,8 @@ run_jupyter:
 kill_jupyter:
 	neuro kill $(JUPYTER_NAME)
 
-.PHONY: run_tensorboard
-run_tensorboard:
+.PHONY: tensorboard
+tensorboard:
 	neuro run \
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
@@ -136,8 +136,8 @@ run_tensorboard:
 kill_tensorboard:
 	neuro kill $(TENSORBOARD_NAME)
 
-.PHONY: run_filebrowser
-run_filebrowser:
+.PHONY: filebrowser
+filebrowser:
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
