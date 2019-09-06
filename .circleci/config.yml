@@ -43,7 +43,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            cookiecutter --no-input --config-file .circleci/cookiecutter.yaml --output-dir .. .
+            cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
             stat ../test-project
       #
       # - store_artifacts:
