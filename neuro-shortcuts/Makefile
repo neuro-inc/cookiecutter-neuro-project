@@ -3,7 +3,7 @@ BLACK_DIRS := $(ISORT_DIRS)
 MYPY_DIRS :=  tests
 
 setup:
-	pip install --disable-pip-version-check -r requirements-test.txt
+	pip install --disable-pip-version-check -r requirements-dev.txt
 
 .PHONY: lint
 lint:
