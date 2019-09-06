@@ -1,2 +1,11 @@
+/.env/
+/venv/
+/build/
 .mypy_cache/
-
+pip-wheel-metadata
+*.swo
+*.egg-info
+**/__pycache__
+.eggs
+.tmontmp
+.testmondata

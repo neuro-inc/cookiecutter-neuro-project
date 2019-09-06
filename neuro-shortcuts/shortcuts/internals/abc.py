@@ -55,14 +55,14 @@ class ContainerProject(Project):
 @dataclass
 class Config:
     local: LocalProject
-    storage: LocalProject
-    container: LocalProject
+    storage: StorageProject
+    container: ContainerProject
 
-    # TODO
-    SETUP_NAME = "setup"
-    TRAINING_NAME = "training"
-    JUPYTER_NAME = "jupyter"
-    TENSORBOARD_NAME = "tensorboard"
-    FILEBROWSER_NAME = "filebrowser"
-    BASE_ENV_NAME = "image:neuro/base"
-    CUSTOM_ENV_NAME = "image:neuro/custom"
+    # TODO: cleanup
+    SETUP_NAME: str
+    TRAINING_NAME: str
+    JUPYTER_NAME: str
+    TENSORBOARD_NAME: str
+    FILEBROWSER_NAME: str
+    BASE_ENV_NAME: str
+    CUSTOM_ENV_NAME: str

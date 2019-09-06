@@ -1,7 +1,0 @@
-SETUP_NAME = "setup"
-TRAINING_NAME = "training"
-JUPYTER_NAME = "jupyter"
-TENSORBOARD_NAME = "tensorboard"
-FILEBROWSER_NAME = "filebrowser"
-BASE_ENV_NAME = "image:neuro/base"
-CUSTOM_ENV_NAME = "image:neuro/custom"

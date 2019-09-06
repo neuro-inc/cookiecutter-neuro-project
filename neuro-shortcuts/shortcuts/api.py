@@ -1,5 +1,5 @@
-from ._internals.abc import Config
-from ._internals.runner import run
+from .internals.abc import Config
+from .internals.runners import run
 
 
 ##### SETUP #####
@@ -24,6 +24,9 @@ def setup(cfg: Config):
     run(f"neuro job save {cfg.SETUP_NAME} {cfg.CUSTOM_ENV_NAME}")
     run(f"neuro kill {cfg.SETUP_NAME}")
 
+
+def test(cfg: Config):
+    run("neuro ls")
 
 ##### STORAGE #####
 
