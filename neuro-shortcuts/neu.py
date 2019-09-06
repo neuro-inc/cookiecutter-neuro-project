@@ -240,11 +240,13 @@ def run(cmd: str, check_return_code: bool = True) -> None:
             exit(proc.returncode)
 
 
-def __main() -> None:
+def main() -> None:
     from argparse import ArgumentParser
     import importlib
     import sys
     import typing as t
+
+    RESERVED_ACTION_NAMES = ("run", "main")
 
     def collect_entrypoints(module_name: str) -> t.Dict[str, t.Callable[[], None]]:
         """ collect all callable object from module `module_name`
@@ -254,7 +256,7 @@ def __main() -> None:
         module = sys.modules[module_name]
         result: t.Dict[str, t.Callable] = {}
         for name in dir(module):
-            if "a" <= name[0] <= "z":
+            if "a" <= name[0] <= "z" and name not in RESERVED_ACTION_NAMES:
                 obj = getattr(module, name)
                 if callable(obj):
                     result[name] = obj
@@ -285,7 +287,7 @@ def __main() -> None:
         return
 
     if not action:
-        print(f"ERROR: Cannot find action '{action_name}' in module '{module_name}'")
+        print(f"ERROR: Cannot find action '{action_name}'")
         print()
         exit(1)
 
@@ -297,4 +299,4 @@ def __main() -> None:
 
 
 if __name__ == "__main__":
-    __main()
+    main()
