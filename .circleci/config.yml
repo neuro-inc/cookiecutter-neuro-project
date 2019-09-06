@@ -43,7 +43,8 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            true
+            cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
+            stat ../test-project
       #
       # - store_artifacts:
       #     path: test-reports
