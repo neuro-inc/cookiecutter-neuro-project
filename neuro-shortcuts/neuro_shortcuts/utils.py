@@ -41,6 +41,7 @@ log = logging.getLogger(__name__)
 def split_command(cmd: str) -> t.List[str]:
     return shlex.split(cmd)
 
+
 def random_str(length: int) -> str:
     assert 0 <= length <= 32, length
     return uuid4().hex[:length]
