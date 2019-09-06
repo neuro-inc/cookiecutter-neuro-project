@@ -35,13 +35,13 @@ CUSTOM_ENV_NAME = "image:neuro/custom"
 
 
 def setup():
-    run(f"neuro kill {SETUP_NAME}", check_return_code=False)
-    cmd = (
+    run(f"neuro kill {SETUP_NAME}", assert_success=False)
+    command = "sleep 1h"
+    run(
         f"neuro run --name {SETUP_NAME} --preset cpu-small --detach "
         f"--volume {PROJECT_PATH_STORAGE}:{PROJECT_PATH_ENV}:ro "
-        f"{BASE_ENV_NAME} 'tail -f /dev/null'"  # TODO: must be 'sleep 1h'
+        f"{BASE_ENV_NAME} '{command}'"
     )
-    run(cmd)
     run(f"neuro cp -r {REQUIREMENTS_PATH} {REQUIREMENTS_PATH_STORAGE}")
     # TODO: fix commands below
     # For some reason the second command fail
@@ -49,21 +49,16 @@ def setup():
     # neuro exec {SETUP_NAME} 'cat {REQUIREMENTS_PATH_ENV}/apt.txt | xargs apt-get install -y'  # noqa
     run(f"neuro exec {SETUP_NAME} 'pip install -r {REQUIREMENTS_PATH_ENV}/pip.txt'")
     run(f"neuro job save {SETUP_NAME} {CUSTOM_ENV_NAME}")
-    run(f"neuro kill {SETUP_NAME}", check_return_code=False)
-
-
-def test():
-    run("neuro ls")
+    run(f"neuro kill {SETUP_NAME}", assert_success=False)
 
 
 #  ##### STORAGE #####
 
 
 def upload_code() -> None:
-    run(f"neuro cp -r -T {CODE_PATH} {CODE_PATH_ENV}")
+    run(f"neuro cp -r -T {CODE_PATH} {CODE_PATH_STORAGE}")
 
 
-# TODO: redundant? clean where? locally?
 def clean_code() -> None:
     run(f"neuro rm -r {CODE_PATH_STORAGE}")
 
@@ -103,7 +98,7 @@ def clean() -> None:
 #  ##### JOBS #####
 
 
-def run_training() -> None:
+def training() -> None:
     cmd = (
         f"python {CODE_PATH_ENV}/train.py --log_dir "
         f"{RESULTS_PATH_ENV} --data_root {DATA_PATH_ENV}/cifar10"
@@ -126,7 +121,7 @@ def connect_training() -> None:
     run(f"neuro exec {TRAINING_NAME} bash")
 
 
-def run_jupyter() -> None:
+def jupyter() -> None:
     cmd = (
         f"jupyter notebook --no-browser --ip=0.0.0.0 --allow-root "
         f"--NotebookApp.token= --notebook-dir={NOTEBOOKS_PATH_ENV}"
@@ -150,7 +145,7 @@ def kill_jupyter() -> None:
     run(f"neuro kill {JUPYTER_NAME}")
 
 
-def run_tensorboard() -> None:
+def tensorboard() -> None:
     cmd = f"tensorboard --logdir={RESULTS_PATH_ENV}"
     run(
         f"neuro run "
@@ -168,7 +163,7 @@ def kill_tensorboard() -> None:
     run(f"neuro kill {TENSORBOARD_NAME}")
 
 
-def run_filebrowser() -> None:
+def filebrowser() -> None:
     run(
         f"neuro run "
         f"--name {FILEBROWSER_NAME} "
@@ -219,7 +214,7 @@ def ps() -> None:
 RESERVED_ACTION_NAMES = ("run", "main")
 
 
-def run(cmd: str, check_return_code: bool = True) -> None:
+def run(cmd: str, assert_success: bool = True) -> None:
     # local import so that only user-defined actions are declared in this file
     import shlex
     import subprocess
@@ -237,7 +232,7 @@ def run(cmd: str, check_return_code: bool = True) -> None:
         stderr=subprocess.PIPE,
     )
     print(proc.stdout)
-    if check_return_code:
+    if assert_success:
         try:
             proc.check_returncode()
         except subprocess.CalledProcessError:
