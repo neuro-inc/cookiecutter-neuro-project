@@ -1,6 +1,6 @@
 PROJECT_NAME = "{{cookiecutter.project_slug}}"
 
-CODE_PATH = "code"
+CODE_PATH = PROJECT_NAME
 DATA_PATH = "data"
 NOTEBOOKS_PATH = "notebooks"
 REQUIREMENTS_PATH = "requirements"
