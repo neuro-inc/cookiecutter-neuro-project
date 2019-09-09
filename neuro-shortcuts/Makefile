@@ -1,4 +1,4 @@
-ISORT_DIRS := neu.py setup.py
+ISORT_DIRS := tasks.py setup.py
 BLACK_DIRS := $(ISORT_DIRS)
 MYPY_DIRS :=  tests
 

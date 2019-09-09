@@ -1,0 +1,4 @@
+debug: false
+run:
+    echo: true
+    color: true
