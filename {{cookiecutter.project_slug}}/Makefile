@@ -29,10 +29,17 @@ FILEBROWSER_NAME?=filebrowser
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
+
+.PHONY: help
+help:
+	# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+
 ##### SETUP #####
 
 .PHONY: setup
-setup:
+setup: ### Setup remote environment
 	neuro kill $(SETUP_NAME)
 	neuro run \
 		--name $(SETUP_NAME) \
@@ -51,43 +58,43 @@ setup:
 ##### STORAGE #####
 
 .PHONY: upload_code
-upload_code:
+upload_code:  ### Upload code directory to Storage
 	neuro cp -r -T $(CODE_PATH) $(CODE_PATH_STORAGE)
 
 .PHONY: clean_code
-clean_code:
+clean_code:  ### Delete code directory on Storage
 	neuro rm -r $(CODE_PATH_STORAGE)
 
-.PHONY: upload_data
+.PHONY: upload_data  ### Upload data directory to Storage
 upload_data:
 	neuro storage load -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
 
-.PHONY: clean_data
+.PHONY: clean_data  ### Delete data directory on Storage
 clean_data:
 	neuro rm -r $(DATA_PATH_STORAGE)
 
 .PHONY: upload_notebooks
-upload_notebooks:
+upload_notebooks:  ### Upload notebooks directory to Storage
 	neuro cp -r -T $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: download_notebooks
-download_notebooks:
+download_notebooks:  ### Download notebooks directory from Storage
 	neuro cp -r $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
 .PHONY: clean_notebooks
-clean_notebooks:
+clean_notebooks:  ### Delete notebooks directory on Storage
 	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
 
-.PHONY: upload
+.PHONY: upload  ### Upload code, data and notebooks directories to Storage
 upload: upload_code upload_data upload_notebooks
 
-.PHONY: clean
+.PHONY: clean  ### Delete code, data and notebooks directories on Storage
 clean: clean_code clean_data clean_notebooks
 
 ##### JOBS #####
 
 .PHONY: training
-training:
+training:  ### Run training job
 	neuro run \
 		--name $(TRAINING_NAME) \
 		--preset gpu-small \
@@ -98,15 +105,15 @@ training:
 		'python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
 
 .PHONY: kill_training
-kill_training:
+kill_training:  ### Stop training job
 	neuro kill $(TRAINING_NAME)
 
 .PHONY: connect_training
-connect_training:
+connect_training:  ### Execute shell to the training job
 	neuro exec $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:
+jupyter:  ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
@@ -120,11 +127,11 @@ jupyter:
 	neuro job browse $(JUPYTER_NAME)
 
 .PHONY: kill_jupyter
-kill_jupyter:
+kill_jupyter:  ### Stop jupyter job
 	neuro kill $(JUPYTER_NAME)
 
 .PHONY: tensorboard
-tensorboard:
+tensorboard:  ### Run tensorboard job
 	neuro run \
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
@@ -135,11 +142,11 @@ tensorboard:
 	neuro job browse $(TENSORBOARD_NAME)
 
 .PHONY: kill_tensorboard
-kill_tensorboard:
+kill_tensorboard:  ### Kill tensorboard job
 	neuro kill $(TENSORBOARD_NAME)
 
 .PHONY: filebrowser
-filebrowser:
+filebrowser:  ### Run filebrowser job
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
@@ -149,29 +156,29 @@ filebrowser:
 	neuro job browse $(FILEBROWSER_NAME)
 
 .PHONY: kill_filebrowser
-kill_filebrowser:
+kill_filebrowser:  ### Kill filebrowser job
 	neuro kill $(FILEBROWSER_NAME)
 
-.PHONY: kill
+.PHONY: kill  ### Kill training, jupyter, tensorboard and filebrowser jobs (even if some of them are not running)
 kill: kill_training kill_jupyter kill_tensorboard kill_filebrowser
 
 ##### LOCAL #####
 
 .PHONY: setup_local
-setup_local:
+setup_local:  ### Install pip requirements locally
 	pip install -r requirements/pip.txt
 
 .PHONY: lint
-lint:
+lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 .PHONY: install
-install:
+install:  ### Install project as a python package locally
 	python setup.py install --user
 
 ##### MISC #####
 
 .PHONY: ps
-ps:
+ps:  ### List all running and pending jobs
 	neuro ps
