@@ -46,7 +46,7 @@ setup:
 	# For some reason the second command fails:
 	# neuro exec $(SETUP_NAME) 'apt-get update'
 	# neuro exec $(SETUP_NAME) 'cat $(REQUIREMENTS_APT_ENV) | xargs apt-get install -y'
-	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)/pip.txt'
+	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
 	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
