@@ -45,7 +45,8 @@ setup:
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
-	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
+	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
+
 	neuro kill $(SETUP_NAME)
 
 ##### STORAGE #####
@@ -111,13 +112,13 @@ jupyter:
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
 		--http 8888 --no-http-auth --detach \
+		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
 		--volume $(NOTEBOOKS_PATH_STORAGE):$(NOTEBOOKS_PATH_ENV):rw \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
-	neuro job browse $(JUPYTER_NAME)
 
 .PHONY: kill_jupyter
 kill_jupyter:
