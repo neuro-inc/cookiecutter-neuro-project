@@ -29,10 +29,16 @@ FILEBROWSER_NAME?=filebrowser
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
+define trick
+    @echo + $(1)
+    @$(1)
+endef
+
 
 .PHONY: help
 help:
-	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+	@grep -hE '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
 ##### SETUP #####
