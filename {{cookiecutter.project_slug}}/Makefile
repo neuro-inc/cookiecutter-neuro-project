@@ -33,7 +33,7 @@ CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 .PHONY: help
 help:
 	# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' | sort -k 1
 
 
 ##### SETUP #####
@@ -53,44 +53,43 @@ setup: ### Setup remote environment
 	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
-
 	neuro kill $(SETUP_NAME)
 
 ##### STORAGE #####
 
-.PHONY: upload_code
-upload_code:  ### Upload code directory to Storage
+.PHONY: upload-code
+upload-code:  ### Upload code directory to Storage
 	neuro cp -r -T $(CODE_PATH) $(CODE_PATH_STORAGE)
 
-.PHONY: clean_code
-clean_code:  ### Delete code directory on Storage
+.PHONY: clean-code
+clean-code:  ### Delete code directory on Storage
 	neuro rm -r $(CODE_PATH_STORAGE)
 
-.PHONY: upload_data  ### Upload data directory to Storage
-upload_data:
+.PHONY: upload-data  ### Upload data directory to Storage
+upload-data:
 	neuro storage load -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
 
-.PHONY: clean_data  ### Delete data directory on Storage
-clean_data:
+.PHONY: clean-data  ### Delete data directory on Storage
+clean-data:
 	neuro rm -r $(DATA_PATH_STORAGE)
 
-.PHONY: upload_notebooks
-upload_notebooks:  ### Upload notebooks directory to Storage
+.PHONY: upload-notebooks
+upload-notebooks:  ### Upload notebooks directory to Storage
 	neuro cp -r -T $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
 
-.PHONY: download_notebooks
-download_notebooks:  ### Download notebooks directory from Storage
+.PHONY: download-notebooks
+download-notebooks:  ### Download notebooks directory from Storage
 	neuro cp -r $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
-.PHONY: clean_notebooks
-clean_notebooks:  ### Delete notebooks directory on Storage
+.PHONY: clean-notebooks
+clean-notebooks:  ### Delete notebooks directory on Storage
 	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: upload  ### Upload code, data and notebooks directories to Storage
-upload: upload_code upload_data upload_notebooks
+upload: upload-code upload-data upload-notebooks
 
 .PHONY: clean  ### Delete code, data and notebooks directories on Storage
-clean: clean_code clean_data clean_notebooks
+clean: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
@@ -105,12 +104,12 @@ training:  ### Run training job
 		$(CUSTOM_ENV_NAME) \
 		'python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
 
-.PHONY: kill_training
-kill_training:  ### Stop training job
+.PHONY: kill-training
+kill-training:  ### Stop training job
 	neuro kill $(TRAINING_NAME)
 
-.PHONY: connect_training
-connect_training:  ### Execute shell to the training job
+.PHONY: connect-training
+connect-training:  ### Execute shell to the training job
 	neuro exec $(TRAINING_NAME) bash
 
 .PHONY: jupyter
@@ -127,8 +126,8 @@ jupyter:  ### Run jupyter job
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
 
-.PHONY: kill_jupyter
-kill_jupyter:  ### Stop jupyter job
+.PHONY: kill-jupyter
+kill-jupyter:  ### Stop jupyter job
 	neuro kill $(JUPYTER_NAME)
 
 .PHONY: tensorboard
@@ -136,14 +135,14 @@ tensorboard:  ### Run tensorboard job
 	neuro run \
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
+		--browse \
 		--http 6006 --no-http-auth --detach \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		$(CUSTOM_ENV_NAME) \
 		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
-	neuro job browse $(TENSORBOARD_NAME)
 
-.PHONY: kill_tensorboard
-kill_tensorboard:  ### Kill tensorboard job
+.PHONY: kill-tensorboard
+kill-tensorboard:  ### Kill tensorboard job
 	neuro kill $(TENSORBOARD_NAME)
 
 .PHONY: filebrowser
@@ -152,21 +151,21 @@ filebrowser:  ### Run filebrowser job
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
 		--http 80 --no-http-auth --detach \
+		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		filebrowser/filebrowser
-	neuro job browse $(FILEBROWSER_NAME)
 
-.PHONY: kill_filebrowser
-kill_filebrowser:  ### Kill filebrowser job
+.PHONY: kill-filebrowser
+kill-filebrowser:  ### Kill filebrowser job
 	neuro kill $(FILEBROWSER_NAME)
 
 .PHONY: kill  ### Kill training, jupyter, tensorboard and filebrowser jobs (even if some of them are not running)
-kill: kill_training kill_jupyter kill_tensorboard kill_filebrowser
+kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 ##### LOCAL #####
 
-.PHONY: setup_local
-setup_local:  ### Install pip requirements locally
+.PHONY: setup-local
+setup-local:  ### Install pip requirements locally
 	pip install -r requirements/pip.txt
 
 .PHONY: lint
