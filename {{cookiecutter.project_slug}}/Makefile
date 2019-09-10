@@ -26,8 +26,8 @@ JUPYTER_NAME?=jupyter
 TENSORBOARD_NAME?=tensorboard
 FILEBROWSER_NAME?=filebrowser
 
-BASE_ENV_NAME?=image:neuro/base
-CUSTOM_ENV_NAME?=image:neuro/custom
+BASE_ENV_NAME?=neuromation/base-2
+CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
 ##### SETUP #####
 
@@ -41,12 +41,10 @@ setup:
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	# For some reason the second command fails:
-	# neuro exec $(SETUP_NAME) 'apt-get update'
-	# neuro exec $(SETUP_NAME) 'cat $(REQUIREMENTS_APT_ENV) | xargs apt-get install -y'
-	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
+	-neuro mkdir -p $(REQUIREMENTS_PATH_STORAGE)
+	neuro cp -r $(REQUIREMENTS_PATH) $(REQUIREMENTS_PATH_STORAGE)
+	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_PATH_ENV)/requirements/apt.txt | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PATH_ENV)/requirements/pip.txt'
 	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
