@@ -29,11 +29,6 @@ FILEBROWSER_NAME?=filebrowser
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
-define trick
-    @echo + $(1)
-    @$(1)
-endef
-
 
 .PHONY: help
 help:
