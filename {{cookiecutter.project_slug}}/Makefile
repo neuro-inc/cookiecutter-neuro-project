@@ -1,7 +1,7 @@
 CODE_PATH?={{cookiecutter.project_slug}}
 DATA_PATH?=data
 NOTEBOOKS_PATH?=notebooks
-REQUIREMENTS_PIP?=requirements-dev.txt
+REQUIREMENTS_PIP?=requirements.txt
 REQUIREMENTS_APT?=apt.txt
 RESULTS_PATH?=results
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
