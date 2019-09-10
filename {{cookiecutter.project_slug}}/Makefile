@@ -1,7 +1,7 @@
 CODE_PATH?={{cookiecutter.project_slug}}
 DATA_PATH?=data
 NOTEBOOKS_PATH?=notebooks
-REQUIREMENTS_PIP?=requirements.txt
+REQUIREMENTS_PIP?=requirements-pip.txt
 REQUIREMENTS_APT?=apt.txt
 RESULTS_PATH?=results
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
@@ -41,10 +41,10 @@ setup:
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	-neuro mkdir -p $(REQUIREMENTS_PATH_STORAGE)
-	neuro cp -r $(REQUIREMENTS_PATH) $(REQUIREMENTS_PATH_STORAGE)
-	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_PATH_ENV)/requirements/apt.txt | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PATH_ENV)/requirements/pip.txt'
+	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
+	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
+	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
 	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
