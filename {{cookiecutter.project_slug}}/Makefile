@@ -33,7 +33,7 @@ CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 .PHONY: help
 help:
 	# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' | sort -k 1
+	@grep -E '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
 ##### SETUP #####
@@ -166,7 +166,7 @@ kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	pip install -r requirements/pip.txt
+	pip install -r $(REQUIREMENTS_PIP)
 
 .PHONY: lint
 lint:  ### Run static code analysis locally
