@@ -1,7 +1,7 @@
-neuromation-template
+Neuro Platform Project Template
 ====================
 
-Base template for Neuromation-based projects
+Base template for [Neuro Platform](https://neu.ro) projects
 
 Requirements
 ------------
