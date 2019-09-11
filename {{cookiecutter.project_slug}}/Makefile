@@ -67,7 +67,7 @@ clean-code:  ### Delete code directory on Storage
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
-	neuro cp -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
+	neuro cp -r -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
