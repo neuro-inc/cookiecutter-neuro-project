@@ -1,13 +1,11 @@
 {
     "full_name": "Your name",
-    "email": "Your address email (eq. you@example.com)",
-    "github_username": "Your github username",
+    "email": "Your email address (e.g. you@example.com)",
     "project_name": "Name of the project",
     "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-') }}",
     "project_short_description": "A short description of the project",
-    "release_date": "{% now 'local' %}",
-    "version": "0.1.0",
-    "year_from": [ "2019"],
+    "code_directory": "modules",
+    "year_from": [ "2019" ],
     "year_to": "{% now 'utc', '%Y' %}",
     "license": ["BSD 2-Clause License", "BSD 3-Clause License", "MIT license", "ISC license", "Apache Software License 2.0", "no"],
     "_extensions": ["jinja2_time.TimeExtension"]

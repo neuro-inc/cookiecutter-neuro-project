@@ -1,1 +1,5 @@
-Describe and document your project here
+# {{ cookiecutter.project_name }}
+
+{{ cookiecutter.project_short_description }}
+
+Created by {{ cookiecutter.full_name }} ({{ cookiecutter.email }})

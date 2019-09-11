@@ -1,4 +1,4 @@
-CODE_PATH?={{cookiecutter.project_slug}}
+CODE_PATH?={{cookiecutter.code_directory}}
 DATA_PATH?=data
 NOTEBOOKS_PATH?=notebooks
 REQUIREMENTS_PIP?=requirements.txt
@@ -67,7 +67,7 @@ clean-code:  ### Delete code directory on Storage
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
-	neuro storage load -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
+	neuro cp -r -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
