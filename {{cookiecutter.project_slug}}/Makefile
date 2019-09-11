@@ -1,4 +1,4 @@
-CODE_PATH?={{cookiecutter.project_slug}}
+CODE_PATH?={{cookiecutter.code_directory}}
 DATA_PATH?=data
 NOTEBOOKS_PATH?=notebooks
 REQUIREMENTS_PIP?=requirements.txt
