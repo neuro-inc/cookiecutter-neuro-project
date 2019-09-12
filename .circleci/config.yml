@@ -67,7 +67,7 @@ jobs:
             . venv/bin/activate
             python ./cleanup_jobs.py
           when: always
-          
+
 workflows:
   version: 2
 

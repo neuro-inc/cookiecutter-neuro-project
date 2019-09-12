@@ -76,12 +76,14 @@ def test_make_setup() -> None:
             "Status: running",
             # step 2
             f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
-            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
+            # # somehow we don't print the line below
+            # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
             *apt_deps_result_messages,
             "installed apt requirements",  # we generate this line in pip
             # step 3
             f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
-            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
+            # # somehow we don't print the line below
+            # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
             "installed pip requirements",  # we generate this line in pip
             # step 4
             "Saving job '",

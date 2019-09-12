@@ -250,7 +250,8 @@ def run_detach_wait_substrings(
                 current = next(expect_stdouts_iter)
                 log.info(f"Waiting for the next string: {current}")
             except StopIteration:
-                log.info("Returning")
+                log.info("Found everything, finishing.")
+                process.kill()
                 return
         for unexpect_stdout in unexpect_stdouts:
             if unexpect_stdout in line:
