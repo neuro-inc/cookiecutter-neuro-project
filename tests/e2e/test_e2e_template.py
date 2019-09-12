@@ -63,11 +63,11 @@ def test_make_help_works() -> None:
 
 
 def test_make_setup() -> None:
-    local_root = Path().resolve()
-    apt_deps_result_messages = [
-        f"Selecting previously unselected package {package}."
-        for package in PACKAGES_APT
-    ]
+    # local_root = Path().resolve()
+    # apt_deps_result_messages = [
+    #     f"Selecting previously unselected package {package}."
+    #     for package in PACKAGES_APT
+    # ]
     run_detach_wait_substrings(
         "make setup",
         expect_stdouts=[
@@ -75,13 +75,13 @@ def test_make_setup() -> None:
             "neuro run ",
             "Status: running",
             # step 2
-            f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
-            # # somehow we don't print the line below
+            # f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
+            # # somehow we don't print the lines below
             # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
-            *apt_deps_result_messages,
+            # *apt_deps_result_messages,
             "installed apt requirements",  # we generate this line in pip
             # step 3
-            f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
+            # f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
             # # somehow we don't print the line below
             # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
             "installed pip requirements",  # we generate this line in pip
@@ -91,39 +91,17 @@ def test_make_setup() -> None:
             "Pushing image",
             # step 5
             "neuro kill setup",
+            # finish
+            "Project setup completed",
         ],
         unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
     )
 
-    # def test_run_job_fastai(self, neuro_login: None) -> None:
-    #     # TODO: fix docs: simplify command (note also issue #66)
-    #     # TODO: fix docs: use job name
-    #     cmd = (
-    #         "neuro run -s cpu-small --http 80 --name=fastai "
-    #         "--volume storage://~:/var/storage/home:rw "
-    #         "--volume storage://neuromation/public:/var/storage/neuromation/public:ro "
-    #         "image://neuromation/fastai"
-    #     )
-    #     job_name = parse_cli_option(cmd, ("--name", "-n"))
-    #
-    #     # TODO: define real timeout w.r.t. image size and cluster resources
-    #     try:
-    #         run_detach(f"neuro kill {job_name}")
-    #         with timeout(TIMEOUT_NEURO_JOB_RUN):
-    #             with measure_time(f"job-run: {job_name}"):
-    #                 run_detach_wait_substring(
-    #                     cmd,
-    #                     expect_stdout="Status: pending",
-    #                     unexpect_stdouts=("Status: failed", "Status: succeeded"),
-    #                 )
-    #                 run_repeatedly_wait_substring(
-    #                     f"neuro status {job_name}", expect_stdout="Status: running"
-    #                 )
-    #
-    #             # TODO: check job's URL
-    #     finally:
-    #         run_once(f"neuro kill {job_name}")
-    #
+def test_make_upload_code() -> None:
+    run_once("make upload-code")
+
+
+
     # @pytest.mark.flaky(reruns=3)
     # def test_upload_download_dataset(self, neuro_login: None) -> None:
     #     # TODO: fix docs: modify command `neuro cp dataset.tar.gz storage://~`

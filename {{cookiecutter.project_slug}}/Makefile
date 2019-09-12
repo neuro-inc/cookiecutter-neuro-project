@@ -57,6 +57,7 @@ setup: ### Setup remote environment
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV) && echo installed pip requirements'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
+	@echo "Project setup completed"
 
 ##### STORAGE #####
 
