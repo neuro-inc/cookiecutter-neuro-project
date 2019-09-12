@@ -88,8 +88,8 @@ def test_make_setup() -> None:
         )
     except RuntimeError:
         captured = run_once(f"neuro status {COOKIECUTTER_SETUP_JOB_NAME}")
-        log.info(f"stdout> `{captured.out}`")
-        log.info(f"stderr> `{captured.err}`")
+        log.info(f"stdout: `{captured.out}`")
+        raise
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:
     #     # TODO: fix docs: simplify command (note also issue #66)

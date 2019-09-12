@@ -29,8 +29,8 @@ FILEBROWSER_NAME?=filebrowser
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
-APT_COMMAND?="apt-get -qq"
-PIP_COMMAND?="pip -q"
+APT_COMMAND?=apt-get -qq
+PIP_COMMAND?=pip -q
 
 .PHONY: help
 help:
