@@ -60,6 +60,14 @@ jobs:
       # - store_artifacts:
       #     path: test-reports
       #     destination: test-reports
+
+      - run:
+          name: clean up running jobs
+          command: |
+            . venv/bin/activate
+            python ./cleanup_jobs.py
+          when: always
+          
 workflows:
   version: 2
 

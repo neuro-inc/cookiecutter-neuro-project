@@ -4,7 +4,13 @@ from pathlib import Path
 import pytest
 
 from .conftest import (
+    COOKIECUTTER_APT_FILE_NAME,
+    COOKIECUTTER_CODE_DIR_NAME,
+    COOKIECUTTER_DATA_DIR_NAME,
+    COOKIECUTTER_NOTEBOOKS_DIR_NAME,
+    COOKIECUTTER_PIP_FILE_NAME,
     COOKIECUTTER_PROJECT_NAME,
+    COOKIECUTTER_SETUP_JOB_NAME,
     FILE_SIZE_B,
     FILE_SIZE_KB,
     N_FILES,
@@ -21,12 +27,6 @@ from .conftest import (
     run_detach,
     run_detach_wait_substrings,
     run_once,
-    COOKIECUTTER_APT_FILE_NAME,
-    COOKIECUTTER_PIP_FILE_NAME,
-    COOKIECUTTER_DATA_DIR_NAME,
-    COOKIECUTTER_CODE_DIR_NAME,
-    COOKIECUTTER_NOTEBOOKS_DIR_NAME,
-    COOKIECUTTER_SETUP_JOB_NAME,
     run_repeatedly_wait_substring,
     timeout,
 )
@@ -64,35 +64,34 @@ def test_make_help_works() -> None:
 
 def test_make_setup() -> None:
     local_root = Path().resolve()
-    apt_deps_result_messages = [f"Setting up {package}" for package in PACKAGES_APT]
-    try:
-        run_detach_wait_substrings(
-            "make setup",
-            expect_stdouts=[
-                # step 1
-                "neuro run ",
-                "Status: running",
-                # step 2
-                f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
-                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
-                *apt_deps_result_messages,
-                # step 3
-                f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
-                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
-                "installed pip requirements",
-                # step 4
-                "Saving job '",
-                "Image created",
-                "Pushing image",
-                # step 5
-                "neuro kill setup",
-            ],
-            unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
-        )
-    except RuntimeError:
-        captured = run_once(f"neuro status {COOKIECUTTER_SETUP_JOB_NAME}")
-        log.info(f"stdout: `{captured.out}`")
-        raise
+    apt_deps_result_messages = [
+        f"Selecting previously unselected package {package}."
+        for package in PACKAGES_APT
+    ]
+    run_detach_wait_substrings(
+        "make setup",
+        expect_stdouts=[
+            # step 1
+            "neuro run ",
+            "Status: running",
+            # step 2
+            f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
+            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
+            *apt_deps_result_messages,
+            "installed apt requirements",  # we generate this line in pip
+            # step 3
+            f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
+            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
+            "installed pip requirements",  # we generate this line in pip
+            # step 4
+            "Saving job '",
+            "Image created",
+            "Pushing image",
+            # step 5
+            "neuro kill setup",
+        ],
+        unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
+    )
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:
     #     # TODO: fix docs: simplify command (note also issue #66)

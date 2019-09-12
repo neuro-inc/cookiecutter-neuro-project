@@ -1,6 +1,6 @@
 import typing as t
 
-from tests.conftest import get_submitted_jobs_file, run_once
+from tests.e2e.conftest import get_submitted_jobs_file
 
 
 def cleanup_jobs() -> None:

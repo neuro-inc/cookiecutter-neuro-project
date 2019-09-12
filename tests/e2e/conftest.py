@@ -60,6 +60,7 @@ COOKIECUTTER_APT_FILE_NAME = "apt.txt"
 COOKIECUTTER_PIP_FILE_NAME = "requirements.txt"
 COOKIECUTTER_SETUP_JOB_NAME = "setup"
 
+
 def get_logger() -> logging.Logger:
     logger = logging.getLogger(LOGGER_NAME)
     return logger
@@ -231,28 +232,23 @@ def measure_time(operation_name: str = "") -> t.Iterator[None]:
 
 
 def run_detach_wait_substrings(
-    cmd: str,
-    *,
-    log_stdout: bool = True,
-    expect_stdouts: t.List[str],
-    unexpect_stdouts: t.Sequence[str] = (),
+    cmd: str, *, expect_stdouts: t.List[str], unexpect_stdouts: t.Sequence[str] = ()
 ) -> None:
     process = run_detach(cmd)
     log.info(f"Waiting for strings in stdout: {expect_stdouts}...")
     job_saved = False
     assert expect_stdouts
     expect_stdouts_iter = iter(expect_stdouts)
-    current_expect_stdout = next(expect_stdouts_iter)
+    current = next(expect_stdouts_iter)
     for line in process.stdout:
-        if log_stdout:
-            log.info(f"  stdout: `{_escape_log(line)}`")
+        log.info(f"    stdout: `{_escape_log(line)}`")
         if not job_saved and _remember_job_runned(cmd, line):
             job_saved = True
-        while current_expect_stdout in line:
-            log.info(f"Found in stdout: {current_expect_stdout}")
+        while current in line:
+            log.info(f"Found in stdout: {current}")
             try:
-                current_expect_stdout = next(expect_stdouts_iter)
-                log.info("Waiting for the next string...")
+                current = next(expect_stdouts_iter)
+                log.info(f"Waiting for the next string: {current}")
             except StopIteration:
                 log.info("Returning")
                 return
@@ -260,7 +256,7 @@ def run_detach_wait_substrings(
             if unexpect_stdout in line:
                 raise RuntimeError(f"Found unexpected `{unexpect_stdout}` in stdout")
 
-    log.error(f"COULD NOT FIND STRING `{current_expect_stdout}` IN STDOUT")
+    log.error(f"COULD NOT FIND STRING `{current}` IN STDOUT")
     log.error(f"STDERR: `{process.stderr.read()}`")
     log.error(f"RETURN CODE: {process.returncode}")
     raise RuntimeError()
