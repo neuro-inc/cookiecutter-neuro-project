@@ -75,7 +75,7 @@ def test_make_setup() -> None:
             f"neuro exec setup \"bash -c 'apt-get update ",
             " newly installed,",
         ],
-        unexpect_stdouts=["Status: failed", "recipe for target "],
+        unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
     )
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:
