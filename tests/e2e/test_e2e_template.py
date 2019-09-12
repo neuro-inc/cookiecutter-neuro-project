@@ -21,8 +21,12 @@ from .conftest import (
     run_detach,
     run_detach_wait_substrings,
     run_once,
-    COOKIECUTTER_APT_FILE_REL_PATH,
-    COOKIECUTTER_PIP_FILE_REL_PATH,
+    COOKIECUTTER_APT_FILE_NAME,
+    COOKIECUTTER_PIP_FILE_NAME,
+    COOKIECUTTER_DATA_DIR_NAME,
+    COOKIECUTTER_CODE_DIR_NAME,
+    COOKIECUTTER_NOTEBOOKS_DIR_NAME,
+    COOKIECUTTER_SETUP_JOB_NAME,
     run_repeatedly_wait_substring,
     timeout,
 )
@@ -33,14 +37,18 @@ log = get_logger()
 
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
-    assert dirs == {"modules", "data", "notebooks"}
+    assert dirs == {
+        COOKIECUTTER_DATA_DIR_NAME,
+        COOKIECUTTER_CODE_DIR_NAME,
+        COOKIECUTTER_NOTEBOOKS_DIR_NAME,
+    }
     files = {f.name for f in Path().iterdir() if f.is_file()}
     assert files == {
         "Makefile",
         "README.md",
         "LICENSE",
-        "apt.txt",
-        "requirements.txt",
+        COOKIECUTTER_APT_FILE_NAME,
+        COOKIECUTTER_PIP_FILE_NAME,
         "setup.py",
         "setup.cfg",
         ".gitignore",
@@ -65,12 +73,12 @@ def test_make_setup() -> None:
                 "neuro run ",
                 "Status: running",
                 # step 2
-                f"neuro cp {COOKIECUTTER_APT_FILE_REL_PATH} ",
-                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_REL_PATH}' => ",
+                f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
+                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
                 *apt_deps_result_messages,
                 # step 3
-                f"neuro cp {COOKIECUTTER_PIP_FILE_REL_PATH} ",
-                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_REL_PATH}' => ",
+                f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
+                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
                 "installed pip requirements",
                 # step 4
                 f"neuro exec setup \"bash -c 'apt-get update ",
@@ -79,9 +87,9 @@ def test_make_setup() -> None:
             unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
         )
     except RuntimeError:
-        captured = run_once("neuro status setup")
-        log.info(f"stdout>{captured.out}")
-        log.info(f"stderr>{captured.err}")
+        captured = run_once(f"neuro status {COOKIECUTTER_SETUP_JOB_NAME}")
+        log.info(f"stdout> `{captured.out}`")
+        log.info(f"stderr> `{captured.err}`")
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:
     #     # TODO: fix docs: simplify command (note also issue #66)

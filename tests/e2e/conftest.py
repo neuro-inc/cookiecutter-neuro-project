@@ -53,13 +53,12 @@ TESTS_SAMPLES_PATH = TESTS_ROOT_PATH / "samples"
 COOKIECUTTER_CONFIG_PATH = TESTS_ROOT_PATH / "cookiecutter.yaml"
 # Project name is defined in cookiecutter.yaml, from `project_name`
 COOKIECUTTER_PROJECT_NAME = "test-project"
-
 COOKIECUTTER_DATA_DIR_NAME = "data"
 COOKIECUTTER_CODE_DIR_NAME = "modules"
 COOKIECUTTER_NOTEBOOKS_DIR_NAME = "notebooks"
-COOKIECUTTER_APT_FILE_REL_PATH = "apt.txt"
-COOKIECUTTER_PIP_FILE_REL_PATH = "requirements.txt"
-
+COOKIECUTTER_APT_FILE_NAME = "apt.txt"
+COOKIECUTTER_PIP_FILE_NAME = "requirements.txt"
+COOKIECUTTER_SETUP_JOB_NAME = "setup"
 
 def get_logger() -> logging.Logger:
     logger = logging.getLogger(LOGGER_NAME)
@@ -119,13 +118,13 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
 def generate_empty_project(run_cookiecutter: None) -> None:
     log.info(f"Initializing empty project: {Path().absolute()}")
 
-    apt_file = Path(COOKIECUTTER_APT_FILE_REL_PATH)
+    apt_file = Path(COOKIECUTTER_APT_FILE_NAME)
     assert apt_file.is_file() and apt_file.exists()
     with apt_file.open("a") as f:
         for package in PACKAGES_APT:
             f.write("\n" + package)
 
-    pip_file = Path(COOKIECUTTER_PIP_FILE_REL_PATH)
+    pip_file = Path(COOKIECUTTER_PIP_FILE_NAME)
     assert pip_file.is_file() and pip_file.exists()
     with pip_file.open("a") as f:
         for package in PACKAGES_PIP:
