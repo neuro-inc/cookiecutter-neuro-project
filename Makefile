@@ -2,8 +2,13 @@ ISORT_DIRS := tests setup.py
 BLACK_DIRS := $(ISORT_DIRS)
 MYPY_DIRS :=  tests
 
-setup:
+.PHONY: init
+init:
 	pip install -r requirements-dev.txt
+
+.PHONY: lint
+cook:
+	cookiecutter gh:neuromation/cookiecutter-neuro-project
 
 .PHONY: lint
 lint:
@@ -19,5 +24,5 @@ format:
 
 .PHONY: test
 test:
-	pytest -v -s tests/
+	pytest -v tests/
 
