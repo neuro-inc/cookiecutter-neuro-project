@@ -248,7 +248,7 @@ def run_detach_wait_substrings(
             log.info(f"stdout: `{_escape_log(line)}`")
         if not job_saved and _remember_job_runned(cmd, line):
             job_saved = True
-        if current_expect_stdout in line:
+        while current_expect_stdout in line:
             log.info(f"found in stdout: {current_expect_stdout}")
             try:
                 current_expect_stdout = next(expect_stdouts_iter)
