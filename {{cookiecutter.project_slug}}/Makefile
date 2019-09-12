@@ -50,6 +50,7 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
+	@echo
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
