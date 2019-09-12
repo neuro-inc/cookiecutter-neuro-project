@@ -21,6 +21,8 @@ from .conftest import (
     run_detach,
     run_detach_wait_substrings,
     run_once,
+    COOKIECUTTER_APT_FILE_REL_PATH,
+    COOKIECUTTER_PIP_FILE_REL_PATH,
     run_repeatedly_wait_substring,
     timeout,
 )
@@ -62,18 +64,18 @@ def test_make_setup() -> None:
             "neuro run ",
             "Status: running",
             # step 2
-            f"neuro cp apt.txt ",
-            f"Copy '{local_root.as_uri()}/apt.txt' => ",
+            f"neuro cp {COOKIECUTTER_APT_FILE_REL_PATH} ",
+            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_REL_PATH}' => ",
             *apt_deps_result_messages,
             # step 3
-            f"neuro cp requirements.txt ",
-            f"Copy '{local_root.as_uri()}/requirements.txt' => ",
+            f"neuro cp {COOKIECUTTER_PIP_FILE_REL_PATH} ",
+            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_REL_PATH}' => ",
             "installed pip requirements",
             # step 4
             f"neuro exec setup \"bash -c 'apt-get update ",
             " newly installed,",
         ],
-        unexpect_stdouts=["Status: failed"],
+        unexpect_stdouts=["Status: failed", "recipe for target "],
     )
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:

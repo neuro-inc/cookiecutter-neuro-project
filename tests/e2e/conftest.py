@@ -57,6 +57,8 @@ COOKIECUTTER_PROJECT_NAME = "test-project"
 COOKIECUTTER_DATA_DIR_NAME = "data"
 COOKIECUTTER_CODE_DIR_NAME = "modules"
 COOKIECUTTER_NOTEBOOKS_DIR_NAME = "notebooks"
+COOKIECUTTER_APT_FILE_REL_PATH = "apt.txt"
+COOKIECUTTER_PIP_FILE_REL_PATH = "requirements.txt"
 
 
 def get_logger() -> logging.Logger:
@@ -117,13 +119,13 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
 def generate_empty_project(run_cookiecutter: None) -> None:
     log.info(f"Initializing empty project: {Path().absolute()}")
 
-    apt_file = Path("apt.txt")
+    apt_file = Path(COOKIECUTTER_APT_FILE_REL_PATH)
     assert apt_file.is_file() and apt_file.exists()
     with apt_file.open("a") as f:
         for package in PACKAGES_APT:
             f.write("\n" + package)
 
-    pip_file = Path("requirements.txt")
+    pip_file = Path(COOKIECUTTER_PIP_FILE_REL_PATH)
     assert pip_file.is_file() and pip_file.exists()
     with pip_file.open("a") as f:
         for package in PACKAGES_PIP:
@@ -259,7 +261,7 @@ def run_detach_wait_substrings(
             if unexpect_stdout in line:
                 raise RuntimeError(f"Found `{unexpect_stdout}` in stdout")
 
-    log.error(f"COULD NOT FOIND STRING `{current_expect_stdout}` IN STDOUT")
+    log.error(f"COULD NOT FIND STRING `{current_expect_stdout}` IN STDOUT")
     stderr = process.stderr.read()
     if stderr:
         log.error(f"STDERR: `{stderr}`")
