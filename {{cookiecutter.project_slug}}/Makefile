@@ -50,8 +50,8 @@ setup: ### Setup remote environment
 		'sleep 1h'
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro exec $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec --no-key-check $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
@@ -110,7 +110,7 @@ kill-training:  ### Stop training job
 
 .PHONY: connect-training
 connect-training:  ### Execute shell to the training job
-	neuro exec $(TRAINING_NAME) bash
+	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
 jupyter:  ### Run jupyter job
