@@ -81,8 +81,11 @@ def test_make_setup() -> None:
                 f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
                 "installed pip requirements",
                 # step 4
-                f"neuro exec setup \"bash -c 'apt-get update ",
-                " newly installed,",
+                "Saving job '",
+                "Image created",
+                "Pushing image",
+                # step 5
+                "neuro kill setup",
             ],
             unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
         )

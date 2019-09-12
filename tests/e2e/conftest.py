@@ -245,16 +245,16 @@ def run_detach_wait_substrings(
     current_expect_stdout = next(expect_stdouts_iter)
     for line in process.stdout:
         if log_stdout:
-            log.info(f"stdout: `{_escape_log(line)}`")
+            log.info(f"  stdout: `{_escape_log(line)}`")
         if not job_saved and _remember_job_runned(cmd, line):
             job_saved = True
         while current_expect_stdout in line:
             log.info(f"Found in stdout: {current_expect_stdout}")
             try:
                 current_expect_stdout = next(expect_stdouts_iter)
-                log.info("waiting for the next string...")
+                log.info("Waiting for the next string...")
             except StopIteration:
-                log.info("returning")
+                log.info("Returning")
                 return
         for unexpect_stdout in unexpect_stdouts:
             if unexpect_stdout in line:
