@@ -30,7 +30,7 @@ BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
 APT_COMMAND?="apt-get -qq"
-PIP_COMMAND?="pip --no-progress"
+PIP_COMMAND?="pip -q"
 
 .PHONY: help
 help:
@@ -53,7 +53,7 @@ setup: ### Setup remote environment
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV)'
+	neuro exec --no-key-check $(SETUP_NAME) '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV) && echo "installed pip requirements"'
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 

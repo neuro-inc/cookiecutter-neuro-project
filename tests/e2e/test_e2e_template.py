@@ -8,6 +8,7 @@ from .conftest import (
     FILE_SIZE_B,
     FILE_SIZE_KB,
     N_FILES,
+    PACKAGES_APT,
     TIMEOUT_NEURO_DOWNLOAD,
     TIMEOUT_NEURO_JOB_RUN,
     TIMEOUT_NEURO_STORAGE_LS,
@@ -53,7 +54,7 @@ def test_make_help_works() -> None:
 
 def test_make_setup() -> None:
     local_root = Path().resolve()
-
+    apt_deps_result_messages = [f"Setting up {package}" for package in PACKAGES_APT]
     run_detach_wait_substrings(
         "make setup",
         expect_stdouts=[
@@ -63,11 +64,11 @@ def test_make_setup() -> None:
             # step 2
             f"neuro cp apt.txt ",
             f"Copy '{local_root.as_uri()}/apt.txt' => ",
-            "'apt.txt' ",
+            *apt_deps_result_messages,
             # step 3
             f"neuro cp requirements.txt ",
             f"Copy '{local_root.as_uri()}/requirements.txt' => ",
-            "'requirements.txt' ",
+            "installed pip requirements",
             # step 4
             f"neuro exec setup \"bash -c 'apt-get update ",
             " newly installed,",
