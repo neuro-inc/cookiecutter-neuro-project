@@ -57,26 +57,31 @@ def test_make_help_works() -> None:
 def test_make_setup() -> None:
     local_root = Path().resolve()
     apt_deps_result_messages = [f"Setting up {package}" for package in PACKAGES_APT]
-    run_detach_wait_substrings(
-        "make setup",
-        expect_stdouts=[
-            # step 1
-            "neuro run ",
-            "Status: running",
-            # step 2
-            f"neuro cp {COOKIECUTTER_APT_FILE_REL_PATH} ",
-            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_REL_PATH}' => ",
-            *apt_deps_result_messages,
-            # step 3
-            f"neuro cp {COOKIECUTTER_PIP_FILE_REL_PATH} ",
-            f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_REL_PATH}' => ",
-            "installed pip requirements",
-            # step 4
-            f"neuro exec setup \"bash -c 'apt-get update ",
-            " newly installed,",
-        ],
-        unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
-    )
+    try:
+        run_detach_wait_substrings(
+            "make setup",
+            expect_stdouts=[
+                # step 1
+                "neuro run ",
+                "Status: running",
+                # step 2
+                f"neuro cp {COOKIECUTTER_APT_FILE_REL_PATH} ",
+                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_REL_PATH}' => ",
+                *apt_deps_result_messages,
+                # step 3
+                f"neuro cp {COOKIECUTTER_PIP_FILE_REL_PATH} ",
+                f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_REL_PATH}' => ",
+                "installed pip requirements",
+                # step 4
+                f"neuro exec setup \"bash -c 'apt-get update ",
+                " newly installed,",
+            ],
+            unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
+        )
+    except RuntimeError:
+        captured = run_once("neuro status setup")
+        log.info(f"stdout>{captured.out}")
+        log.info(f"stderr>{captured.err}")
 
     # def test_run_job_fastai(self, neuro_login: None) -> None:
     #     # TODO: fix docs: simplify command (note also issue #66)
