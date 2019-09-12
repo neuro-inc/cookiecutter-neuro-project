@@ -258,13 +258,14 @@ def run_detach_wait_substrings(
         for unexpect_stdout in unexpect_stdouts:
             if unexpect_stdout in line:
                 raise RuntimeError(f"Found `{unexpect_stdout}` in stdout")
+
+    log.error(f"COULD NOT FOIND STRING `{current_expect_stdout}` IN STDOUT")
     stderr = process.stderr.read()
     if stderr:
-        err = f"Found stderr: `{stderr}`"
-    else:
-        err = f"Could not find string `{current_expect_stdout}` in stdout"
-    log.error(err)
-    raise RuntimeError(err)
+        log.error(f"STDERR: `{stderr}`")
+    if process.returncode != 0:
+        log.error(f"RETURN CODE: {process.returncode}")
+    raise RuntimeError()
 
 
 def run_detach(cmd: str) -> subprocess.Popen:
