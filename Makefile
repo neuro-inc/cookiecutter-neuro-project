@@ -22,9 +22,12 @@ format:
 	isort -rc $(ISORT_DIRS)
 	black $(BLACK_DIRS)
 
-.PHONY: test
-test:
-	pytest -v -s tests/
+.PHONY: test_unit
+test_unit:
+	pytest -v -s tests/unit
 	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
 	stat ../test-project
 
+.PHONY: test_e2e
+test_e2e:
+	pytest -v -s tests/e2e
