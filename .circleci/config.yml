@@ -40,11 +40,16 @@ jobs:
           key: v1-dependencies-{{ checksum "requirements-dev.txt" }}
 
       - run:
+          name: run linter
+          command: |
+            . venv/bin/activate
+            make lint
+
+      - run:
           name: run tests
           command: |
             . venv/bin/activate
-            cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
-            stat ../test-project
+            make test
       #
       # - store_artifacts:
       #     path: test-reports

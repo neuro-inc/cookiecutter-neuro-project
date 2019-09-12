@@ -1,4 +1,4 @@
-ISORT_DIRS := tests setup.py
+ISORT_DIRS := tests
 BLACK_DIRS := $(ISORT_DIRS)
 MYPY_DIRS :=  tests
 
@@ -25,4 +25,6 @@ format:
 .PHONY: test
 test:
 	pytest -v -s tests/
+	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
+	stat ../test-project
 
