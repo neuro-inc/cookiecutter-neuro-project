@@ -18,17 +18,16 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements-dev.txt" }}
+            - v1-dependencies-3.6.1-{{ checksum "requirements-dev.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
       - run:
           name: install dependencies
           command: |
-            pyenv install --list
-            pyenv install --debug 3.6.5
-            pyenv local 3.6.5-debug
-            python -m venv venv
+            pyenv install --debug 3.6.1
+            pyenv local 3.6.1-debug
+            python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
             make init
@@ -36,7 +35,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements-dev.txt" }}
+          key: v1-dependencies-3.6.1-{{ checksum "requirements-dev.txt" }}
 
       - run:
           name: run linter
