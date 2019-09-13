@@ -385,8 +385,12 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
     for f in from_dir.glob("*"):
         if not f.is_file():
             continue
-        log.info(f"Copying local file `{f}` to `{to_dir.absolute()}/`")
-        shutil.copyfile(str(f), to_dir / f.name, follow_symlinks=False)
+        target = to_dir / f.name
+        if target.exists():
+            log.info(f"Skipping file `{f}`: target `{target}` already exists")
+            continue
+        log.info(f"Copying file `{f}` to `{to_dir.absolute()}/`")
+        shutil.copyfile(str(f), str(target), follow_symlinks=False)
 
 
 # == neuro helpers ==
