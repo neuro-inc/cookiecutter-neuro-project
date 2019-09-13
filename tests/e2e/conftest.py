@@ -160,14 +160,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation() -> None:
-    output = run_command("pip install -U --progress-bar=off neuromation", debug=True)
-    # stderr can contain: "You are using pip version..."
-    patterns = (
-        r"Requirement already up-to-date:.* neuromation",
-        r"Installing collected packages:.* neuromation"
-        r"Successfully installed.* neuromation",
-    )
-    assert any(re.search(p, output) for p in patterns), f"output: `{output}`"
+    run_command("pip install -U neuromation")
     assert "Name: neuromation" in run_command("pip show neuromation")
 
 
