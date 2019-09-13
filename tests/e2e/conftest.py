@@ -154,7 +154,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
 
     notebooks_dir = Path(MK_NOTEBOOKS_PATH)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
-    copy_local_files("*.ipynb", from_dir=LOCAL_TESTS_SAMPLES_PATH, to_dir=notebooks_dir)
+    copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
     assert list(notebooks_dir.iterdir())
 
 
@@ -386,7 +386,7 @@ def copy_local_files(glob: str, from_dir: Path, to_dir: Path) -> None:
         if not f.is_file():
             continue
         log.info(f"Copying local file `{f}` to `{to_dir.absolute()}/`")
-        shutil.copyfile(str(f), to_dir / f.name)
+        shutil.copyfile(str(f), to_dir / f.name, follow_symlinks=False)
 
 
 # == neuro helpers ==
