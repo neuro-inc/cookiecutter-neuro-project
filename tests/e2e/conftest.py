@@ -160,7 +160,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation() -> None:
-    output = run_command("pip install -U neuromation")
+    output = run_command("pip install -U neuromation", debug=True)
     # stderr can contain: "You are using pip version..."
     patterns = (
         "Requirement already up-to-date:.* neuromation",
