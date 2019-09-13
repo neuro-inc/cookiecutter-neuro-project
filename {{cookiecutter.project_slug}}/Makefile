@@ -83,7 +83,7 @@ upload-notebooks:  ### Upload notebooks directory to Storage
 
 .PHONY: download-notebooks
 download-notebooks:  ### Download notebooks directory from Storage
-	neuro cp -r $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
+	neuro cp -r -T $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory on Storage

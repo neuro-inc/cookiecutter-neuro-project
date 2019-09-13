@@ -223,13 +223,14 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 
 @contextmanager
-def measure_time(operation_name: str = "") -> t.Iterator[None]:
+def measure_time(command_name: str = "") -> t.Iterator[None]:
     log.info("")
+    log.info(f"Running command: {command_name}")
     start_time = time.time()
     yield
     elapsed_time = time.time() - start_time
     log.info("=" * 50)
-    log.info(f"  TIME SUMMARY [{operation_name}]: {elapsed_time:.2f} sec")
+    log.info(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
     log.info("=" * 50)
 
 
@@ -263,7 +264,7 @@ def run_command(
     ...          debug=False,
     ...          expect_patterns=['1', '2', '3', '4'])
     ... except RuntimeError as e:
-    ...     assert str(e) == "Could not find pattern: `re.compile('4', re.DOTALL)`"
+    ...     assert str(e) == "Could not find pattern: re.compile('4', re.DOTALL)"
     """
 
     child = pexpect.spawn(
@@ -293,7 +294,7 @@ def run_command(
                 chunk = _get_chunk(child)
                 output += chunk
             except pexpect.EOF:
-                raise RuntimeError(f"Could not find pattern: `{repr(expected)}`")
+                raise RuntimeError(f"Could not find pattern: {repr(expected)}")
 
             for unexpected_p in unexpected_patterns:
                 if unexpected_p.search(chunk):
@@ -303,14 +304,10 @@ def run_command(
 
         # read the rest:
         child.wait()
-        # TODO: read with chunks here
+        # TODO: read huge chunk in chunks
         chunk = child.read()
-        if chunk:
-            output += chunk
+        output += chunk
 
-        for unexpected in unexpected_patterns:
-            if unexpected.search(output):
-                raise RuntimeError(f"Abort because found pattern: `{unexpected}`")
         return output
 
     except RuntimeError as e:
@@ -354,35 +351,36 @@ def generate_random_file(path: Path, size_b: int) -> Path:
     return path_and_name
 
 
-def cleanup_local_dirs(*dirs: Path) -> None:
-    for d in dirs:
-        log.info(f"Cleaning up local directory `{d}`")
+def cleanup_local_dirs(*dirs: t.Union[str, Path]) -> None:
+    for d_or_name in dirs:
+        if isinstance(d_or_name, str):
+            d = Path(d_or_name)
+        else:
+            d = d_or_name
+        log.info(f"Cleaning up local directory `{d.absolute()}`")
         for f in d.iterdir():
             if f.is_file():
                 f.unlink()
+        assert not list(d.iterdir()), "directory should be empty here"
 
 
 def copy_local_files(glob: str, from_dir: Path, to_dir: Path) -> None:
     for f in from_dir.glob(glob):
         if not f.is_file():
             continue
+        log.info(f"Copying local file `{f}` to `{to_dir.absolute()}/`")
         shutil.copyfile(str(f), to_dir / f.name)
 
 
-def _escape_log(s: str) -> str:
-    return repr(s).strip("'")
+# == neuro helpers ==
 
 
-def neuro_ls(
-    project_relative_path: str,
-    timeout: int,
-    stop_patterns: t.Sequence[str] = DEFAULT_NEURO_ERROR_PATTERNS,
-) -> t.Set[str]:
+def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]:
     out = run_command(
-        f"neuro ls {project_relative_path}",
+        f"neuro ls {path}",
         timeout=timeout,
-        debug=False,
-        stop_patterns=stop_patterns,
+        debug=True,
+        stop_patterns=() if ignore_errors else DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
     if ".gitkeep" in result:
@@ -391,13 +389,12 @@ def neuro_ls(
 
 
 def neuro_rm_dir(
-    project_relative_path: str,
-    timeout: int,
-    stop_patterns: t.Sequence[str] = DEFAULT_NEURO_ERROR_PATTERNS,
+    project_relative_path: str, timeout: int, ignore_errors: bool = False
 ) -> None:
+    log.info(f"Deleting remote directory `{project_relative_path}`")
     run_command(
         f"neuro rm -r {project_relative_path}",
         timeout=timeout,
         debug=False,
-        stop_patterns=stop_patterns,
+        stop_patterns=() if ignore_errors else DEFAULT_NEURO_ERROR_PATTERNS,
     )

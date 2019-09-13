@@ -52,10 +52,10 @@ def test_make_setup() -> None:
         # run
         r"Status:[^\n]+running",
         # copy apt.txt
-        f"Copy 'file:///.*{PROJECT_APT_FILE_NAME}",
+        f"Copy 'file://.*{PROJECT_APT_FILE_NAME}",
         rf"'{PROJECT_APT_FILE_NAME}' \d+B",
         # copy pep.txt
-        f"Copy 'file:///.*{PROJECT_PIP_FILE_NAME}",
+        f"Copy 'file://.*{PROJECT_PIP_FILE_NAME}",
         rf"'{PROJECT_PIP_FILE_NAME}' \d+B",
         # apt-get install
         *apt_deps_messages,
@@ -94,7 +94,7 @@ def test_make_upload_code() -> None:
     make_cmd = "make upload-code"
 
     neuro_rm_dir(
-        MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+        MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, ignore_errors=True
     )
 
     with measure_time(make_cmd):
@@ -102,10 +102,7 @@ def test_make_upload_code() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[
-                rf"'file:///.*/{MK_CODE_PATH}'...",
-                rf"'file:///.*/{MK_CODE_PATH}' DONE",
-            ],
+            expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -134,7 +131,7 @@ def test_make_upload_data() -> None:
     make_cmd = "make upload-data"
 
     neuro_rm_dir(
-        MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+        MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, ignore_errors=True
     )
 
     with measure_time(make_cmd):
@@ -142,10 +139,7 @@ def test_make_upload_data() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_DATA,
-            expect_patterns=[
-                rf"'file:///.*/{MK_DATA_PATH}'...",
-                rf"'file:///.*/{MK_DATA_PATH}' DONE",
-            ],
+            expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -171,24 +165,37 @@ def test_make_clean_data() -> None:
 
 
 @pytest.mark.run(order=6)
-def test_make_upload_notebooks() -> None:
+def test_make_upload_download_notebooks() -> None:
+    files_set = {"00_notebook_tutorial.ipynb", "__init__.py"}
+
     make_cmd = "make upload-notebooks"
-
     neuro_rm_dir(
-        MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+        MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, ignore_errors=True
     )
-
     with measure_time(make_cmd):
         run_command(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-            expect_patterns=[
-                rf"'file:///.*/{MK_NOTEBOOKS_PATH}'...",
-                rf"'file:///.*/{MK_NOTEBOOKS_PATH}' DONE",
-            ],
+            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
-    assert actual == {"00_notebook_tutorial.ipynb", "__init__.py"}
+    actual_remote = neuro_ls(
+        MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS
+    )
+    assert actual_remote == files_set
+
+    make_cmd = "make download-notebooks"
+    cleanup_local_dirs(MK_NOTEBOOKS_PATH)
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
+            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
+            # TODO: add upload-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    actual_local = {f.name for f in Path(MK_NOTEBOOKS_PATH).iterdir()}
+    assert actual_local == files_set
