@@ -19,9 +19,8 @@ from uuid import uuid4
 import pexpect
 import pytest
 
+from tests.e2e.configuration import *
 from tests.utils import inside_dir
-
-from .configuration import *
 
 
 CHILD_PROCESSES_OUTPUT_LOGFILE = sys.stdout  # stdout or file
@@ -39,7 +38,7 @@ DEFAULT_TIMEOUT_LONG = 10 * 60
 # TODO: use a real dataset after cleaning up docs
 FILE_SIZE_KB = 4
 FILE_SIZE_B = FILE_SIZE_KB * 1024
-N_FILES = 1000
+N_FILES = 100
 
 
 VERBS_SECRET = ("login-with-token",)
@@ -224,8 +223,8 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 @contextmanager
 def measure_time(command_name: str = "") -> t.Iterator[None]:
-    log.info("")
-    log.info(f"Running command: {command_name}")
+    log.info("-" * 50)
+    log.info(f'TESTING COMMAND: "{command_name}"')
     start_time = time.time()
     yield
     elapsed_time = time.time() - start_time
@@ -245,10 +244,10 @@ def run_command(
 ) -> str:
     """
     >>> # Check expected-outputs:
-    >>> s1 = run_command("bash -c 'echo 1; echo 2; echo 3'",
+    >>> s = run_command("bash -c 'echo 1; echo 2; echo 3'",
     ...          debug=False,
     ...          expect_patterns=['1', '2'])
-    >>> s1.split()
+    >>> s.split()
     ['1', '2', '3']
     >>> # Check expected-outputs:
     >>> try:
@@ -258,13 +257,20 @@ def run_command(
     ...          stop_patterns=['2'])
     ... except RuntimeError as e:
     ...     assert str(e) == "Found stop-pattern: re.compile('2', re.DOTALL)"
+    >>> # Works with only stop-patterns:
+    >>> try:
+    ...     run_command("bash -c 'echo 1; echo 2; echo 3'",
+    ...          debug=False,
+    ...          stop_patterns=['2'])
+    ... except RuntimeError as e:
+    ...     assert str(e) == "Found stop-pattern: re.compile('2', re.DOTALL)"
     >>> # Pattern not found at all:
     >>> try:
     ...     run_command("bash -c 'echo 1; echo 2; echo 3'",
     ...          debug=False,
     ...          expect_patterns=['1', '2', '3', '4'])
     ... except RuntimeError as e:
-    ...     assert str(e) == "Could not find pattern: re.compile('4', re.DOTALL)"
+    ...     assert str(e) == "Could not find pattern: '4'"
     """
 
     child = pexpect.spawn(
@@ -279,7 +285,7 @@ def run_command(
     compile_flags = re.DOTALL
     if child.ignorecase:
         compile_flags = compile_flags | re.IGNORECASE
-    unexpected_patterns = [re.compile(p, compile_flags) for p in stop_patterns]
+    stop_patterns_compiled = [re.compile(p, compile_flags) for p in stop_patterns]
     if stop_patterns:
         log.info(f"Stop-patterns: {repr(stop_patterns)}")
 
@@ -288,25 +294,22 @@ def run_command(
         for expected in expect_patterns:
             log.info(f"Searching pattern: {repr(expected)}")
             expected_p = re.compile(expected, compile_flags)
-            pattern_list = [expected_p] + unexpected_patterns
             try:
-                child.expect_list(pattern_list)
+                child.expect_list([expected_p] + stop_patterns_compiled)
                 chunk = _get_chunk(child)
                 output += chunk
             except pexpect.EOF:
                 raise RuntimeError(f"Could not find pattern: {repr(expected)}")
 
-            for unexpected_p in unexpected_patterns:
-                if unexpected_p.search(chunk):
-                    raise RuntimeError(f"Found stop-pattern: {repr(unexpected_p)}")
-
-            log.info(f"Found pattern: {repr(expected_p)}")
+            _check_chunk_not_contains_stop_patterns(chunk, stop_patterns_compiled)
 
         # read the rest:
         child.wait()
         # TODO: read huge chunk in chunks
         chunk = child.read()
-        output += chunk
+        if chunk:
+            output += chunk
+            _check_chunk_not_contains_stop_patterns(chunk, stop_patterns_compiled)
 
         return output
 
@@ -325,6 +328,14 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
     if isinstance(child.after, child.allowed_string_types):
         chunk += child.after
     return chunk
+
+
+def _check_chunk_not_contains_stop_patterns(
+    chunk: str, stop_patterns_compiled: t.List[t.Pattern]
+) -> None:
+    for stop_p in stop_patterns_compiled:
+        if stop_p.search(chunk):
+            raise RuntimeError(f"Found stop-pattern: {repr(stop_p)}")
 
 
 def _detect_job_ids(stdout: str) -> t.Set[str]:
