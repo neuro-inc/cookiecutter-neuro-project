@@ -3,7 +3,6 @@ import os
 import re
 import shutil
 import signal
-import sys
 import textwrap
 import time
 import typing as t
@@ -26,9 +25,6 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGIN,
 )
 from tests.utils import inside_dir
-
-
-CHILD_PROCESSES_OUTPUT_LOGFILE = sys.stdout  # stdout or file
 
 
 LOGGER_NAME = "e2e"
@@ -55,11 +51,18 @@ ESCAPE_LOG_CHARACTERS: t.Sequence[t.Tuple[str, str]] = [("\n", "\\n")]
 # all variables prefixed "LOCAL_" store paths to file on your local machine
 LOCAL_ROOT_PATH = Path(__file__).resolve().parent.parent.parent
 LOCAL_TESTS_ROOT_PATH = LOCAL_ROOT_PATH / "tests"
-LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_ROOT_PATH / "samples"
+LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
+LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
+LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
+LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
+
 LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
 LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
-LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
 
+# use `sys.stdout` to echo everything to standard output
+# use `open('mylog.txt','wb')` to log to a file
+# use `None` to disable logging to console
+PEXPECT_DEBUG_OUTPUT_LOGFILE = None
 
 # note: ERROR, being the most general error, must go the last
 DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", "ERROR")
@@ -106,7 +109,8 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     run_command(
         f"cookiecutter --no-input "
-        f"--config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}"
+        f"--config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}",
+        stop_patterns=["raise .*Exception"],
     )
     with inside_dir(MK_PROJECT_NAME):
         yield
@@ -275,7 +279,7 @@ def run_command(
     child = pexpect.spawn(
         cmd,
         timeout=timeout,
-        logfile=CHILD_PROCESSES_OUTPUT_LOGFILE if debug else None,
+        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if debug else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",

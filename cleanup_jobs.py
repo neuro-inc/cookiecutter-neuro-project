@@ -6,6 +6,10 @@ from tests.e2e.conftest import LOCAL_SUBMITTED_JOBS_FILE, run_command
 
 def cleanup_jobs_from_file() -> None:
     path = LOCAL_SUBMITTED_JOBS_FILE
+    if not path.exists():
+        print(f"WARNING: FILE {path.absolute()} DOES NOT EXIST!")
+        return
+    
     print(f"Reading jobs from file: {path.absolute()}")
     jobs: t.List[str] = []
     with path.open("r") as f:
