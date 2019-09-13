@@ -1,19 +1,14 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
-version: 2
+version: 2.1
+
+defaults: &defaults
+  machine:
+    image: circleci/classic:201808-01
+    docker_layer_caching: true
+  working_directory: ~/platform-monitoring
+
 jobs:
   test:
-    docker:
-      # specify the version you desire here
-      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
-      - image: circleci/python:3.6.1
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
+    <<: *defaults
 
     working_directory: ~/neuromation-template
 
@@ -30,9 +25,11 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
+            pyenv global 3.6.5
+            python -m venv venv
             . venv/bin/activate
-            pip install -r requirements-dev.txt
+            pip install --upgrade pip
+            make init
 
       - save_cache:
           paths:
