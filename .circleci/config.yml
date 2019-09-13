@@ -25,7 +25,8 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            pyenv global 3.6.5
+            pyenv install --debug 3.6.7
+            pyenv local 3.6.7-debug
             python -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
