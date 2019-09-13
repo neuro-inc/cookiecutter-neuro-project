@@ -9,7 +9,7 @@ def cleanup_jobs_from_file() -> None:
     if not path.exists():
         print(f"WARNING: FILE {path.absolute()} DOES NOT EXIST!")
         return
-    
+
     print(f"Reading jobs from file: {path.absolute()}")
     jobs: t.List[str] = []
     with path.open("r") as f:

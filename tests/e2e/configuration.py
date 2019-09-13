@@ -1,4 +1,3 @@
-# TODO: move all timeotus and other setting files to a separate file
 TIMEOUT_MAKE_SETUP = 6 * 60
 TIMEOUT_MAKE_UPLOAD_CODE = 5
 TIMEOUT_MAKE_CLEAN_CODE = 3

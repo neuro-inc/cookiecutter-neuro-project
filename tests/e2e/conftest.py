@@ -193,7 +193,7 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
             log.info("Deleted")
 
 
-# == helpers ==
+# == generic helpers ==
 
 
 def unique_label() -> str:
@@ -236,6 +236,9 @@ def measure_time(command_name: str = "") -> t.Iterator[None]:
     log.info("=" * 50)
 
 
+# == execution helpers ==
+
+# TODO: Move this helper to a separate file to use it from outside
 def run_command(
     cmd: str,
     *,
@@ -246,6 +249,14 @@ def run_command(
     stop_patterns: t.Sequence[str] = (),  # ignore errors (and stderr) by default
 ) -> str:
     """
+    This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
+    searches for patterns defined in `expect_patterns` *in their order*
+    (normally, `pexpect.expect([pattern1, pattern2, ...])` won't search
+    them in a specified order). Once it sees any pattern from `stop_patterns`,
+    it aborts its execution with `RuntimeError`. If any pattern from `expect_patterns`
+    wasn't found, also `RuntimeError` is raised.
+        Note: if you want `debug=True` to work,
+        set `PEXPECT_DEBUG_OUTPUT_LOGFILE=sys.output`
     >>> # Check expected-outputs:
     >>> s = run_command("bash -c 'echo 1; echo 2; echo 3'",
     ...          debug=False,
@@ -350,6 +361,9 @@ def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
         log.info(f"Dumped jobs: {jobs}")
         with LOCAL_SUBMITTED_JOBS_FILE.open("a") as f:
             f.write("\n" + "\n".join(jobs))
+
+
+# == local file helpers ==
 
 
 def generate_random_file(path: Path, size_b: int) -> Path:
