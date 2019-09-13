@@ -1,7 +1,7 @@
 import typing as t
 
 # TODO: move runners logs from tests
-from tests.e2e.conftest import LOCAL_SUBMITTED_JOBS_FILE, run_command
+from tests.e2e.conftest import LOCAL_SUBMITTED_JOBS_FILE, run
 
 
 def cleanup_jobs_from_file() -> None:
@@ -27,11 +27,11 @@ def cleanup_jobs_from_file() -> None:
             print("-" * 53)
 
             cmd = f"neuro status {job}"
-            out = run_command(cmd, detect_new_jobs=False)
+            out = run(cmd, detect_new_jobs=False)
             print(f"`{cmd}` => {repr(out)}")
 
             cmd = f"neuro kill {job}"
-            out = run_command(cmd, detect_new_jobs=False)
+            out = run(cmd, detect_new_jobs=False)
             print(f"`{cmd}` => {repr(out)}")
             killed.append(job)
 
@@ -48,14 +48,14 @@ def cleanup_jobs_from_file() -> None:
 
 def cleanup_active_jobs() -> None:
     print("Killing active jobs:")
-    output = run_command("neuro --quiet ps", debug=True, detect_new_jobs=False)
+    output = run("neuro --quiet ps", debug=True, detect_new_jobs=False)
     jobs = output.split()
     if jobs:
         _dump_jobs("FOUND ACTIVE JOBS", jobs)
-        run_command(f"bash -c 'neuro kill {' '.join(jobs)}'", detect_new_jobs=False)
+        run(f"bash -c 'neuro kill {' '.join(jobs)}'", detect_new_jobs=False)
         print("-" * 53)
         print("Result:")
-        run_command("neuro ps", debug=True, detect_new_jobs=False)
+        run("neuro ps", debug=True, detect_new_jobs=False)
         print("=" * 53)
 
 
@@ -66,7 +66,7 @@ def _dump_jobs(message: str, jobs: t.List[str]) -> None:
 
 
 if __name__ == "__main__":
-    run_command("neuro config show", debug=True, detect_new_jobs=False)
-    run_command("neuro ps", debug=True, detect_new_jobs=False)
-    cleanup_jobs_from_file()
+    run("neuro config show", debug=True, detect_new_jobs=False)
+    run("neuro ps", debug=True, detect_new_jobs=False)
     cleanup_active_jobs()
+    cleanup_jobs_from_file()

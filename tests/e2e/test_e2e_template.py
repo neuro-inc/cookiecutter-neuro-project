@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -21,17 +22,22 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_LS,
+    TIMEOUT_NEURO_PS,
 )
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
+    DEFAULT_TIMEOUT_LONG,
+    DEFAULT_TIMEOUT_SHORT,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
     measure_time,
     neuro_ls,
+    neuro_ps,
     neuro_rm_dir,
-    run_command,
+    repeat_until_success,
+    run,
 )
 
 
@@ -55,7 +61,7 @@ def test_project_structure() -> None:
 
 
 def test_make_help_works() -> None:
-    out = run_command("make help", debug=True)
+    out = run("make help", debug=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
@@ -106,7 +112,7 @@ def test_make_setup() -> None:
 
     make_cmd = "make setup"
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_SETUP,
@@ -123,7 +129,7 @@ def test_make_upload_clean_code() -> None:
     # Upload:
     make_cmd = "make upload-code"
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_CODE,
@@ -137,7 +143,7 @@ def test_make_upload_clean_code() -> None:
     # Clean:
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_CODE,
@@ -156,7 +162,7 @@ def test_make_upload_clean_data() -> None:
     make_cmd = "make upload-data"
     # Upload:
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_DATA,
@@ -171,7 +177,7 @@ def test_make_upload_clean_data() -> None:
     # Clean:
     make_cmd = "make clean-data"
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_CLEAN_DATA,
@@ -193,7 +199,7 @@ def test_make_upload_download_clean_notebooks() -> None:
         MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS, ignore_errors=True
     )
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
@@ -208,7 +214,7 @@ def test_make_upload_download_clean_notebooks() -> None:
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_PATH)
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
@@ -222,7 +228,7 @@ def test_make_upload_download_clean_notebooks() -> None:
     # Clean:
     make_cmd = "make clean-notebooks"
     with measure_time(make_cmd):
-        run_command(
+        run(
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
@@ -235,5 +241,44 @@ def test_make_upload_download_clean_notebooks() -> None:
 
 
 # TODO: test 'make upload', 'make clean'
+
+# TODO: training, kill-training, connect-training
+
+
+@pytest.mark.run(order=4)
+@pytest.mark.parametrize(
+    "target,path",
+    [("jupyter", "/tree"), ("tensorboard", "/"), ("filebrowser", "/login")],
+)
+def test_make_run_something_useful(target: str, path: str) -> None:
+    make_cmd = f"make {target}"
+    with measure_time(make_cmd):
+        output = run(
+            make_cmd,
+            debug=True,
+            timeout=DEFAULT_TIMEOUT_LONG,
+            expect_patterns=[r"Status:[^\n]+running"],
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+        search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
+        assert search, f"not found in output: `{repr(output)}`"
+        url = search.group(1)
+
+    repeat_until_success(
+        f"curl --fail {url}{path}",
+        expect_patterns=["<html.*>"],
+        stop_patterns=["curl: "],
+    )
+
+    make_cmd = f"make kill-{target}"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            debug=True,
+            timeout=DEFAULT_TIMEOUT_SHORT,
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()
+
 
 # TODO: other tests

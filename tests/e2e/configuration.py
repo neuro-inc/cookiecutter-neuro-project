@@ -10,7 +10,7 @@ TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
 TIMEOUT_NEURO_LOGIN = 5
 TIMEOUT_NEURO_RUN = 30
 TIMEOUT_NEURO_LS = 4
-TIMEOUT_NEURO_RM = 10
+TIMEOUT_NEURO_PS = 4
 
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
