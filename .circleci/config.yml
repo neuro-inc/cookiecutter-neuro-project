@@ -65,7 +65,7 @@ jobs:
           name: clean up running jobs
           command: |
             . venv/bin/activate
-            python ./cleanup_jobs.py
+            python tests/e2e/cleanup_jobs.py
           when: always
 
 workflows:

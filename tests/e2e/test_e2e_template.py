@@ -3,33 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from .conftest import (
-    COOKIECUTTER_APT_FILE_NAME,
-    COOKIECUTTER_CODE_DIR_NAME,
-    COOKIECUTTER_DATA_DIR_NAME,
-    COOKIECUTTER_NOTEBOOKS_DIR_NAME,
-    COOKIECUTTER_PIP_FILE_NAME,
-    COOKIECUTTER_PROJECT_NAME,
-    COOKIECUTTER_SETUP_JOB_NAME,
-    FILE_SIZE_B,
-    FILE_SIZE_KB,
-    N_FILES,
-    PACKAGES_APT,
-    TIMEOUT_NEURO_DOWNLOAD,
-    TIMEOUT_NEURO_JOB_RUN,
-    TIMEOUT_NEURO_STORAGE_LS,
-    TIMEOUT_NEURO_STORAGE_RM,
-    TIMEOUT_NEURO_UPLOAD,
-    cleanup_local_dirs,
-    generate_random_file,
-    get_logger,
-    measure_time,
-    run_detach,
-    run_detach_wait_substrings,
-    run_once,
-    run_repeatedly_wait_substring,
-    timeout,
-)
+from .configuration import *
+from .conftest import *
 
 
 log = get_logger()
@@ -37,18 +12,14 @@ log = get_logger()
 
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
-    assert dirs == {
-        COOKIECUTTER_DATA_DIR_NAME,
-        COOKIECUTTER_CODE_DIR_NAME,
-        COOKIECUTTER_NOTEBOOKS_DIR_NAME,
-    }
+    assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
     files = {f.name for f in Path().iterdir() if f.is_file()}
     assert files == {
         "Makefile",
         "README.md",
         "LICENSE",
-        COOKIECUTTER_APT_FILE_NAME,
-        COOKIECUTTER_PIP_FILE_NAME,
+        PROJECT_APT_FILE_NAME,
+        PROJECT_PIP_FILE_NAME,
         "setup.py",
         "setup.cfg",
         ".gitignore",
@@ -56,90 +27,168 @@ def test_project_structure() -> None:
 
 
 def test_make_help_works() -> None:
-    captured = run_once("make help")
-    assert not captured.err
-    assert captured.out
-    assert "setup" in captured.out, f"not found in stdout `{captured.out}`"
+    out = run_command("make help", debug=True)
+    assert "setup" in out, f"not found in output: `{out}`"
 
 
+@pytest.mark.run(order=1)
 def test_make_setup() -> None:
-    # local_root = Path().resolve()
-    # apt_deps_result_messages = [
-    #     f"Selecting previously unselected package {package}."
-    #     for package in PACKAGES_APT
-    # ]
-    run_detach_wait_substrings(
-        "make setup",
-        expect_stdouts=[
-            # step 1
-            "neuro run ",
-            "Status: running",
-            # step 2
-            # f"neuro cp {COOKIECUTTER_APT_FILE_NAME} ",
-            # # somehow we don't print the lines below
-            # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_APT_FILE_NAME}' => ",
-            # *apt_deps_result_messages,
-            "installed apt requirements",  # we generate this line in pip
-            # step 3
-            # f"neuro cp {COOKIECUTTER_PIP_FILE_NAME} ",
-            # # somehow we don't print the line below
-            # f"Copy '{local_root.as_uri()}/{COOKIECUTTER_PIP_FILE_NAME}' => ",
-            "installed pip requirements",  # we generate this line in pip
-            # step 4
-            "Saving job '",
-            "Image created",
-            "Pushing image",
-            # step 5
-            "neuro kill setup",
-            # finish
-            "Project setup completed",
-        ],
-        unexpect_stdouts=["Makefile:", "Status: failed", "recipe for target "],
+    make_cmd = "make setup"
+
+    # TODO: test also pre-installed APT packages
+    apt_deps_messages = [
+        f"Selecting previously unselected package {entry}"
+        for entry in PACKAGES_APT_USER
+    ]
+    # TODO: test also pre-installed PIP packages
+    pip_deps_entries = sorted(
+        [entry.replace("==", "-").replace("_", "-") for entry in PACKAGES_PIP_USER]
+    )
+    pip_deps_message = r"Successfully installed [^\n]* " + r"[^\n]*".join(
+        pip_deps_entries
     )
 
+    expected_patterns = [
+        # run
+        r"Status:[^\n]+running",
+        # copy apt.txt
+        f"Copy 'file:///.*{PROJECT_APT_FILE_NAME}",
+        rf"'{PROJECT_APT_FILE_NAME}' \d+B",
+        # copy pep.txt
+        f"Copy 'file:///.*{PROJECT_PIP_FILE_NAME}",
+        rf"'{PROJECT_PIP_FILE_NAME}' \d+B",
+        # apt-get install
+        *apt_deps_messages,
+        r"APT requirements installation completed",
+        # pip install
+        # (pip works either with stupid progress bars, or completely silently)
+        pip_deps_message,
+        r"PIP requirements installation completed",
+        # neuro save
+        r"Saving .+ \->",
+        r"Creating image",
+        r"Image created",
+        r"Pushing image .+ => .+",
+        r"image://.*",
+        # neuro kill
+        "neuro kill",
+        r"job\-[^\n]+",
+        # success
+        r"Project setup completed",
+    ]
+
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_SETUP,
+            expect_patterns=expected_patterns,
+            # TODO: add specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    # run_command("neuro ls stor)
+
+
+@pytest.mark.run(order=2)
 def test_make_upload_code() -> None:
-    run_once("make upload-code")
+    make_cmd = "make upload-code"
+
+    neuro_rm_dir(
+        MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+    )
+
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_UPLOAD_CODE,
+            expect_patterns=[
+                rf"'file:///.*/{MK_CODE_PATH}'...",
+                rf"'file:///.*/{MK_CODE_PATH}' DONE",
+            ],
+            # TODO: add upload-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    actual = neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
+    assert actual == {"main.py"}
 
 
+@pytest.mark.run(order=3)
+def test_make_clean_code() -> None:
+    make_cmd = "make clean-code"
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_UPLOAD_CODE,
+            # no expected output
+            # TODO: add clean-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    with pytest.raises(RuntimeError, match="404: Not Found"):
+        neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
 
-    # @pytest.mark.flaky(reruns=3)
-    # def test_upload_download_dataset(self, neuro_login: None) -> None:
-    #     # TODO: fix docs: modify command `neuro cp dataset.tar.gz storage://~`
-    #     #  to copy files from folder: `neuro cp -r data/ storage:`
-    #     source_local = Path("data/")
-    #     target_local = Path("download/")
-    #     source_local.mkdir(parents=True, exist_ok=True)
-    #     target_local.mkdir(parents=True, exist_ok=True)
-    #     cleanup_local_dirs(source_local, target_local)
-    #
-    #     suffix = f"{N_FILES} x {FILE_SIZE_KB} Kb"
-    #     try:
-    #         # Upload:
-    #         log.info(f"Generating data: {suffix}")
-    #         files = [
-    #             generate_random_file(source_local, size_b=FILE_SIZE_B)
-    #             for _ in range(N_FILES)
-    #         ]
-    #         files_names = set(str(f.name) for f in files)
-    #         with measure_time(f"neuro-cp TO storage, {suffix}"):
-    #             captured = run_once("neuro cp -r data/ storage:", TIMEOUT_NEURO_UPLOAD)
-    #             assert not captured.err
-    #
-    #         with measure_time("neuro-ls"):
-    #             captured = run_once("neuro ls storage:data/", TIMEOUT_NEURO_STORAGE_LS)
-    #             files_uploaded = set(captured.out.split())
-    #             assert files_uploaded >= files_names
-    #
-    #         # Download:
-    #         with measure_time(f"neuro-cp FROM storage, {suffix}"):
-    #             captured = run_once(
-    #                 "neuro cp -r storage:data/ download/", TIMEOUT_NEURO_DOWNLOAD
-    #             )
-    #             assert not captured.out
-    #
-    #         files_downloaded = set(str(f.name) for f in target_local.iterdir())
-    #         assert files_downloaded >= files_names
-    #     finally:
-    #         cleanup_local_dirs(source_local, target_local)
-    #         with measure_time(f"neuro-rm of the folder, {suffix}"):
-    #             run_once("neuro rm -r storage:data", TIMEOUT_NEURO_STORAGE_RM)
+
+@pytest.mark.run(order=4)
+def test_make_upload_data() -> None:
+    make_cmd = "make upload-data"
+
+    neuro_rm_dir(
+        MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+    )
+
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_UPLOAD_DATA,
+            expect_patterns=[
+                rf"'file:///.*/{MK_DATA_PATH}'...",
+                rf"'file:///.*/{MK_DATA_PATH}' DONE",
+            ],
+            # TODO: add upload-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    actual = neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
+    assert len(actual) == N_FILES
+    assert all(name.endswith(".tmp") for name in actual)
+
+
+@pytest.mark.run(order=5)
+def test_make_clean_data() -> None:
+    make_cmd = "make clean-data"
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_CLEAN_DATA,
+            # no expected output
+            # TODO: add clean-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    with pytest.raises(RuntimeError, match="404: Not Found"):
+        neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
+
+
+@pytest.mark.run(order=6)
+def test_make_upload_notebooks() -> None:
+    make_cmd = "make upload-notebooks"
+
+    neuro_rm_dir(
+        MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS, stop_patterns=()
+    )
+
+    with measure_time(make_cmd):
+        run_command(
+            make_cmd,
+            debug=True,
+            timeout=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+            expect_patterns=[
+                rf"'file:///.*/{MK_NOTEBOOKS_PATH}'...",
+                rf"'file:///.*/{MK_NOTEBOOKS_PATH}' DONE",
+            ],
+            # TODO: add upload-specific error patterns
+            stop_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    actual = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_STORAGE_LS)
+    assert actual == {"00_notebook_tutorial.ipynb", "__init__.py"}

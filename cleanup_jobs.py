@@ -1,39 +1,51 @@
 import typing as t
 
-from tests.e2e.conftest import get_submitted_jobs_file
+# TODO: move runners logs from tests
+from tests.e2e.conftest import LOCAL_SUBMITTED_JOBS_FILE, run_command
 
 
 def cleanup_jobs() -> None:
-    path = get_submitted_jobs_file()
+    path = LOCAL_SUBMITTED_JOBS_FILE
     print(f"Reading jobs from file: {path.absolute()}")
     jobs: t.List[str] = []
-    with path.open() as f:
+    with path.open("r") as f:
         for job in f.readlines():
             job = job.strip()
             if job:
                 jobs.append(job)
 
-    print(f"About to kill {len(jobs)} jobs:\n")
-    for job in jobs:
-        print(f"  {job}")
+    _dump_jobs("About to kill", jobs)
 
+    killed: t.List[str] = []
     failed_to_kill: t.List[str] = []
     for job in jobs:
         try:
             print("-" * 53)
-            cap = run_once(f"neuro status {job}")
-            print(f"stderr: `{cap.err}`")
-            print(f"stdout: `{cap.out}`")
-            print()
-            print(f"Killing job: {job}")
-            cap = run_once(f"neuro kill {job}")
-            print(f"stderr: `{cap.err}`")
-            print(f"stdout: `{cap.out}`")
+
+            cmd = f"neuro status {job}"
+            out = run_command(cmd, detect_new_jobs=False)
+            print(f"`{cmd}` => {repr(out)}")
+
+            cmd = f"neuro kill {job}"
+            out = run_command(cmd, detect_new_jobs=False)
+            print(f"`{cmd}` => {repr(out)}")
+            killed.append(job)
+
         except Exception as e:
-            print(f"FAILED TO KILL {job}: {e}")
+            print(f"Failed to kill job {job}: {e}")
             failed_to_kill.append(job)
+
+    print("=" * 53)
+    _dump_jobs(f"KILLED", killed)
+    _dump_jobs(f"FAILED TO KILL", failed_to_kill)
     with path.open("w"):
-        path.write_text("\n".join(failed_to_kill))
+        path.write_text("" + "\n".join(failed_to_kill))
+
+
+def _dump_jobs(message: str, jobs: t.List[str]) -> None:
+    print(f"{message}: {len(jobs)} jobs:")
+    for job in jobs:
+        print(f"  {job}")
 
 
 if __name__ == "__main__":

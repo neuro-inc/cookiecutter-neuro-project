@@ -6,7 +6,7 @@ MYPY_DIRS :=  tests
 init:
 	pip install -r requirements-dev.txt
 
-.PHONY: lint
+.PHONY: cook 
 cook:
 	cookiecutter gh:neuromation/cookiecutter-neuro-project
 

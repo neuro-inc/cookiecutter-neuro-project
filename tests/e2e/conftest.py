@@ -1,3 +1,4 @@
+import abc
 import logging
 import os
 import re
@@ -5,6 +6,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import textwrap
 import time
 import typing as t
@@ -14,51 +16,54 @@ from pathlib import Path
 from time import sleep
 from uuid import uuid4
 
+import pexpect
 import pytest
 
 from tests.utils import inside_dir
 
+from .configuration import *
+
+
+CHILD_PROCESSES_OUTPUT_LOGFILE = sys.stdout  # stdout or file
+
 
 LOGGER_NAME = "e2e"
-OUT_DIRECTORY_NAME = "out"
+
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
+CLEANUP_JOBS_SCRIPT_NAME = "cleanup_jobs.py"
 
 
-SHORT_TIMEOUT_SEC = 10
-LONG_TIMEOUT_SEC = 10 * 60
+DEFAULT_TIMEOUT_SHORT = 10
+DEFAULT_TIMEOUT_LONG = 10 * 60
 
 # TODO: use a real dataset after cleaning up docs
 FILE_SIZE_KB = 4
 FILE_SIZE_B = FILE_SIZE_KB * 1024
 N_FILES = 1000
-PACKAGES_APT = ["vim", "nginx", "figlet"]
-PACKAGES_PIP = ["aiohttp==3.5.4", "aiohttp_security==0.4.0", "neuromation"]
-
-TIMEOUT_NEURO_LOGIN = 5
-TIMEOUT_NEURO_JOB_RUN = 30
-TIMEOUT_NEURO_UPLOAD = TIMEOUT_NEURO_DOWNLOAD = 40
-TIMEOUT_NEURO_STORAGE_LS = 4
-TIMEOUT_NEURO_STORAGE_RM = 10
 
 
 VERBS_SECRET = ("login-with-token",)
 VERBS_JOB_RUN = ("run", "submit")
 
-SysCap = namedtuple("SysCap", "out err")
+# OutCode = namedtuple("OutCode", "output code")
 ESCAPE_LOG_CHARACTERS: t.Sequence[t.Tuple[str, str]] = [("\n", "\\n")]
 
-ROOT_PATH = Path(__file__).resolve().parent.parent.parent
-TESTS_ROOT_PATH = ROOT_PATH / "tests"
-TESTS_SAMPLES_PATH = TESTS_ROOT_PATH / "samples"
-COOKIECUTTER_CONFIG_PATH = TESTS_ROOT_PATH / "cookiecutter.yaml"
-# Project name is defined in cookiecutter.yaml, from `project_name`
-COOKIECUTTER_PROJECT_NAME = "test-project"
-COOKIECUTTER_DATA_DIR_NAME = "data"
-COOKIECUTTER_CODE_DIR_NAME = "modules"
-COOKIECUTTER_NOTEBOOKS_DIR_NAME = "notebooks"
-COOKIECUTTER_APT_FILE_NAME = "apt.txt"
-COOKIECUTTER_PIP_FILE_NAME = "requirements.txt"
-COOKIECUTTER_SETUP_JOB_NAME = "setup"
+# all variables prefixed "LOCAL_" store paths to file on your local machine
+LOCAL_ROOT_PATH = Path(__file__).resolve().parent.parent.parent
+LOCAL_TESTS_ROOT_PATH = LOCAL_ROOT_PATH / "tests"
+LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_ROOT_PATH / "samples"
+LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
+LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
+LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
+
+
+# note: ERROR, being the most general error, must go the last
+DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", "ERROR")
+DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:", "make: ", "recipe for target ")
+DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
+
+
+PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
 
 
 def get_logger() -> logging.Logger:
@@ -76,20 +81,7 @@ def pytest_logger_config(logger_config: t.Any) -> None:
     logger_config.set_log_option_default(",".join(loggers))
 
 
-def get_submitted_jobs_file() -> Path:
-    project_root = Path(__file__).resolve().parent.parent
-    out_path = project_root / OUT_DIRECTORY_NAME
-    result_path = out_path / SUBMITTED_JOBS_FILE_NAME
-    if not out_path.exists():
-        out_path.mkdir(parents=True)
-    log.info(f"Using jobs dump file: {result_path.absolute()}")
-    return result_path
-
-
-SUBMITTED_JOBS_FILE = get_submitted_jobs_file()
-
-
-job_id_pattern = re.compile(
+JOB_ID_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
     r"(job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
     re.IGNORECASE,
@@ -108,36 +100,40 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
-    run_once(
-        f"cookiecutter --no-input --config-file={COOKIECUTTER_CONFIG_PATH} {ROOT_PATH}"
+    run_command(
+        f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}"
     )
-    with inside_dir(COOKIECUTTER_PROJECT_NAME):
+    with inside_dir(MK_PROJECT_NAME):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(run_cookiecutter: None) -> None:
-    log.info(f"Initializing empty project: {Path().absolute()}")
+    log.info(f"Initializing empty project: `{Path().absolute()}`")
 
-    apt_file = Path(COOKIECUTTER_APT_FILE_NAME)
+    apt_file = Path(PROJECT_APT_FILE_NAME)
+    log.info(f"Copying `{apt_file}`")
     assert apt_file.is_file() and apt_file.exists()
     with apt_file.open("a") as f:
-        for package in PACKAGES_APT:
+        for package in PACKAGES_APT_USER:
             f.write("\n" + package)
 
-    pip_file = Path(COOKIECUTTER_PIP_FILE_NAME)
+    pip_file = Path(PROJECT_PIP_FILE_NAME)
+    log.info(f"Copying `{pip_file}`")
     assert pip_file.is_file() and pip_file.exists()
     with pip_file.open("a") as f:
-        for package in PACKAGES_PIP:
+        for package in PACKAGES_PIP_USER:
             f.write("\n" + package)
 
-    data_dir = Path(COOKIECUTTER_DATA_DIR_NAME)
+    data_dir = Path(MK_DATA_PATH)
+    log.info(f"Generating data to `{data_dir}/`")
     assert data_dir.is_dir() and data_dir.exists()
     for _ in range(N_FILES):
         generate_random_file(data_dir, FILE_SIZE_B)
     assert len(list(data_dir.iterdir())) >= N_FILES
 
-    code_dir = Path(COOKIECUTTER_CODE_DIR_NAME)
+    code_dir = Path(MK_CODE_PATH)
+    log.info(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
     with code_file.open("w") as f:
@@ -151,24 +147,23 @@ def generate_empty_project(run_cookiecutter: None) -> None:
         )
     assert code_file.exists()
 
-    notebooks_dir = Path(COOKIECUTTER_NOTEBOOKS_DIR_NAME)
+    notebooks_dir = Path(MK_NOTEBOOKS_PATH)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
-    copy_local_files("*.ipynb", from_dir=TESTS_SAMPLES_PATH, to_dir=notebooks_dir)
+    copy_local_files("*.ipynb", from_dir=LOCAL_TESTS_SAMPLES_PATH, to_dir=notebooks_dir)
     assert list(notebooks_dir.iterdir())
 
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation() -> None:
-    captured = run_once("pip install -U neuromation")
+    output = run_command("pip install -U neuromation")
     # stderr can contain: "You are using pip version..."
     patterns = (
-        r"Requirement already up-to-date: .*neuromation",
-        r"Successfully installed .*neuromation",
+        "Requirement already up-to-date:.* neuromation",
+        "Installing collected packages:.* neuromation"
+        "Successfully installed.* neuromation",
     )
-    assert any(
-        re.search(pattern, captured.out) for pattern in patterns
-    ), f"stdout: `{captured.out}`"
-    assert "Name: neuromation" in run_once("pip show neuromation").out
+    assert any(re.search(p, output) for p in patterns), f"output: `{output}`"
+    assert "Name: neuromation" in run_command("pip show neuromation")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -176,18 +171,24 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
     token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
     url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
     try:
-        captured = run_once(
+        captured = run_command(
             f"neuro config login-with-token {token} {url}",
-            timeout_sec=TIMEOUT_NEURO_LOGIN,
+            timeout=TIMEOUT_NEURO_LOGIN,
+            debug=False,
         )
-        assert f"Logged into {url}" in captured.out, f"stdout: `{captured.out}`"
-        log.info(run_once("neuro config show").out)
+        assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
+        log.info(run_command("neuro config show"))
         yield
     finally:
-        nmrc = Path("~/.nmrc").expanduser()
-        log.info(f"Deleting {nmrc} file")
-        nmrc.unlink()
-        log.info("Deleted")
+        run_command(
+            f"python '{LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}'",
+            debug=True,
+        )
+        if os.environ.get("CI") == "true":
+            nmrc = Path("~/.nmrc").expanduser()
+            log.info(f"Deleting {nmrc} file")
+            nmrc.unlink()
+            log.info("Deleted")
 
 
 # == helpers ==
@@ -227,108 +228,117 @@ def measure_time(operation_name: str = "") -> t.Iterator[None]:
     start_time = time.time()
     yield
     elapsed_time = time.time() - start_time
+    log.info("=" * 50)
     log.info(f"  TIME SUMMARY [{operation_name}]: {elapsed_time:.2f} sec")
-    log.info("")
+    log.info("=" * 50)
 
 
-def run_detach_wait_substrings(
-    cmd: str, *, expect_stdouts: t.List[str], unexpect_stdouts: t.Sequence[str] = ()
-) -> None:
-    process = run_detach(cmd)
-    log.info(f"Waiting for strings in stdout: {expect_stdouts}...")
-    job_saved = False
-    assert expect_stdouts
-    expect_stdouts_iter = iter(expect_stdouts)
-    current = next(expect_stdouts_iter)
-    for line in process.stdout:
-        log.info(f"    stdout: `{_escape_log(line)}`")
-        if not job_saved and _remember_job_runned(cmd, line):
-            job_saved = True
-        while current in line:
-            log.info(f"Found in stdout: {current}")
-            try:
-                current = next(expect_stdouts_iter)
-                log.info(f"Waiting for the next string: {current}")
-            except StopIteration:
-                log.info("Found everything, finishing.")
-                process.kill()
-                return
-        for unexpect_stdout in unexpect_stdouts:
-            if unexpect_stdout in line:
-                raise RuntimeError(f"Found unexpected `{unexpect_stdout}` in stdout")
+def run_command(
+    cmd: str,
+    *,
+    debug: bool = False,
+    detect_new_jobs: bool = True,
+    timeout: int = DEFAULT_TIMEOUT_LONG,
+    expect_patterns: t.Sequence[str] = (),
+    stop_patterns: t.Sequence[str] = (),  # ignore errors (and stderr) by default
+) -> str:
+    """
+    >>> # Check expected-outputs:
+    >>> s1 = run_command("bash -c 'echo 1; echo 2; echo 3'",
+    ...          debug=False,
+    ...          expect_patterns=['1', '2'])
+    >>> s1.split()
+    ['1', '2', '3']
+    >>> # Check expected-outputs:
+    >>> try:
+    ...     run_command("bash -c 'echo 1; echo 2; echo 3'",
+    ...          debug=False,
+    ...          expect_patterns=['1', '3'],
+    ...          stop_patterns=['2'])
+    ... except RuntimeError as e:
+    ...     assert str(e) == "Found stop-pattern: re.compile('2', re.DOTALL)"
+    >>> # Pattern not found at all:
+    >>> try:
+    ...     run_command("bash -c 'echo 1; echo 2; echo 3'",
+    ...          debug=False,
+    ...          expect_patterns=['1', '2', '3', '4'])
+    ... except RuntimeError as e:
+    ...     assert str(e) == "Could not find pattern: `re.compile('4', re.DOTALL)`"
+    """
 
-    log.error(f"COULD NOT FIND STRING `{current}` IN STDOUT")
-    log.error(f"STDERR: `{process.stderr.read()}`")
-    log.error(f"RETURN CODE: {process.returncode}")
-    raise RuntimeError()
-
-
-def run_detach(cmd: str) -> subprocess.Popen:
-    args = shlex.split(cmd)
-    if not any(verb in args for verb in VERBS_SECRET):
-        log.info(f"Running detach: `{cmd}`")
-    process = subprocess.Popen(
-        args, encoding="utf8", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    child = pexpect.spawn(
+        cmd,
+        timeout=timeout,
+        logfile=CHILD_PROCESSES_OUTPUT_LOGFILE if debug else None,
+        maxread=PEXPECT_BUFFER_SIZE_BYTES,
+        searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
+        encoding="utf-8",
     )
-    return process
 
+    compile_flags = re.DOTALL
+    if child.ignorecase:
+        compile_flags = compile_flags | re.IGNORECASE
+    unexpected_patterns = [re.compile(p, compile_flags) for p in stop_patterns]
+    if stop_patterns:
+        log.info(f"Stop-patterns: {repr(stop_patterns)}")
 
-def run_repeatedly_wait_substring(cmd: str, *, expect_stdout: str) -> None:
-    DELAY_SEC = 2
-    captured: t.Optional[SysCap] = None
-    log.info("Waiting for string in stdout...")
+    output = ""
     try:
-        while True:
-            captured = run_once(cmd, timeout_sec=SHORT_TIMEOUT_SEC)
-            log.info(f"stderr: `{_escape_log(captured.err)}`")
-            log.info(f"stdout: `{_escape_log(captured.out)}`")
-            if expect_stdout in captured.out:
-                log.info("found in stdout.")
-                return
-            sleep(DELAY_SEC)
-    except Exception:
-        if captured:
-            log.info(f"Last stderr: `{_escape_log(captured.err)}`")
-            log.info(f"Last stdout: `{_escape_log(captured.out)}`")
+        for expected in expect_patterns:
+            log.info(f"Searching pattern: {repr(expected)}")
+            expected_p = re.compile(expected, compile_flags)
+            pattern_list = [expected_p] + unexpected_patterns
+            try:
+                child.expect_list(pattern_list)
+                chunk = _get_chunk(child)
+                output += chunk
+            except pexpect.EOF:
+                raise RuntimeError(f"Could not find pattern: `{repr(expected)}`")
+
+            for unexpected_p in unexpected_patterns:
+                if unexpected_p.search(chunk):
+                    raise RuntimeError(f"Found stop-pattern: {repr(unexpected_p)}")
+
+            log.info(f"Found pattern: {repr(expected_p)}")
+
+        # read the rest:
+        child.wait()
+        # TODO: read with chunks here
+        chunk = child.read()
+        if chunk:
+            output += chunk
+
+        for unexpected in unexpected_patterns:
+            if unexpected.search(output):
+                raise RuntimeError(f"Abort because found pattern: `{unexpected}`")
+        return output
+
+    except RuntimeError as e:
+        log.error(str(e))
+        log.error(f"Dump: `{repr(output)}`")
         raise
 
-
-def run_once(
-    cmd: str, timeout_sec: int = LONG_TIMEOUT_SEC, assert_success: bool = True
-) -> SysCap:
-    args = shlex.split(cmd)
-    if not any(verb in args for verb in VERBS_SECRET):
-        log.info(f"Running [timeout={timeout_sec}]: `{cmd}`")
-    proc = subprocess.run(
-        args,
-        timeout=timeout_sec,
-        encoding="utf8",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if assert_success:
-        try:
-            proc.check_returncode()
-        except subprocess.CalledProcessError:
-            log.error(f"stderr: `{_escape_log(proc.stderr)}`")
-            log.error(f"stdout: `{_escape_log(proc.stdout)}`")
-            raise
-    out = proc.stdout.strip()
-    err = proc.stderr.strip()
-    _remember_job_runned(cmd, out)
-    return SysCap(out, err)
+    finally:
+        if detect_new_jobs:
+            _dump_submitted_job_ids(_detect_job_ids(output))
 
 
-def _remember_job_runned(cmd: str, stdout: str) -> bool:
-    if any(start in cmd for start in VERBS_JOB_RUN):
-        match = job_id_pattern.search(stdout)
-        if match:
-            job_id = match.group(1)
-            log.info(f"Detected job-id: {job_id}")
-            with SUBMITTED_JOBS_FILE.open("a") as f:
-                f.write("\n" + job_id)
-                return True
-    return False
+def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
+    chunk = child.before
+    if isinstance(child.after, child.allowed_string_types):
+        chunk += child.after
+    return chunk
+
+
+def _detect_job_ids(stdout: str) -> t.Set[str]:
+    return set(JOB_ID_PATTERN.findall(stdout))
+
+
+def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
+    if jobs:
+        log.info(f"Dumped jobs: {jobs}")
+        with LOCAL_SUBMITTED_JOBS_FILE.open("a") as f:
+            f.write("\n" + "\n".join(jobs))
 
 
 def generate_random_file(path: Path, size_b: int) -> Path:
@@ -361,3 +371,33 @@ def copy_local_files(glob: str, from_dir: Path, to_dir: Path) -> None:
 
 def _escape_log(s: str) -> str:
     return repr(s).strip("'")
+
+
+def neuro_ls(
+    project_relative_path: str,
+    timeout: int,
+    stop_patterns: t.Sequence[str] = DEFAULT_NEURO_ERROR_PATTERNS,
+) -> t.Set[str]:
+    out = run_command(
+        f"neuro ls {project_relative_path}",
+        timeout=timeout,
+        debug=False,
+        stop_patterns=stop_patterns,
+    )
+    result = set(out.split())
+    if ".gitkeep" in result:
+        result.remove(".gitkeep")
+    return result
+
+
+def neuro_rm_dir(
+    project_relative_path: str,
+    timeout: int,
+    stop_patterns: t.Sequence[str] = DEFAULT_NEURO_ERROR_PATTERNS,
+) -> None:
+    run_command(
+        f"neuro rm -r {project_relative_path}",
+        timeout=timeout,
+        debug=False,
+        stop_patterns=stop_patterns,
+    )

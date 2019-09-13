@@ -9,4 +9,5 @@ pip-wheel-metadata
 .mypy_cache
 .tmontmp
 .testmondata
-
+/tests/e2e/out/
+submitted_jobs.txt
