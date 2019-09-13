@@ -1,10 +1,38 @@
-import os
 from pathlib import Path
 
 import pytest
 
-from .configuration import *
-from .conftest import *
+from tests.e2e.configuration import (
+    MK_CODE_PATH,
+    MK_CODE_PATH_STORAGE,
+    MK_DATA_PATH,
+    MK_DATA_PATH_STORAGE,
+    MK_NOTEBOOKS_PATH,
+    MK_NOTEBOOKS_PATH_STORAGE,
+    PACKAGES_APT_CUSTOM,
+    PACKAGES_PIP_CUSTOM,
+    PROJECT_APT_FILE_NAME,
+    PROJECT_PIP_FILE_NAME,
+    TIMEOUT_MAKE_CLEAN_DATA,
+    TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
+    TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
+    TIMEOUT_MAKE_SETUP,
+    TIMEOUT_MAKE_UPLOAD_CODE,
+    TIMEOUT_MAKE_UPLOAD_DATA,
+    TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+    TIMEOUT_NEURO_LS,
+)
+
+from .conftest import (
+    DEFAULT_ERROR_PATTERNS,
+    N_FILES,
+    cleanup_local_dirs,
+    get_logger,
+    measure_time,
+    neuro_ls,
+    neuro_rm_dir,
+    run_command,
+)
 
 
 log = get_logger()
@@ -37,11 +65,11 @@ def test_make_setup() -> None:
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
-        for entry in PACKAGES_APT_USER
+        for entry in PACKAGES_APT_CUSTOM
     ]
     # TODO: test also pre-installed PIP packages
     pip_deps_entries = sorted(
-        [entry.replace("==", "-").replace("_", "-") for entry in PACKAGES_PIP_USER]
+        [entry.replace("==", "-").replace("_", "-") for entry in PACKAGES_PIP_CUSTOM]
     )
     pip_deps_message = r"Successfully installed [^\n]* " + r"[^\n]*".join(
         pip_deps_entries
@@ -207,3 +235,5 @@ def test_make_upload_download_clean_notebooks() -> None:
 
 
 # TODO: test 'make upload', 'make clean'
+
+# TODO: other tests

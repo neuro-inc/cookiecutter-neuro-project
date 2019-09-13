@@ -4,7 +4,7 @@ import typing as t
 from tests.e2e.conftest import LOCAL_SUBMITTED_JOBS_FILE, run_command
 
 
-def cleanup_jobs() -> None:
+def cleanup_jobs_from_file() -> None:
     path = LOCAL_SUBMITTED_JOBS_FILE
     print(f"Reading jobs from file: {path.absolute()}")
     jobs: t.List[str] = []
@@ -42,6 +42,19 @@ def cleanup_jobs() -> None:
         path.write_text("" + "\n".join(failed_to_kill))
 
 
+def cleanup_active_jobs() -> None:
+    print("Killing active jobs:")
+    output = run_command("neuro --quiet ps", debug=True, detect_new_jobs=False)
+    jobs = output.split()
+    if jobs:
+        _dump_jobs("FOUND ACTIVE JOBS", jobs)
+        run_command(f"bash -c 'neuro kill {' '.join(jobs)}'", detect_new_jobs=False)
+        print("-" * 53)
+        print("Result:")
+        run_command("neuro ps", debug=True, detect_new_jobs=False)
+        print("=" * 53)
+
+
 def _dump_jobs(message: str, jobs: t.List[str]) -> None:
     print(f"{message}: {len(jobs)} jobs:")
     for job in jobs:
@@ -49,4 +62,7 @@ def _dump_jobs(message: str, jobs: t.List[str]) -> None:
 
 
 if __name__ == "__main__":
-    cleanup_jobs()
+    run_command("neuro config show", debug=True, detect_new_jobs=False)
+    run_command("neuro ps", debug=True, detect_new_jobs=False)
+    cleanup_jobs_from_file()
+    cleanup_active_jobs()

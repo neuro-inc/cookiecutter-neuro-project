@@ -1,25 +1,30 @@
-import abc
 import logging
 import os
 import re
-import shlex
 import shutil
 import signal
-import subprocess
 import sys
 import textwrap
 import time
 import typing as t
-from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
-from time import sleep
 from uuid import uuid4
 
 import pexpect
 import pytest
 
-from tests.e2e.configuration import *
+from tests.e2e.configuration import (
+    MK_CODE_PATH,
+    MK_DATA_PATH,
+    MK_NOTEBOOKS_PATH,
+    MK_PROJECT_NAME,
+    PACKAGES_APT_CUSTOM,
+    PACKAGES_PIP_CUSTOM,
+    PROJECT_APT_FILE_NAME,
+    PROJECT_PIP_FILE_NAME,
+    TIMEOUT_NEURO_LOGIN,
+)
 from tests.utils import inside_dir
 
 
@@ -100,7 +105,8 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 @pytest.fixture(scope="session", autouse=True)
 def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     run_command(
-        f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}"
+        f"cookiecutter --no-input "
+        f"--config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}"
     )
     with inside_dir(MK_PROJECT_NAME):
         yield
@@ -114,14 +120,14 @@ def generate_empty_project(run_cookiecutter: None) -> None:
     log.info(f"Copying `{apt_file}`")
     assert apt_file.is_file() and apt_file.exists()
     with apt_file.open("a") as f:
-        for package in PACKAGES_APT_USER:
+        for package in PACKAGES_APT_CUSTOM:
             f.write("\n" + package)
 
     pip_file = Path(PROJECT_PIP_FILE_NAME)
     log.info(f"Copying `{pip_file}`")
     assert pip_file.is_file() and pip_file.exists()
     with pip_file.open("a") as f:
-        for package in PACKAGES_PIP_USER:
+        for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
     data_dir = Path(MK_DATA_PATH)
@@ -331,7 +337,7 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
 
 
 def _check_chunk_not_contains_stop_patterns(
-    chunk: str, stop_patterns_compiled: t.List[t.Pattern]
+    chunk: str, stop_patterns_compiled: t.List[t.Pattern[str]]
 ) -> None:
     for stop_p in stop_patterns_compiled:
         if stop_p.search(chunk):
@@ -391,7 +397,7 @@ def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]
         f"neuro ls {path}",
         timeout=timeout,
         debug=True,
-        stop_patterns=() if ignore_errors else DEFAULT_NEURO_ERROR_PATTERNS,
+        stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
     result = set(out.split())
     if ".gitkeep" in result:
@@ -407,5 +413,5 @@ def neuro_rm_dir(
         f"neuro rm -r {project_relative_path}",
         timeout=timeout,
         debug=False,
-        stop_patterns=() if ignore_errors else DEFAULT_NEURO_ERROR_PATTERNS,
+        stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )

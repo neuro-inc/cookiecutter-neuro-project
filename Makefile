@@ -12,11 +12,10 @@ cook:
 
 .PHONY: lint
 lint:
-	echo ok
-# 	isort -c -rc ${ISORT_DIRS}
-# 	black --check $(BLACK_DIRS)
-# 	mypy $(MYPY_DIRS)
-# 	flake8 $(FLAKE8_DIRS)
+	isort -c -rc ${ISORT_DIRS}
+	black --check $(BLACK_DIRS)
+	mypy $(MYPY_DIRS)
+	flake8 $(FLAKE8_DIRS)
 
 .PHONY: format
 format:

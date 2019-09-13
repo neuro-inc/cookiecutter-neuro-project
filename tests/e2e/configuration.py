@@ -2,8 +2,8 @@
 TIMEOUT_MAKE_SETUP = 6 * 60
 TIMEOUT_MAKE_UPLOAD_CODE = 5
 TIMEOUT_MAKE_CLEAN_CODE = 3
-TIMEOUT_MAKE_UPLOAD_DATA = 1000
-TIMEOUT_MAKE_CLEAN_DATA = 100
+TIMEOUT_MAKE_UPLOAD_DATA = 500
+TIMEOUT_MAKE_CLEAN_DATA = 50
 TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
 # TIMEOUT_MAKE_DOWNLOAD
@@ -51,5 +51,5 @@ PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_USER = ["python", "expect", "figlet"]
-PACKAGES_PIP_USER = ["aiohttp==3.5.4", "aiohttp_security==0.4.0", "neuromation"]
+PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
+PACKAGES_PIP_CUSTOM = ["aiohttp==3.5.4", "aiohttp_security==0.4.0", "neuromation"]
