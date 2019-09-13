@@ -2,15 +2,13 @@ version: 2.1
 
 defaults: &defaults
   machine:
-    image: circleci/classic:201808-01
+    image: ubuntu-1604:201903-01
     docker_layer_caching: true
-  working_directory: ~/platform-monitoring
+  working_directory: ~/neuromation-template
 
 jobs:
   test:
     <<: *defaults
-
-    working_directory: ~/neuromation-template
 
     steps:
       - checkout
@@ -18,16 +16,20 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-3.6.1-{{ checksum "requirements-dev.txt" }}
+            - &pip_packages_cache_key v1-dependencies-3.6.1-{{ checksum "requirements-dev.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
       - run:
           name: install dependencies
           command: |
-            pyenv install --debug 3.6.1
-            pyenv local 3.6.1-debug
-            python3 -m venv venv
+            pyenv install --debug 3.6.3
+            pyenv local 3.6.3-debug
+
+      - run:
+          name: set up python virtual env
+          command: |
+            python -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
             make init
@@ -35,7 +37,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-3.6.1-{{ checksum "requirements-dev.txt" }}
+          key: *pip_packages_cache_key
 
       - run:
           name: run linter
