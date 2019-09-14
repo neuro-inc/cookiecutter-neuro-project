@@ -180,6 +180,7 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
             debug=False,
         )
         assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
+        time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
         log.info(run("neuro config show"))
 
         yield
@@ -305,7 +306,7 @@ def run(
     ...          debug=False,
     ...          expect_patterns=['1', '2', '3', '4'])
     ... except RuntimeError as e:
-    ...     assert str(e) == "Could not find pattern: '4'"
+    ...     assert str(e) == "Could not find pattern: `4`"
     """
 
     if not any(verb in cmd for verb in VERBS_SECRET):
@@ -324,20 +325,20 @@ def run(
         compile_flags = compile_flags | re.IGNORECASE
     stop_patterns_compiled = [re.compile(p, compile_flags) for p in stop_patterns]
     if stop_patterns:
-        log.info(f"Stop-patterns: {repr(stop_patterns)}")
+        log.info(f"Stop-patterns: {stop_patterns}")
 
     output = ""
     try:
         for expected in expect_patterns:
-            log.info(f"Searching pattern: {repr(expected)}")
+            log.info(f"Searching pattern: `{expected}`")
             expected_p = re.compile(expected, compile_flags)
             try:
                 child.expect_list([expected_p] + stop_patterns_compiled)
-                log.info(f"Found: {repr(expected)}")
+                log.info(f"Found: `{expected}`")
                 chunk = _get_chunk(child)
                 output += chunk
             except pexpect.EOF:
-                raise RuntimeError(f"Could not find pattern: {repr(expected)}")
+                raise RuntimeError(f"Could not find pattern: `{expected}`")
 
             _raise_if_contains_stop_pattern(chunk, stop_patterns_compiled)
         # read the rest:
@@ -374,7 +375,7 @@ def _raise_if_contains_stop_pattern(
 ) -> None:
     for stop_p in stop_patterns_compiled:
         if stop_p.search(chunk):
-            raise RuntimeError(f"Found stop-pattern: {repr(stop_p)}")
+            raise RuntimeError(f"Found stop-pattern: {stop_p}")
 
 
 def _detect_job_ids(stdout: str) -> t.Set[str]:
