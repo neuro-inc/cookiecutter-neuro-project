@@ -330,7 +330,7 @@ def run(
     output = ""
     try:
         for expected in expect_patterns:
-            log.info(f"Searching pattern: `{expected}`")
+            log.info(f"Waiting for pattern: `{expected}`")
             expected_p = re.compile(expected, compile_flags)
             try:
                 child.expect_list([expected_p] + stop_patterns_compiled)

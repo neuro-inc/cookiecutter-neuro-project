@@ -23,11 +23,12 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_PS,
+    TIMEOUT_NEURO_RUN_CPU,
+    TIMEOUT_NEURO_RUN_GPU,
 )
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    DEFAULT_TIMEOUT_LONG,
     DEFAULT_TIMEOUT_SHORT,
     N_FILES,
     cleanup_local_dirs,
@@ -259,16 +260,20 @@ def test_make_upload_download_clean_notebooks() -> None:
 
 @pytest.mark.run(order=4)
 @pytest.mark.parametrize(
-    "target,path",
-    [("jupyter", "/tree"), ("tensorboard", "/"), ("filebrowser", "/login")],
+    "target,path,timeout",
+    [
+        ("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU),
+        ("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU),
+        ("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU),
+    ],
 )
-def test_make_run_something_useful(target: str, path: str) -> None:
+def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     make_cmd = f"make {target}"
     with measure_time(make_cmd):
         output = run(
             make_cmd,
             debug=True,
-            timeout=DEFAULT_TIMEOUT_LONG,
+            timeout=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
