@@ -66,7 +66,6 @@ def _dump_jobs(message: str, jobs: t.List[str]) -> None:
 
 
 if __name__ == "__main__":
-    run("neuro config show", debug=True, detect_new_jobs=False)
-    run("neuro ps", debug=True, detect_new_jobs=False)
+    print(run("neuro ps", detect_new_jobs=False))
     cleanup_active_jobs()
     cleanup_jobs_from_file()
