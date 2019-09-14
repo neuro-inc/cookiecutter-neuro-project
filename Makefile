@@ -31,4 +31,4 @@ test_unit:
 
 .PHONY: test_e2e
 test_e2e:
-	pytest -v -s tests/e2e
+	pytest -v -s --reruns=3 tests/e2e

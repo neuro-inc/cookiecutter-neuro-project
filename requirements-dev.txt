@@ -11,4 +11,3 @@ pytest-cookies==0.4.0
 pytest-aiohttp==0.3.0
 pytest-rerunfailures==7.0
 pytest-logger==0.5.1
-pytest-sugar==0.9.2  # pretty ouptut + show errors instantly
