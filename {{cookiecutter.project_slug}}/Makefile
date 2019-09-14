@@ -59,7 +59,7 @@ setup: ### Setup remote environment
 	@echo PIP requirements installation: completed
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
-	@echo setup
+	@echo setup: completed
 
 ##### STORAGE #####
 
