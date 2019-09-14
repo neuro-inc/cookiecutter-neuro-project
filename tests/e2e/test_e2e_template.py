@@ -92,11 +92,11 @@ def test_make_setup() -> None:
         rf"'{PROJECT_PIP_FILE_NAME}' \d+B",
         # apt-get install
         *apt_deps_messages,
-        r"APT requirements installation completed",
+        r"APT requirements installation: completed",
         # pip install
         # (pip works either with stupid progress bars, or completely silently)
         pip_deps_message,
-        r"PIP requirements installation completed",
+        r"PIP requirements installation: completed",
         # neuro save
         r"Saving .+ \->",
         r"Creating image",
@@ -107,7 +107,7 @@ def test_make_setup() -> None:
         "neuro kill",
         r"job\-[^\n]+",
         # success
-        r"Project setup completed",
+        r"setup: completed",
     ]
 
     make_cmd = "make setup"
@@ -133,7 +133,10 @@ def test_make_upload_clean_code() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
+            expect_patterns=[
+                rf"'file://.*/{MK_CODE_PATH}' DONE",
+                r"upload\-code: completed",
+            ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -147,7 +150,7 @@ def test_make_upload_clean_code() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_CODE,
-            # no expected output
+            expect_patterns=[r"clean\-code: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -166,7 +169,10 @@ def test_make_upload_clean_data() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_DATA,
-            expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
+            expect_patterns=[
+                rf"'file://.*/{MK_DATA_PATH}' DONE",
+                r"upload\-data: completed",
+            ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -181,7 +187,7 @@ def test_make_upload_clean_data() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_CLEAN_DATA,
-            # no expected output
+            expect_patterns=[r"clean\-data: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -203,7 +209,10 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
+            expect_patterns=[
+                rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE",
+                r"upload\-notebooks: completed",
+            ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -218,7 +227,10 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
+            expect_patterns=[
+                rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE",
+                r"download\-notebooks: completed",
+            ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -232,7 +244,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
-            # no expected output
+            expect_patterns=[r"clean\-notebooks: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -276,6 +288,7 @@ def test_make_run_something_useful(target: str, path: str) -> None:
             make_cmd,
             debug=True,
             timeout=DEFAULT_TIMEOUT_SHORT,
+            expect_patterns=[rf"kill\-{target}: completed"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()

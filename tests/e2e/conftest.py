@@ -66,7 +66,7 @@ LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT
 PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout if os.environ.get("CI") != "true" else None
 
 # note: ERROR, being the most general error, must go the last
-DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[\^:]*: ")
+DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[^:]*: ")
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:", "make: ", "recipe for target ")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
 
@@ -181,11 +181,14 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
         )
         assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
         log.info(run("neuro config show"))
+
         yield
+
     finally:
         run(
             f"python '{LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}'",
             debug=True,
+            detect_new_jobs=False,
         )
         if os.environ.get("CI") == "true":
             nmrc = Path("~/.nmrc").expanduser()

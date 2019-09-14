@@ -53,47 +53,58 @@ setup: ### Setup remote environment
 	@echo
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/* && echo APT requirements installation completed'"
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV) && echo PIP requirements installation completed'"
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
+	@echo APT requirements installation: completed
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
+	@echo PIP requirements installation: completed
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
-	@echo Project setup completed
+	@echo setup
 
 ##### STORAGE #####
 
 .PHONY: upload-code
 upload-code:  ### Upload code directory to Storage
 	neuro cp -r -T $(CODE_PATH) $(CODE_PATH_STORAGE)
-
+	@echo upload-code: completed
+	
 .PHONY: clean-code
 clean-code:  ### Delete code directory on Storage
 	neuro rm -r $(CODE_PATH_STORAGE)
+	@echo clean-code: completed
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
 	neuro cp -r -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
+	@echo upload-data: completed
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
 	neuro rm -r $(DATA_PATH_STORAGE)
+	@echo clean-data: completed
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to Storage
 	neuro cp -r -T $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
+	@echo upload-notebooks: completed
 
 .PHONY: download-notebooks
 download-notebooks:  ### Download notebooks directory from Storage
 	neuro cp -r -T $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
+	@echo download-notebooks: completed
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory on Storage
 	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
+	@echo clean-notebooks: completed
 
 .PHONY: upload  ### Upload code, data and notebooks directories to Storage
 upload: upload-code upload-data upload-notebooks
+	@echo upload: completed
 
 .PHONY: clean  ### Delete code, data and notebooks directories on Storage
 clean: clean-code clean-data clean-notebooks
+	@echo clean: completed
 
 ##### JOBS #####
 
@@ -111,6 +122,7 @@ training:  ### Run training job
 .PHONY: kill-training
 kill-training:  ### Stop training job
 	neuro kill $(TRAINING_NAME)
+	@echo kill-training: completed
 
 .PHONY: connect-training
 connect-training:  ### Execute shell to the training job
@@ -133,6 +145,7 @@ jupyter:  ### Run jupyter job
 .PHONY: kill-jupyter
 kill-jupyter:  ### Stop jupyter job
 	neuro kill $(JUPYTER_NAME)
+	@echo kill-jupyter: completed
 
 .PHONY: tensorboard
 tensorboard:  ### Run tensorboard job
@@ -148,6 +161,7 @@ tensorboard:  ### Run tensorboard job
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Kill tensorboard job
 	neuro kill $(TENSORBOARD_NAME)
+	@echo kill-tensorboard: completed
 
 .PHONY: filebrowser
 filebrowser:  ### Run filebrowser job
@@ -162,27 +176,33 @@ filebrowser:  ### Run filebrowser job
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Kill filebrowser job
 	neuro kill $(FILEBROWSER_NAME)
+	@echo kill-filebrowser: completed
 
 .PHONY: kill  ### Kill training, jupyter, tensorboard and filebrowser jobs (even if some of them are not running)
 kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
+	@echo kill: completed
 
 ##### LOCAL #####
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
 	$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP)
+	@echo setup-local: completed
 
 .PHONY: lint
 lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
+	@echo lint: completed
 
 .PHONY: install
 install:  ### Install project as a python package locally
 	python setup.py install --user
+	@echo install: completed
 
 ##### MISC #####
 
 .PHONY: ps
 ps:  ### List all running and pending jobs
 	neuro ps
+	@echo ps: completed
