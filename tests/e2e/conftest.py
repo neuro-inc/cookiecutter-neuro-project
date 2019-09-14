@@ -176,7 +176,7 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
     try:
         captured = run(
             f"neuro config login-with-token {token} {url}",
-            timeout=TIMEOUT_NEURO_LOGIN,
+            timeout_s=TIMEOUT_NEURO_LOGIN,
             debug=False,
         )
         assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
@@ -245,13 +245,13 @@ def measure_time(command_name: str = "") -> t.Iterator[None]:
 
 def repeat_until_success(
     cmd: str,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:
     if not any(verb in cmd for verb in VERBS_SECRET):
         log.info(f"Running command until success: `{cmd}`")
-    with timeout(timeout_s):
+    with timeout(timeout_total_s):
         while True:
             try:
                 return run(cmd, **kwargs)
@@ -266,7 +266,7 @@ def run(
     *,
     debug: bool = False,
     detect_new_jobs: bool = True,
-    timeout: int = DEFAULT_TIMEOUT_LONG,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
     stop_patterns: t.Sequence[str] = (),  # ignore errors (and stderr) by default
 ) -> str:
@@ -313,7 +313,7 @@ def run(
         log.info(f"Running command: `{cmd}`")
     child = pexpect.spawn(
         cmd,
-        timeout=timeout,
+        timeout=timeout_s,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if debug else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
@@ -436,7 +436,7 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
-        timeout=timeout,
+        timeout_s=timeout,
         debug=True,
         stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
@@ -452,7 +452,7 @@ def neuro_rm_dir(
     log.info(f"Deleting remote directory `{project_relative_path}`")
     run(
         f"neuro rm -r {project_relative_path}",
-        timeout=timeout,
+        timeout_s=timeout,
         debug=False,
         stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
@@ -461,7 +461,7 @@ def neuro_rm_dir(
 def neuro_ps(timeout: int) -> t.Set[str]:
     out = run(
         f"neuro --quiet ps",
-        timeout=timeout,
+        timeout_s=timeout,
         debug=True,
         stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )

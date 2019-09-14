@@ -116,7 +116,7 @@ def test_make_setup() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_SETUP,
+            timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -133,7 +133,7 @@ def test_make_upload_clean_code() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_UPLOAD_CODE,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[
                 rf"'file://.*/{MK_CODE_PATH}' DONE",
                 r"upload\-code: completed",
@@ -150,7 +150,7 @@ def test_make_upload_clean_code() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_UPLOAD_CODE,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[r"clean\-code: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -169,7 +169,7 @@ def test_make_upload_clean_data() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_UPLOAD_DATA,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[
                 rf"'file://.*/{MK_DATA_PATH}' DONE",
                 r"upload\-data: completed",
@@ -187,7 +187,7 @@ def test_make_upload_clean_data() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_CLEAN_DATA,
+            timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             expect_patterns=[r"clean\-data: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -209,7 +209,7 @@ def test_make_upload_download_clean_notebooks() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[
                 rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE",
                 r"upload\-notebooks: completed",
@@ -227,7 +227,7 @@ def test_make_upload_download_clean_notebooks() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
+            timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[
                 rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE",
                 r"download\-notebooks: completed",
@@ -244,7 +244,7 @@ def test_make_upload_download_clean_notebooks() -> None:
         run(
             make_cmd,
             debug=True,
-            timeout=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
+            timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             expect_patterns=[r"clean\-notebooks: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -260,7 +260,7 @@ def test_make_upload_download_clean_notebooks() -> None:
 
 @pytest.mark.run(order=4)
 @pytest.mark.parametrize(
-    "target,path,timeout",
+    "target,path,timeout_run",
     [
         ("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU),
         ("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU),
@@ -273,7 +273,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
         output = run(
             make_cmd,
             debug=True,
-            timeout=timeout_run,
+            timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -292,7 +292,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
         run(
             make_cmd,
             debug=True,
-            timeout=DEFAULT_TIMEOUT_SHORT,
+            timeout_s=DEFAULT_TIMEOUT_SHORT,
             expect_patterns=[rf"kill\-{target}: completed"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
