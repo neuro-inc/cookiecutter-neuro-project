@@ -132,7 +132,7 @@ connect-training:  ### Execute shell to the training job
 jupyter:  ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
-		--preset gpu-small \
+		--preset cpu-small \
 		--http 8888 --no-http-auth --detach \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
