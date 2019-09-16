@@ -21,10 +21,10 @@ REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
 RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
 SETUP_NAME?=setup
-TRAINING_NAME?=training
-JUPYTER_NAME?=jupyter
-TENSORBOARD_NAME?=tensorboard
-FILEBROWSER_NAME?=filebrowser
+TRAINING_NAME?=training-{{cookiecutter.project_slug}}
+JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
+TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
+FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
@@ -115,7 +115,7 @@ connect-training:  ### Execute shell to the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:  ### Run jupyter job
+jupyter:  upload_code upload_notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
