@@ -46,6 +46,7 @@ setup: ### Setup remote environment
 		--preset cpu-small \
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
@@ -101,6 +102,7 @@ training:  ### Run training job
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):ro \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
 
@@ -123,6 +125,7 @@ jupyter:  ### Run jupyter job
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
 		--volume $(NOTEBOOKS_PATH_STORAGE):$(NOTEBOOKS_PATH_ENV):rw \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
 
@@ -138,6 +141,7 @@ tensorboard:  ### Run tensorboard job
 		--browse \
 		--http 6006 --no-http-auth --detach \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
 
@@ -153,6 +157,7 @@ filebrowser:  ### Run filebrowser job
 		--http 80 --no-http-auth --detach \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		filebrowser/filebrowser
 
 .PHONY: kill-filebrowser
