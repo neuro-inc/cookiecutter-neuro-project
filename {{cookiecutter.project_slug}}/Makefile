@@ -52,7 +52,7 @@ setup: ### Setup remote environment
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) 'pip install -r $(REQUIREMENTS_PIP_ENV)'
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'pip install -r $(REQUIREMENTS_PIP_ENV) && pip install ${PROJECT_PATH_ENV}'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
