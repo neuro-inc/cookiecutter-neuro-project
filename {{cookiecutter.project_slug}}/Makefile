@@ -22,11 +22,11 @@ RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
 NEURO_CP=neuro cp --recursive --update --no-target-directory
 
-SETUP_NAME?=setup
-TRAINING_NAME?=training
-JUPYTER_NAME?=jupyter
-TENSORBOARD_NAME?=tensorboard
-FILEBROWSER_NAME?=filebrowser
+SETUP_NAME?=setup-{{cookiecutter.project_slug}}
+TRAINING_NAME?=training-{{cookiecutter.project_slug}}
+JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
+TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
+FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
