@@ -29,6 +29,12 @@ FILEBROWSER_NAME?=filebrowser
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
+# Set it to True (verbatim) to disable HTTP authentication for your jobs
+DISABLE_HTTP_AUTH:=
+ifeq ($(DISABLE_HTTP_AUTH), True)
+	HTTP_AUTH:=--no-http-auth
+endif
+
 
 .PHONY: help
 help:
@@ -52,7 +58,7 @@ setup: ### Setup remote environment
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'apt-get update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % apt-get install -y --no-install-recommends % && apt-get clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'pip install -r $(REQUIREMENTS_PIP_ENV) && pip install ${PROJECT_PATH_ENV}'"
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'pip install -r $(REQUIREMENTS_PIP_ENV)'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
@@ -119,7 +125,8 @@ jupyter:  ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
-		--http 8888 --no-http-auth --detach \
+		--http 8888 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
@@ -139,7 +146,8 @@ tensorboard:  ### Run tensorboard job
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
 		--browse \
-		--http 6006 --no-http-auth --detach \
+		--http 6006 --detach \
+		$(HTTP_AUTH) \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
@@ -154,7 +162,8 @@ filebrowser:  ### Run filebrowser job
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
-		--http 80 --no-http-auth --detach \
+		--http 80 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
