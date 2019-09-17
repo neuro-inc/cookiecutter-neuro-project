@@ -20,7 +20,7 @@ REQUIREMENTS_PIP_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_PIP)
 REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
 RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
-SETUP_NAME?=setup
+SETUP_NAME?=setup-{{cookiecutter.project_slug}}
 TRAINING_NAME?=training-{{cookiecutter.project_slug}}
 JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
 TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
