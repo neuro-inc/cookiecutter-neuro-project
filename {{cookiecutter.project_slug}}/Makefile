@@ -115,7 +115,7 @@ connect-training:  ### Execute shell to the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:  upload_code upload_notebooks ### Run jupyter job
+jupyter:  upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
