@@ -72,7 +72,7 @@ clean-code:  ### Delete code directory on Storage
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
-	$(NEURO_CP) --progress $(DATA_PATH) $(DATA_PATH_STORAGE)
+	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
@@ -119,7 +119,7 @@ connect-training:  ### Execute shell to the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:  upload-code upload-notebooks ### Run jupyter job
+jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
