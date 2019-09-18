@@ -105,8 +105,6 @@ def test_make_setup() -> None:
         # neuro kill
         "neuro kill",
         r"job\-[^\n]+",
-        # success
-        r"setup: completed",
     ]
 
     make_cmd = "make setup"
