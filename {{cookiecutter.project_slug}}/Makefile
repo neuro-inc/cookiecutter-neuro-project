@@ -20,6 +20,8 @@ REQUIREMENTS_PIP_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_PIP)
 REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
 RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
+NEURO_CP=neuro cp --recursive --update --no-target-directory
+
 SETUP_NAME?=setup-{{cookiecutter.project_slug}}
 TRAINING_NAME?=training-{{cookiecutter.project_slug}}
 JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
@@ -51,8 +53,8 @@ setup: ### Setup remote environment
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
+	$(NEURO_CP) $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
+	$(NEURO_CP) $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV) && echo installed pip requirements'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
@@ -62,7 +64,7 @@ setup: ### Setup remote environment
 
 .PHONY: upload-code
 upload-code:  ### Upload code directory to Storage
-	neuro cp -r -T $(CODE_PATH) $(CODE_PATH_STORAGE)
+	$(NEURO_CP) $(CODE_PATH) $(CODE_PATH_STORAGE)
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory on Storage
@@ -70,7 +72,7 @@ clean-code:  ### Delete code directory on Storage
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
-	neuro cp -r -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
+	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
@@ -78,11 +80,11 @@ clean-data:
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to Storage
-	neuro cp -r -T $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
+	$(NEURO_CP) $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: download-notebooks
 download-notebooks:  ### Download notebooks directory from Storage
-	neuro cp -r $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
+	$(NEURO_CP) $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory on Storage
@@ -117,7 +119,7 @@ connect-training:  ### Execute shell to the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:  upload-code upload-notebooks ### Run jupyter job
+jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
