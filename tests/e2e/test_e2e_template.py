@@ -132,9 +132,7 @@ def test_make_upload_clean_code() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[
-                rf"'file://.*/{MK_CODE_PATH}' DONE",
-            ],
+            expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -166,9 +164,7 @@ def test_make_upload_clean_data() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
-            expect_patterns=[
-                rf"'file://.*/{MK_DATA_PATH}' DONE",
-            ],
+            expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
