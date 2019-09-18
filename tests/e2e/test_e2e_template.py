@@ -211,8 +211,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[
-                rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE",
-                r"upload\-notebooks: completed",
+                rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"
             ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -229,8 +228,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             debug=True,
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[
-                rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE",
-                r"download\-notebooks: completed",
+                rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"
             ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -293,7 +291,6 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             make_cmd,
             debug=True,
             timeout_s=DEFAULT_TIMEOUT_SHORT,
-            expect_patterns=[rf"kill\-{target}: completed"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()
