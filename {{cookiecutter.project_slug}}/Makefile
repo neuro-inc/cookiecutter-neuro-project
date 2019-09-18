@@ -20,11 +20,13 @@ REQUIREMENTS_PIP_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_PIP)
 REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
 RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
-SETUP_NAME?=setup
-TRAINING_NAME?=training
-JUPYTER_NAME?=jupyter
-TENSORBOARD_NAME?=tensorboard
-FILEBROWSER_NAME?=filebrowser
+NEURO_CP=neuro cp --recursive --update --no-target-directory
+
+SETUP_NAME?=setup-{{cookiecutter.project_slug}}
+TRAINING_NAME?=training-{{cookiecutter.project_slug}}
+JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
+TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
+FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
@@ -48,11 +50,11 @@ setup: ### Setup remote environment
 		--preset cpu-small \
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-
+	$(NEURO_CP) $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
+	$(NEURO_CP) $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
@@ -62,7 +64,7 @@ setup: ### Setup remote environment
 
 .PHONY: upload-code
 upload-code:  ### Upload code directory to Storage
-	neuro cp -r -T $(CODE_PATH) $(CODE_PATH_STORAGE)
+	$(NEURO_CP) $(CODE_PATH) $(CODE_PATH_STORAGE)
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory on Storage
@@ -70,7 +72,7 @@ clean-code:  ### Delete code directory on Storage
 
 .PHONY: upload-data  ### Upload data directory to Storage
 upload-data:
-	neuro cp -r -p -u -T $(DATA_PATH) $(DATA_PATH_STORAGE)
+	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data  ### Delete data directory on Storage
 clean-data:
@@ -78,11 +80,11 @@ clean-data:
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to Storage
-	neuro cp -r -T $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
+	$(NEURO_CP) $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: download-notebooks
 download-notebooks:  ### Download notebooks directory from Storage
-	neuro cp -r -T $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
+	$(NEURO_CP) $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory on Storage
@@ -104,6 +106,7 @@ training:  ### Run training job
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):ro \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
 
@@ -116,7 +119,7 @@ connect-training:  ### Execute shell to the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter:  ### Run jupyter job
+jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset cpu-small \
@@ -126,6 +129,7 @@ jupyter:  ### Run jupyter job
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
 		--volume $(NOTEBOOKS_PATH_STORAGE):$(NOTEBOOKS_PATH_ENV):rw \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
 
@@ -141,6 +145,7 @@ tensorboard:  ### Run tensorboard job
 		--browse \
 		--http 6006 --no-http-auth --detach \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
 
@@ -156,6 +161,7 @@ filebrowser:  ### Run filebrowser job
 		--http 80 --no-http-auth --detach \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
+		--env PLATFORMAPI_SERVICE_HOST="." \
 		filebrowser/filebrowser
 
 .PHONY: kill-filebrowser
@@ -170,6 +176,7 @@ kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
 	$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP)
+
 
 .PHONY: lint
 lint:  ### Run static code analysis locally
