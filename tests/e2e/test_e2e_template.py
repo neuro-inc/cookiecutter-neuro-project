@@ -210,9 +210,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-            expect_patterns=[
-                rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"
-            ],
+            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -227,9 +225,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
-            expect_patterns=[
-                rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"
-            ],
+            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
