@@ -93,11 +93,9 @@ def test_make_setup() -> None:
         rf"'{PROJECT_PIP_FILE_NAME}' \d+B",
         # apt-get install
         *apt_deps_messages,
-        r"APT requirements installation: completed",
         # pip install
         # (pip works either with stupid progress bars, or completely silently)
         pip_deps_message,
-        r"PIP requirements installation: completed",
         # neuro save
         r"Saving .+ \->",
         r"Creating image",
@@ -136,7 +134,6 @@ def test_make_upload_clean_code() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[
                 rf"'file://.*/{MK_CODE_PATH}' DONE",
-                r"upload\-code: completed",
             ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -151,7 +148,6 @@ def test_make_upload_clean_code() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[r"clean\-code: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -172,7 +168,6 @@ def test_make_upload_clean_data() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[
                 rf"'file://.*/{MK_DATA_PATH}' DONE",
-                r"upload\-data: completed",
             ],
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -188,7 +183,6 @@ def test_make_upload_clean_data() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
-            expect_patterns=[r"clean\-data: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -239,7 +233,6 @@ def test_make_upload_download_clean_notebooks() -> None:
             make_cmd,
             debug=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
-            expect_patterns=[r"clean\-notebooks: completed"],
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
