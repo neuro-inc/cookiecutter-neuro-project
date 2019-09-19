@@ -30,6 +30,7 @@ FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
+TRAINING_MACHINE_TYPE?=gpu-small
 
 # Set it to True (verbatim) to disable HTTP authentication for your jobs
 DISABLE_HTTP_AUTH:=
@@ -112,7 +113,7 @@ clean: clean-code clean-data clean-notebooks
 training:  ### Run training job
 	neuro run \
 		--name $(TRAINING_NAME) \
-		--preset gpu-small \
+		--preset $(TRAINING_MACHINE_TYPE) \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):ro \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
@@ -132,7 +133,8 @@ connect-training:  ### Execute shell to the training job
 jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
-		--preset gpu-small \
+
+		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 --detach \
 		$(HTTP_AUTH) \
 		--browse \
