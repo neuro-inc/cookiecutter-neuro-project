@@ -5,11 +5,11 @@ Base template for [Neuro Platform](https://neu.ro) projects
 
 Requirements
 ------------
-Install `cookiecutter` command line: `pip install cookiecutter`    
+Install `cookiecutter` command line: `pip install cookiecutter` (or `make init`)    
 
 Usage
 -----
-Generate a new Cookiecutter template layout: `cookiecutter gh:neuromation/cookiecutter-neuro-project`    
+Generate a new Cookiecutter template layout: `cookiecutter gh:neuromation/cookiecutter-neuro-project` (or `make cook`)    
 
 License
 -------

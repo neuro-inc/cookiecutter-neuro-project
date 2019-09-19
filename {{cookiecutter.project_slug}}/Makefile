@@ -32,8 +32,18 @@ BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 TRAINING_MACHINE_TYPE?=gpu-small
 
+# Set it to True (verbatim) to disable HTTP authentication for your jobs
+DISABLE_HTTP_AUTH:=
+ifeq ($(DISABLE_HTTP_AUTH), True)
+	HTTP_AUTH:=--no-http-auth
+endif
+
 APT_COMMAND?=apt-get -qq
 PIP_COMMAND?=pip -q
+# example:
+# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH_ENV)'"
+TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
+
 
 .PHONY: help
 help:
@@ -109,7 +119,7 @@ training:  ### Run training job
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
-		'python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
+		$(TRAINING_COMMAND)
 
 .PHONY: kill-training
 kill-training:  ### Stop training job
@@ -123,8 +133,10 @@ connect-training:  ### Execute shell to the training job
 jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
+
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--http 8888 --no-http-auth --detach \
+		--http 8888 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
@@ -144,7 +156,8 @@ tensorboard:  ### Run tensorboard job
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
 		--browse \
-		--http 6006 --no-http-auth --detach \
+		--http 6006 --detach \
+		$(HTTP_AUTH) \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
@@ -159,7 +172,8 @@ filebrowser:  ### Run filebrowser job
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
-		--http 80 --no-http-auth --detach \
+		--http 80 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
