@@ -31,8 +31,15 @@ FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 BASE_ENV_NAME?=neuromation/base-2
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 
+# Set it to True (verbatim) to disable HTTP authentication for your jobs
+DISABLE_HTTP_AUTH:=
+ifeq ($(DISABLE_HTTP_AUTH), True)
+	HTTP_AUTH:=--no-http-auth
+endif
+
 APT_COMMAND?=apt-get -qq
 PIP_COMMAND?=pip -q
+
 
 .PHONY: help
 help:
@@ -123,7 +130,8 @@ jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset gpu-small \
-		--http 8888 --no-http-auth --detach \
+		--http 8888 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
@@ -143,7 +151,8 @@ tensorboard:  ### Run tensorboard job
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
 		--browse \
-		--http 6006 --no-http-auth --detach \
+		--http 6006 --detach \
+		$(HTTP_AUTH) \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
@@ -158,7 +167,8 @@ filebrowser:  ### Run filebrowser job
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
-		--http 80 --no-http-auth --detach \
+		--http 80 --detach \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
