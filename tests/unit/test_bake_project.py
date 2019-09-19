@@ -1,7 +1,21 @@
+import os
 import subprocess
 import typing as t
-
+from contextlib import contextmanager
 from tests.utils import inside_dir
+
+@contextmanager
+def inside_dir(dirpath: str) -> t.Iterator[None]:
+    """
+    Execute code from inside the given directory
+    :param dirpath: String, path of the directory the command is being run.
+    """
+    old_path = os.getcwd()
+    try:
+        os.chdir(dirpath)
+        yield
+    finally:
+        os.chdir(old_path)
 
 
 def test_project_tree(cookies: t.Any) -> None:
