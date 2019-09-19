@@ -6,7 +6,7 @@ MYPY_DIRS :=  tests
 init:
 	pip install -r requirements-dev.txt
 
-.PHONY: cook 
+.PHONY: cook
 cook:
 	cookiecutter gh:neuromation/cookiecutter-neuro-project
 
@@ -31,4 +31,4 @@ test_unit:
 
 .PHONY: test_e2e
 test_e2e:
-	pytest -v -s --reruns=2 tests/e2e
+	pytest -v -s --reruns=0 tests/e2e
