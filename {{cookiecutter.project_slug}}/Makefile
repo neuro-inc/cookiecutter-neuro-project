@@ -32,7 +32,7 @@ CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 APT_COMMAND?=apt-get -qq
 PIP_COMMAND?=pip -q
 # example:
-# TRAINING_COMMAND='python $(CODE_PATH_ENV)/train.py --log_dir $(RESULTS_PATH_ENV) --data_root $(DATA_PATH_ENV)/cifar10'
+# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH_ENV)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
 .PHONY: help
