@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from time import sleep
 
 import pytest
 
@@ -166,6 +167,7 @@ def test_make_upload_clean_data() -> None:
             # TODO: add upload-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
+    sleep(1)
     actual = neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)

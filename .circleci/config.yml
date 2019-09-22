@@ -57,12 +57,7 @@ jobs:
           command: |
             . venv/bin/activate
             export TRAINING_MACHINE_TYPE=cpu-small
-            export PEXPECT_DEBUG_OUTPUT_LOGFILE=sys.output
             make test_e2e
-      #
-      # - store_artifacts:
-      #     path: test-reports
-      #     destination: test-reports
 
       - run:
           name: clean up running jobs
