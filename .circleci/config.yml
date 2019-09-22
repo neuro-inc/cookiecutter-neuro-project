@@ -56,6 +56,8 @@ jobs:
           name: run e2e tests
           command: |
             . venv/bin/activate
+            export TRAINING_MACHINE_TYPE=cpu-small
+            export PEXPECT_DEBUG_OUTPUT_LOGFILE=sys.output
             make test_e2e
       #
       # - store_artifacts:

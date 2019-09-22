@@ -249,7 +249,8 @@ def test_make_upload_download_clean_notebooks() -> None:
     ],
 )
 def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    make_cmd = f"make {target}"
+    # Can't test web UI with HTTP auth
+    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
     with measure_time(make_cmd):
         output = run(
             make_cmd,
