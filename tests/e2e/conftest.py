@@ -443,7 +443,6 @@ def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]
     result = set(out.split())
     if ".gitkeep" in result:
         result.remove(".gitkeep")
-    print(result)
     return result
 
 
