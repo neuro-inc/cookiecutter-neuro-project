@@ -43,7 +43,7 @@ MK_JUPYTER_NAME = f"jupyter-{MK_PROJECT_NAME}"
 MK_TENSORBOARD_NAME = f"tensorboard-{MK_PROJECT_NAME}"
 MK_FILEBROWSER_NAME = f"filebrowser-{MK_PROJECT_NAME}"
 
-MK_BASE_ENV_NAME = "neuromation/base-2"
+MK_BASE_ENV_NAME = "neuromation/base"
 MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_NAME}"
 
 

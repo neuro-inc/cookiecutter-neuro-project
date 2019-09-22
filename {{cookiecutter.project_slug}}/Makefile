@@ -28,7 +28,7 @@ JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
 TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
 FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
-BASE_ENV_NAME?=neuromation/base-2
+BASE_ENV_NAME?=neuromation/base
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
 TRAINING_MACHINE_TYPE?=gpu-small
 
