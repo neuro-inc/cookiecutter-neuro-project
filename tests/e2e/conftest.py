@@ -40,7 +40,7 @@ DEFAULT_TIMEOUT_LONG = 10 * 60
 # TODO: use a real dataset after cleaning up docs
 FILE_SIZE_KB = 4
 FILE_SIZE_B = FILE_SIZE_KB * 1024
-N_FILES = 100
+N_FILES = 15
 
 
 VERBS_SECRET = ("login-with-token",)
