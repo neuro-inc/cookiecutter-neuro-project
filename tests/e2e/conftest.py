@@ -319,7 +319,8 @@ def run(
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
     )
-    child.logfile = sys.stdout
+    if cmd == "make setup":
+        child.logfile = sys.stdout
 
     compile_flags = re.DOTALL
     if child.ignorecase:
