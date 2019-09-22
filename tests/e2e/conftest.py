@@ -319,8 +319,6 @@ def run(
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
     )
-    if cmd == "make setup":
-        child.logfile = sys.stdout
 
     compile_flags = re.DOTALL
     if child.ignorecase:
@@ -445,6 +443,7 @@ def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]
     result = set(out.split())
     if ".gitkeep" in result:
         result.remove(".gitkeep")
+    print(result)
     return result
 
 
