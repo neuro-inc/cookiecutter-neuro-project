@@ -21,23 +21,23 @@ This project is designed to run on [Neuro Platform](https://neu.ro), so you can 
 
 ## Development
 
-Follow the instructions below to setup the environment and start Jupyter development session.
+Follow the instructions below in order to setup the environment and start Jupyter development session.
 
 ## Neuro Platform
 
 * Setup development environment `make setup`
 * Run Jupyter with GPU: `make jupyter`
 * Kill Jupyter: `make kill-jupyter`
-* Get list of available template commands: `make help`
+* Get the list of available template commands: `make help`
 
 # Data
 
 ## Uploading via Web UI
 
-From local machine run `make filebrowser` and open job's URL from your mobile device or desktop. 
+On local machine run `make filebrowser` and open job's URL on your mobile device or desktop. 
 Through a simple file explorer interface you can upload test images and perform file operations.
 
 ## Uploading via CLI
 
-From local machine run `make upload-data`. This will push local files stored in `./data` 
+On local machine run `make upload-data`. This command pushes local files stored in `./data` 
 into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development environment's `/project/data`.

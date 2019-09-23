@@ -74,37 +74,37 @@ setup: ### Setup remote environment
 ##### STORAGE #####
 
 .PHONY: upload-code
-upload-code:  ### Upload code directory to your storage
+upload-code:  ### Upload code directory to the platform storage
 	$(NEURO_CP) $(CODE_PATH) $(CODE_PATH_STORAGE)
 
 .PHONY: clean-code
-clean-code:  ### Delete code directory from your storage
+clean-code:  ### Delete code directory from the platform storage
 	neuro rm -r $(CODE_PATH_STORAGE)
 
 .PHONY: upload-data
-upload-data:  ### Upload data directory to your storage
+upload-data:  ### Upload data directory to the platform storage
 	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
 
 .PHONY: clean-data
-clean-data:  ### Delete data directory from your storage
+clean-data:  ### Delete data directory from the platform storage
 	neuro rm -r $(DATA_PATH_STORAGE)
 
 .PHONY: upload-notebooks
-upload-notebooks:  ### Upload notebooks directory to your storage
+upload-notebooks:  ### Upload notebooks directory to the platform storage
 	$(NEURO_CP) $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: download-notebooks
-download-notebooks:  ### Download notebooks directory from your storage
+download-notebooks:  ### Download notebooks directory from the platform storage
 	$(NEURO_CP) $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
 
 .PHONY: clean-notebooks
-clean-notebooks:  ### Delete notebooks directory from your storage
+clean-notebooks:  ### Delete notebooks directory from the platform storage
 	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
 
-.PHONY: upload  ### Upload code, data, and notebooks directories to your storage
+.PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
 
-.PHONY: clean  ### Delete code, data, and notebooks directories from your storage
+.PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
 clean: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
@@ -122,15 +122,15 @@ training:  ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-training
-kill-training:  ### Terminate a training job
+kill-training:  ### Terminate the training job
 	neuro kill $(TRAINING_NAME)
 
 .PHONY: connect-training
-connect-training:  ### Connect with a shell to a training job
+connect-training:  ### Connect to the remote shell running on the training job
 	neuro exec --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
-jupyter: upload-code upload-notebooks ### Run a job with Jupyter notebooks and open UI in your default browser
+jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset $(TRAINING_MACHINE_TYPE) \
@@ -146,11 +146,11 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter notebooks and o
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter:  ### Terminate a job with Jupyter notebooks
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
 	neuro kill $(JUPYTER_NAME)
 
 .PHONY: tensorboard
-tensorboard:  ### Run a job with TensorBoard and open UI in your default browser
+tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 	neuro run \
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
@@ -163,11 +163,11 @@ tensorboard:  ### Run a job with TensorBoard and open UI in your default browser
 		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard:  ### Terminate a job with TensorBoard
+kill-tensorboard:  ### Terminate the job with TensorBoard
 	neuro kill $(TENSORBOARD_NAME)
 
 .PHONY: filebrowser
-filebrowser:  ### Run a job with File Browser and open UI in your default browser
+filebrowser:  ### Run a job with File Browser and open UI in the default browser
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
@@ -179,7 +179,7 @@ filebrowser:  ### Run a job with File Browser and open UI in your default browse
 		filebrowser/filebrowser
 
 .PHONY: kill-filebrowser
-kill-filebrowser:  ### Terminate a job with File Browser
+kill-filebrowser:  ### Terminate the job with File Browser
 	neuro kill $(FILEBROWSER_NAME)
 
 .PHONY: kill  ### Terminate all jobs of this project
