@@ -10,9 +10,7 @@ from pathlib import Path
 import pexpect
 import pytest
 
-from tests.utils import inside_dir
-
-from .configuration import (
+from tests.e2e.configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
@@ -24,6 +22,8 @@ from .configuration import (
     TIMEOUT_NEURO_LOGIN,
     UNIQUE_PROJECT_NAME,
 )
+from tests.utils import inside_dir
+
 from .utils import LOGGER_NAME, get_logger, timeout, unique_label
 
 
