@@ -27,7 +27,8 @@ Follow the instructions below to setup the environment and start Jupyter develop
 
 * Setup development environment `make setup`
 * Run Jupyter with GPU: `make jupyter`
-* Kill Jupyter: `make kill_jupyter`
+* Kill Jupyter: `make kill-jupyter`
+* Get list of available template commands: `make help`
 
 # Data
 
@@ -38,5 +39,5 @@ Through a simple file explorer interface you can upload test images and perform 
 
 ## Uploading via CLI
 
-From local machine run `make upload_data`. This will push local files stored in `./data` 
+From local machine run `make upload-data`. This will push local files stored in `./data` 
 into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development environment's `/project/data`.

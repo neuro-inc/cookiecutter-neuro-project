@@ -81,12 +81,12 @@ upload-code:  ### Upload code directory to your storage
 clean-code:  ### Delete code directory from your storage
 	neuro rm -r $(CODE_PATH_STORAGE)
 
-.PHONY: upload-data  ### Upload data directory to your storage
-upload-data:
+.PHONY: upload-data
+upload-data:  ### Upload data directory to your storage
 	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
 
-.PHONY: clean-data  ### Delete data directory from your storage
-clean-data:
+.PHONY: clean-data
+clean-data:  ### Delete data directory from your storage
 	neuro rm -r $(DATA_PATH_STORAGE)
 
 .PHONY: upload-notebooks
@@ -122,7 +122,7 @@ training:  ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-training
-kill-training:  ### Stop a training job
+kill-training:  ### Terminate a training job
 	neuro kill $(TRAINING_NAME)
 
 .PHONY: connect-training
