@@ -1,20 +1,18 @@
-import logging
 import os
 import re
 import shutil
-import signal
 import sys
 import textwrap
 import time
 import typing as t
-from contextlib import contextmanager
 from pathlib import Path
-from uuid import uuid4
 
 import pexpect
 import pytest
 
-from tests.e2e.configuration import (
+from tests.utils import inside_dir
+
+from .configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
@@ -24,11 +22,10 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
+    UNIQUE_PROJECT_NAME,
 )
-from tests.utils import inside_dir
+from .utils import LOGGER_NAME, get_logger, timeout, unique_label
 
-
-LOGGER_NAME = "e2e"
 
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
 CLEANUP_JOBS_SCRIPT_NAME = "cleanup_jobs.py"
@@ -74,11 +71,6 @@ DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTE
 PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
 
 
-def get_logger() -> logging.Logger:
-    logger = logging.getLogger(LOGGER_NAME)
-    return logger
-
-
 log = get_logger()
 
 
@@ -109,8 +101,8 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 @pytest.fixture(scope="session", autouse=True)
 def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     run(
-        f"cookiecutter --no-input "
-        f"--config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}",
+        f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
+        f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
         stop_patterns=["raise .*Exception"],
     )
     with inside_dir(MK_PROJECT_NAME):
@@ -196,48 +188,6 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
             log.info(f"Deleting {nmrc} file")
             nmrc.unlink()
             log.info("Deleted")
-
-
-# == generic helpers ==
-
-
-def unique_label() -> str:
-    return uuid4().hex[:8]
-
-
-@contextmanager
-def timeout(time_s: int) -> t.Iterator[None]:
-    """ source: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
-    """
-
-    def raise_timeout(signum: int, frame: t.Any) -> t.NoReturn:
-        raise TimeoutError
-
-    # Register a function to raise a TimeoutError on the signal.
-    signal.signal(signal.SIGALRM, raise_timeout)
-    # Schedule the signal to be sent after ``time``.
-    signal.alarm(time_s)
-
-    try:
-        yield
-    except TimeoutError:
-        log.error(f"TIMEOUT ERROR: {time_s}")
-        raise
-    finally:
-        # Unregister the signal so it won't be triggered
-        # if the timeout is not reached.
-        signal.signal(signal.SIGALRM, signal.SIG_IGN)
-
-
-@contextmanager
-def measure_time(command_name: str = "") -> t.Iterator[None]:
-    log.info("-" * 50)
-    start_time = time.time()
-    yield
-    elapsed_time = time.time() - start_time
-    log.info("=" * 50)
-    log.info(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
-    log.info("=" * 50)
 
 
 # == execution helpers ==

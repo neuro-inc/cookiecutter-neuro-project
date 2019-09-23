@@ -1,3 +1,6 @@
+from .utils import unique_label
+
+
 TIMEOUT_MAKE_SETUP = 6 * 60
 TIMEOUT_MAKE_UPLOAD_CODE = 5
 TIMEOUT_MAKE_CLEAN_CODE = 3
@@ -16,7 +19,8 @@ TIMEOUT_NEURO_PS = 4
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
-MK_PROJECT_NAME = "test-project"
+UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
+MK_PROJECT_NAME = UNIQUE_PROJECT_NAME.lower().replace(" ", "-").replace("_", " ")
 
 MK_CODE_PATH = "modules"
 MK_DATA_PATH = "data"

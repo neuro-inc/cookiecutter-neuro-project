@@ -34,13 +34,13 @@ from .conftest import (
     N_FILES,
     cleanup_local_dirs,
     get_logger,
-    measure_time,
     neuro_ls,
     neuro_ps,
     neuro_rm_dir,
     repeat_until_success,
     run,
 )
+from .utils import measure_time
 
 
 log = get_logger()
