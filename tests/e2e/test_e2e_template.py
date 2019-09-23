@@ -102,7 +102,7 @@ def test_make_setup() -> None:
         r"Creating image",
         r"Image created",
         r"Pushing image .+ => .+",
-        r"image://.*",
+        r"image://.+",
         # neuro kill
         "neuro kill",
         r"job\-[^\n]+",
@@ -259,7 +259,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             make_cmd,
             debug=True,
             timeout_s=timeout_run,
-            expect_patterns=[r"Status:[^\n]+running"],
+            expect_patterns=[r"Status:[^\n]*running"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
         search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
@@ -269,7 +269,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
     repeat_until_success(
         f"curl --fail {url}{path}",
         expect_patterns=["<html.*>"],
-        stop_patterns=["curl: "],
+        stop_patterns=[r"curl:[^\n]*"],
     )
 
     make_cmd = f"make kill-{target}"
