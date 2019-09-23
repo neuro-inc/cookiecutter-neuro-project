@@ -22,9 +22,8 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGIN,
     UNIQUE_PROJECT_NAME,
 )
-from tests.utils import inside_dir
-
 from tests.e2e.utils import LOGGER_NAME, get_logger, timeout, unique_label
+from tests.utils import inside_dir
 
 
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
