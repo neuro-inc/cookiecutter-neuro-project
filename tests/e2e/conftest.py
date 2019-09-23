@@ -24,7 +24,7 @@ from tests.e2e.configuration import (
 )
 from tests.utils import inside_dir
 
-from .utils import LOGGER_NAME, get_logger, timeout, unique_label
+from tests.e2e.utils import LOGGER_NAME, get_logger, timeout, unique_label
 
 
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
