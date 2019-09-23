@@ -8,7 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.3
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -23,7 +23,7 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements-dev.txt" }}
+            - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
@@ -32,12 +32,13 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements-dev.txt
+            pip install --upgrade pip
+            make init
 
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements-dev.txt" }}
+          key: *pip_packages_cache_key
 
       - run:
           name: run linter
@@ -55,11 +56,16 @@ jobs:
           name: run e2e tests
           command: |
             . venv/bin/activate
+            export TRAINING_MACHINE_TYPE=cpu-small
             make test_e2e
-      #
-      # - store_artifacts:
-      #     path: test-reports
-      #     destination: test-reports
+
+      - run:
+          name: clean up running jobs
+          command: |
+            . venv/bin/activate
+            python cleanup_jobs.py
+          when: always
+
 workflows:
   version: 2
 

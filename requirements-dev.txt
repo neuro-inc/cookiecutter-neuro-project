@@ -2,7 +2,12 @@ flake8==3.7.8
 mypy==0.720
 isort==4.3.21
 black==19.3b0
-pytest==3.3.2
-pytest-cookies==0.3.0
 cookiecutter==1.6.0
 
+pexpect==4.7.0
+pytest==5.1.2
+pytest-ordering==0.6
+pytest-cookies==0.4.0
+pytest-aiohttp==0.3.0
+pytest-rerunfailures==7.0
+pytest-logger==0.5.1

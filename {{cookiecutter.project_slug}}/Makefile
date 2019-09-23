@@ -39,7 +39,7 @@ ifeq ($(DISABLE_HTTP_AUTH), True)
 endif
 
 APT_COMMAND?=apt-get -qq
-PIP_COMMAND?=pip -q
+PIP_INSTALL_COMMAND?=pip install --progress-bar=off
 # example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH_ENV)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
@@ -64,10 +64,10 @@ setup: ### Setup remote environment
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	$(NEURO_CP) $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	$(NEURO_CP) $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
+	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
+	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV) && echo installed pip requirements'"
+	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
@@ -133,7 +133,6 @@ connect-training:  ### Execute shell to the training job
 jupyter: upload-code upload-notebooks ### Run jupyter job
 	neuro run \
 		--name $(JUPYTER_NAME) \
-
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 --detach \
 		$(HTTP_AUTH) \
@@ -190,7 +189,7 @@ kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP)
+	$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP)
 
 .PHONY: lint
 lint:  ### Run static code analysis locally

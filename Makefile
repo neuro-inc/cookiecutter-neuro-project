@@ -1,4 +1,4 @@
-ISORT_DIRS := tests
+ISORT_DIRS := tests cleanup_jobs.py
 BLACK_DIRS := $(ISORT_DIRS)
 MYPY_DIRS :=  tests
 
@@ -6,7 +6,7 @@ MYPY_DIRS :=  tests
 init:
 	pip install -r requirements-dev.txt
 
-.PHONY: lint
+.PHONY: cook
 cook:
 	cookiecutter gh:neuromation/cookiecutter-neuro-project
 
@@ -27,7 +27,8 @@ test_unit:
 	pytest -v -s tests/unit
 	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
 	stat ../test-project
+	python -m doctest tests/e2e/conftest.py
 
 .PHONY: test_e2e
 test_e2e:
-	pytest -v -s tests/e2e
+	pytest -v -s --reruns=2 tests/e2e
