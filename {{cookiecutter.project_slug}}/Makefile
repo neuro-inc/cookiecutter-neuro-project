@@ -135,7 +135,7 @@ jupyter: upload-code upload-notebooks ### Run jupyter job
 		--name $(JUPYTER_NAME) \
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 --detach \
-    $(HTTP_AUTH) \
+		$(HTTP_AUTH) \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
 		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
