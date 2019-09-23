@@ -189,7 +189,7 @@ def test_make_upload_clean_data() -> None:
 
 @pytest.mark.run(order=4)
 def test_make_upload_download_clean_notebooks() -> None:
-    files_set = {"00_notebook_tutorial.ipynb", "__init__.py"}
+    files_set = {"00_notebook_tutorial.ipynb"}
 
     # Upload:
     make_cmd = "make upload-notebooks"
