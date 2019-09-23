@@ -63,8 +63,12 @@ LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT
 PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout if os.environ.get("CI") != "true" else None
 
 # note: ERROR, being the most general error, must go the last
-DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[^:]*: ")
-DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:", "make: ", "recipe for target ")
+DEFAULT_NEURO_ERROR_PATTERNS = (
+    r"404: Not Found",
+    r"Status: failed",
+    r"ERROR[^:]*:[^\n]*",
+)
+DEFAULT_MAKE_ERROR_PATTERNS = (r"Makefile:[^\n]*", r"recipe for target[^\n]*")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
 
 
@@ -425,7 +429,7 @@ def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]
     out = run(
         f"neuro ls {path}",
         timeout_s=timeout,
-        debug=True,
+        debug=False,
         stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
     result = set(out.split())
