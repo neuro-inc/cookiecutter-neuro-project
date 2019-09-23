@@ -23,21 +23,22 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_LS,
-    TIMEOUT_NEURO_PS,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
+    TIMEOUT_NEURO_STATUS,
 )
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_SHORT,
+    JOB_ID_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
     measure_time,
     neuro_ls,
-    neuro_ps,
     neuro_rm_dir,
+    neuro_status,
     repeat_until_success,
     run,
 )
@@ -255,15 +256,19 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
     # Can't test web UI with HTTP auth
     make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
     with measure_time(make_cmd):
-        output = run(
+        out = run(
             make_cmd,
             debug=True,
             timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
-        assert search, f"not found in output: `{repr(output)}`"
+        search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
+        assert search, f"not found job-ID in output: `{out}`"
+        job_id = search.group(1)
+
+        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+        assert search, f"not found URL in output: `{out}`"
         url = search.group(1)
 
     repeat_until_success(
@@ -280,7 +285,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             timeout_s=DEFAULT_TIMEOUT_SHORT,
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()
+    assert neuro_status(job_id, timeout=TIMEOUT_NEURO_STATUS) == "succeeded"
 
 
 # TODO: other tests

@@ -462,11 +462,13 @@ def neuro_rm_dir(
     )
 
 
-def neuro_ps(timeout: int) -> t.Set[str]:
+def neuro_status(job_id: str, timeout: int) -> str:
     out = run(
-        f"neuro --quiet ps",
+        f"neuro status {job_id}",
         timeout_s=timeout,
-        debug=True,
+        debug=False,
         stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    return set(out.split())
+    search = re.search(r"Status: (\w+)", out)
+    assert search, f"not found job status in output: `{out}`"
+    return search.group(1)

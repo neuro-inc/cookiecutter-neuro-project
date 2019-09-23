@@ -10,7 +10,7 @@ TIMEOUT_NEURO_LOGIN = 5
 TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
 TIMEOUT_NEURO_LS = 10
-TIMEOUT_NEURO_PS = 10
+TIMEOUT_NEURO_STATUS = 10
 
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
