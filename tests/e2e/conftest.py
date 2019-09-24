@@ -21,6 +21,7 @@ from tests.e2e.configuration import (
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_LS,
+    TIMEOUT_NEURO_STATUS,
     UNIQUE_PROJECT_NAME,
 )
 from tests.e2e.utils import LOGGER_NAME, get_logger, timeout, unique_label
@@ -57,6 +58,11 @@ LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
 LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
 LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
 
+JOB_STATUS_PENDING = "pending"
+JOB_STATUS_RUNNING = "running"
+JOB_STATUS_SUCCEEDED = "succeeded"
+JOB_STATUS_FAILED = "failed"
+JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
@@ -81,9 +87,9 @@ def pytest_logger_config(logger_config: t.Any) -> None:
     logger_config.set_log_option_default(",".join(loggers))
 
 
-JOB_ID_PATTERN = re.compile(
+JOB_ID_DECLARATION_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"(job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
     re.IGNORECASE,
 )
 
@@ -352,11 +358,15 @@ def detect_errors(
 
 
 def _detect_job_ids(stdout: str) -> t.Set[str]:
-    """
-    >>> _detect_job_ids("Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ...")
+    r"""
+    >>> output = "Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ..."
+    >>> _detect_job_ids(output)
+    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
+    >>> output = r"\x1b[1mJob ID\x1b[0m: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 ..."
+    >>> _detect_job_ids(output)
     {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
     """
-    return set(JOB_ID_PATTERN.findall(stdout))
+    return set(JOB_ID_DECLARATION_PATTERN.findall(stdout))
 
 
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
@@ -435,11 +445,25 @@ def neuro_rm_dir(
     )
 
 
-def neuro_ps(timeout_s: int) -> t.Set[str]:
-    out = run(
-        f"neuro --quiet ps",
-        timeout_s=timeout_s,
-        verbose=False,
-        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
-    )
-    return set(out.split())
+def wait_job_change_status_to(
+    job_id: str,
+    target_status: str,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    delay_s: int = 1,
+) -> None:
+    log.info(f"Waiting for job {job_id} to get status {target_status}...")
+    with timeout(timeout_s):
+        out = run(
+            f"neuro status {job_id}",
+            timeout_s=TIMEOUT_NEURO_STATUS,
+            verbose=False,
+            error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
+        )
+        search = re.search(r"Status: (\w+)", out)
+        assert search, f"not found job status in output: `{out}`"
+        status = search.group(1)
+        if status == target_status:
+            return
+        if status in JOB_STATUSES_TERMINATED:
+            raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
+        time.sleep(delay_s)

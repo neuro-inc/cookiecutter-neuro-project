@@ -24,7 +24,7 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_CODE,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-    TIMEOUT_NEURO_PS,
+    TIMEOUT_NEURO_KILL,
     TIMEOUT_NEURO_RMDIR_CODE,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -34,15 +34,15 @@ from tests.e2e.configuration import (
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    DEFAULT_TIMEOUT_SHORT,
+    JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
     neuro_ls,
-    neuro_ps,
     neuro_rm_dir,
     repeat_until_success,
     run,
+    wait_job_change_status_to,
 )
 from .utils import measure_time
 
@@ -73,7 +73,6 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup() -> None:
-
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -219,35 +218,45 @@ def test_make_upload_download_notebooks() -> None:
     ],
 )
 def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    # Can't test web UI with HTTP auth
-    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
-    with measure_time(make_cmd):
-        output = run(
-            make_cmd,
-            verbose=True,
-            timeout_s=timeout_run,
-            expect_patterns=[r"Status:[^\n]+running"],
-            error_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
-        assert search, f"not found in output: `{repr(output)}`"
+    try:
+        # Can't test web UI with HTTP auth
+        make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+        with measure_time(make_cmd):
+            out = run(
+                make_cmd,
+                verbose=True,
+                timeout_s=timeout_run,
+                expect_patterns=[r"Status:[^\n]+running"],
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+
+        search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+        assert search, f"not found job-ID in output: `{out}`"
+        job_id = search.group(1)
+
+        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+        assert search, f"not found URL in output: `{out}`"
         url = search.group(1)
 
-    repeat_until_success(
-        f"curl --fail {url}{path}",
-        expect_patterns=["<html.*>"],
-        error_patterns=["curl: "],
-    )
-
-    make_cmd = f"make kill-{target}"
-    with measure_time(make_cmd):
-        run(
-            make_cmd,
-            verbose=True,
-            timeout_s=DEFAULT_TIMEOUT_SHORT,
-            error_patterns=DEFAULT_ERROR_PATTERNS,
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            expect_patterns=["<html.*>"],
+            error_patterns=["curl: "],
         )
-    assert neuro_ps(timeout_s=TIMEOUT_NEURO_PS) == set()
+
+        make_cmd = f"make kill-{target}"
+        with measure_time(make_cmd):
+            run(
+                make_cmd,
+                verbose=True,
+                timeout_s=TIMEOUT_NEURO_KILL,
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+        wait_job_change_status_to(job_id, "succeeded")
+
+    finally:
+        # cleanup
+        run(f"make kill-{target}", verbose=False, error_patterns=())
 
 
 @pytest.mark.run(order=4)
