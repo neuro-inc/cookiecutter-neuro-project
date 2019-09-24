@@ -119,6 +119,7 @@ def pytest_configure(config: t.Any) -> None:
 def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
         environment = request.config.getoption("--environment")
+        log.info(f"Found option `--environment={environment}`")
         if not environment or environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
