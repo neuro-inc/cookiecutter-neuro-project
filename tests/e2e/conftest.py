@@ -403,9 +403,10 @@ def detect_errors(
         for err in re.findall(p, output, flags=compile_flags):
             if err:
                 found.add(err)
-                log.info(f"DETECTED ERROR MATCHING {p}: {repr(output)}")
+                log.info(f"DETECTED ERROR MATCHING {repr(p)}: {repr(err)}")
     if found:
         log.info(f"Overall {len(found)} error(s) detected")
+        log.info(f"DUMP: {repr(output)}")
     return found
 
 
