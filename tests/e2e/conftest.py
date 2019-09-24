@@ -322,10 +322,10 @@ def run_once(
     need_dump = False
     try:
         for expected in expect_patterns:
-            log.info(f"Waiting for pattern: `{expected}`")
+            log.info(f"Waiting: `{expected}`")
             try:
                 child.expect(expected)
-                log.info(f"Found: `{expected}`")
+                log.info(f"Found:   `{expected}`")
             except pexpect.EOF:
                 need_dump = True
                 err = f"NOT FOUND: `{expected}`"
