@@ -24,6 +24,7 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
+    TIMEOUT_NEURO_STATUS,
 )
 from tests.utils import inside_dir
 
@@ -60,6 +61,11 @@ LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
 LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
 LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
 
+JOB_STATUS_PENDING = "pending"
+JOB_STATUS_RUNNING = "running"
+JOB_STATUS_SUCCEEDED = "succeeded"
+JOB_STATUS_FAILED = "failed"
+JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
@@ -462,13 +468,24 @@ def neuro_rm_dir(
     )
 
 
-def get_job_status(job_id: str, timeout: int) -> str:
-    out = run(
-        f"neuro status {job_id}",
-        timeout_s=timeout,
-        debug=False,
-        stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
-    )
-    search = re.search(r"Status: (\w+)", out)
-    assert search, f"not found job status in output: `{out}`"
-    return search.group(1)
+def wait_job_change_status_to(
+    job_id: str,
+    target_status: str,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    delay_s: int = 1,
+) -> None:
+    with timeout(timeout_s):
+        out = run(
+            f"neuro status {job_id}",
+            timeout_s=TIMEOUT_NEURO_STATUS,
+            debug=False,
+            stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
+        )
+        search = re.search(r"Status: (\w+)", out)
+        assert search, f"not found job status in output: `{out}`"
+        status = search.group(1)
+        if status == target_status:
+            return
+        if status in JOB_STATUSES_TERMINATED:
+            raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
+        time.sleep(delay_s)

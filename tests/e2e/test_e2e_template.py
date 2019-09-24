@@ -25,7 +25,6 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
-    TIMEOUT_NEURO_STATUS,
 )
 
 from .conftest import (
@@ -34,13 +33,13 @@ from .conftest import (
     JOB_ID_PATTERN,
     N_FILES,
     cleanup_local_dirs,
-    get_job_status,
     get_logger,
     measure_time,
     neuro_ls,
     neuro_rm_dir,
     repeat_until_success,
     run,
+    wait_job_change_status_to,
 )
 
 
@@ -285,7 +284,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             timeout_s=DEFAULT_TIMEOUT_SHORT,
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    assert get_job_status(job_id, timeout=TIMEOUT_NEURO_STATUS) == "succeeded"
+    wait_job_change_status_to(job_id, "succeeded")
 
 
 # TODO: other tests
