@@ -24,6 +24,7 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_CODE,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+    TIMEOUT_NEURO_KILL,
     TIMEOUT_NEURO_RMDIR_CODE,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -33,7 +34,6 @@ from tests.e2e.configuration import (
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    DEFAULT_TIMEOUT_SHORT,
     JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
@@ -257,7 +257,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             run(
                 make_cmd,
                 verbose=True,
-                timeout_s=DEFAULT_TIMEOUT_SHORT,
+                timeout_s=TIMEOUT_NEURO_KILL,
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
         log.info(f"waiting until killed")

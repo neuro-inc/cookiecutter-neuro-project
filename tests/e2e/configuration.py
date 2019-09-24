@@ -17,6 +17,7 @@ TIMEOUT_NEURO_RMDIR_DATA = 60
 TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
 TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 10
+TIMEOUT_NEURO_KILL = 10
 
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
