@@ -38,6 +38,7 @@ from .conftest import (
     N_FILES,
     cleanup_local_dirs,
     get_logger,
+    log_outer_exceptions,
     neuro_ls,
     neuro_ps,
     neuro_rm_dir,
@@ -50,6 +51,7 @@ from .utils import measure_time
 log = get_logger()
 
 
+@log_outer_exceptions
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
     assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
@@ -66,11 +68,13 @@ def test_project_structure() -> None:
     }
 
 
+@log_outer_exceptions
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=1)
 def test_make_setup() -> None:
 
@@ -124,6 +128,7 @@ def test_make_setup() -> None:
         )
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=2)
 def test_make_upload_code() -> None:
     neuro_rm_dir(
@@ -145,6 +150,7 @@ def test_make_upload_code() -> None:
     assert actual == PROJECT_CODE_DIR_CONTENT
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=2)
 def test_make_upload_data() -> None:
     neuro_rm_dir(
@@ -169,6 +175,7 @@ def test_make_upload_data() -> None:
     assert all(name.endswith(".tmp") for name in actual)
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=2)
 def test_make_upload_download_notebooks() -> None:
     # Upload:
@@ -209,6 +216,7 @@ def test_make_upload_download_notebooks() -> None:
 # TODO: training, kill-training, connect-training
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=3)
 @pytest.mark.parametrize(
     "target,path,timeout_run",
@@ -250,6 +258,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
     assert neuro_ps(timeout_s=TIMEOUT_NEURO_PS) == set()
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=4)
 def test_make_clean_code() -> None:
     actual = neuro_ls(MK_CODE_PATH_STORAGE)
@@ -268,6 +277,7 @@ def test_make_clean_code() -> None:
         neuro_ls(MK_CODE_PATH_STORAGE)
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=4)
 def test_make_clean_data() -> None:
     actual = neuro_ls(MK_DATA_PATH_STORAGE)
@@ -287,6 +297,7 @@ def test_make_clean_data() -> None:
         neuro_ls(MK_DATA_PATH_STORAGE)
 
 
+@log_outer_exceptions
 @pytest.mark.run(order=4)
 def test_make_clean_notebooks() -> None:
     actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)

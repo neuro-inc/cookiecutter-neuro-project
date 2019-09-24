@@ -74,6 +74,17 @@ PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
 log = get_logger()
 
 
+def log_outer_exceptions(func: t.Callable[..., None]) -> t.Callable[..., None]:
+    def wrapper(**kwargs: t.Any) -> None:
+        try:
+            func(**kwargs)
+        except Exception as e:
+            log.exception(f"Error: {repr(e)}")
+            raise
+
+    return wrapper
+
+
 def pytest_logger_config(logger_config: t.Any) -> None:
     """Pytest logging setup"""
     loggers = [LOGGER_NAME]
