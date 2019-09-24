@@ -247,6 +247,12 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             timeout_s=DEFAULT_TIMEOUT_SHORT,
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
+    running = neuro_ps(timeout_s=TIMEOUT_NEURO_PS)
+    if running:
+        log.warning(f"RUNNING: {running}")
+        for job in running:
+            log.warning(run(f"neuro status {job}"))
+
     assert neuro_ps(timeout_s=TIMEOUT_NEURO_PS) == set()
 
 
