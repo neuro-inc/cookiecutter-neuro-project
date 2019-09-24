@@ -451,6 +451,7 @@ def wait_job_change_status_to(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
 ) -> None:
+    log.info(f"Waiting for job {job_id} to get status {target_status}...")
     with timeout(timeout_s):
         out = run(
             f"neuro status {job_id}",
