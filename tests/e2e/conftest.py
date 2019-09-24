@@ -286,7 +286,7 @@ def run_once(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
 ) -> str:
-    """
+    r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
     searches for patterns defined in `expect_patterns` *in their order*
     (normally, `pexpect.expect([pattern1, pattern2, ...])` won't search
@@ -295,17 +295,17 @@ def run_once(
         Note: if you want `debug=True` to print all child process' output to
         stdout, ensure that `PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout`
     >>> # Check expected-outputs:
-    >>> s = run("bash -c 'echo 1; echo 2; echo 3'", expect_patterns=['1', '3'])
-    >>> assert s.split() == ['1', '2', '3']
+    >>> run("echo 1 2 3", expect_patterns=['1', '3'])
+    '1 2 3\r\n'
+    >>> # Empty pattern list:
+    >>> run('echo 1 2 3', expect_patterns=[])
+    '1 2 3\r\n'
     >>> # Pattern not found at all:
     >>> try:
-    ...     run('echo 1', expect_patterns=['2'])
+    ...     run('echo 1 2 3', expect_patterns=['4'])
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND: `2`"
-    >>> # Empty pattern list:
-    >>> s = run('echo 1', expect_patterns=[])
-    >>> assert s.split() == ['1']
+    ...     assert str(e) == "NOT FOUND: `4`", repr(str(e))
     """
 
     if not any(verb in cmd for verb in VERBS_SECRET):
@@ -351,11 +351,11 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
 
 
 def _read_till_end(child: pexpect.spawn) -> str:
-    """
+    r"""
     >>> # _read_till_end() from the beginning:
     >>> child = pexpect.spawn("echo 1 2 3", encoding="utf8")
     >>> _read_till_end(child)
-    '1 2 3\\r\\n'
+    '1 2 3\r\n'
     >>> _read_till_end(child)  # eof reached
     ''
     >>> _read_till_end(child)  # once again
@@ -365,7 +365,7 @@ def _read_till_end(child: pexpect.spawn) -> str:
     >>> child.expect('2')
     0
     >>> _read_till_end(child)
-    ' 3\\r\\n'
+    ' 3\r\n'
     >>> _read_till_end(child)  # eof reached
     ''
     """
@@ -383,14 +383,14 @@ def _read_till_end(child: pexpect.spawn) -> str:
 def detect_errors(
     output: str, error_patterns: t.Iterable[str] = (), ignore_case: bool = True
 ) -> t.Set[str]:
-    """
-    >>> output = r"1\\r\\n2\\r\\n3\\r\\n"
-    >>> e = detect_errors(output, error_patterns=['2'])
-    >>> assert e == {'2'}, e
-    >>> e = detect_errors(output, error_patterns=['3', '(2|3)'])
-    >>> assert e == {'2', '3'}, e
-    >>> e = detect_errors(output, error_patterns=['3', r'\\d+'])
-    >>> assert e == {'1', '2', '3'}, e
+    r"""
+    >>> output = r"1\r\n2\r\n3\r\n"
+    >>> errs = detect_errors(output, error_patterns=['2'])
+    >>> assert errs == {'2'}, repr(errs)
+    >>> errs = detect_errors(output, error_patterns=['3', '(2|3)'])
+    >>> assert errs == {'2', '3'}, repr(errs)
+    >>> errs = detect_errors(output, error_patterns=['3', r'\d+'])
+    >>> assert errs == {'1', '2', '3'}, repr(errs)
     """
     if not error_patterns:
         return set()
