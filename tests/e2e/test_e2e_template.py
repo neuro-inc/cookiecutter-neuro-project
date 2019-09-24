@@ -229,22 +229,30 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 expect_patterns=[r"Status:[^\n]+running"],
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
+            log.info(f"Dump run: {repr(out)}")
 
         search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+        log.info(f"Search id: {search}")
         assert search, f"not found job-ID in output: `{out}`"
         job_id = search.group(1)
+        log.info(f"id: {job_id}")
 
         search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+        log.info(f"Search url: {search}")
         assert search, f"not found URL in output: `{out}`"
         url = search.group(1)
+        log.info(f"url: {url}")
 
+        log.info(f"repeating until success")
         repeat_until_success(
             f"curl --fail {url}{path}",
             expect_patterns=["<html.*>"],
             error_patterns=["curl: "],
         )
+        log.info(f"finish repeating")
 
         make_cmd = f"make kill-{target}"
+        log.info(f"killing")
         with measure_time(make_cmd):
             run(
                 make_cmd,
@@ -252,6 +260,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 timeout_s=DEFAULT_TIMEOUT_SHORT,
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
+        log.info(f"waiting until killed")
         wait_job_change_status_to(job_id, "succeeded")
 
     finally:
