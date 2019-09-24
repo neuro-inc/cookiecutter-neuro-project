@@ -14,6 +14,8 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
+    PROJECT_CODE_DIR_CONTENT,
+    PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_MAKE_CLEAN_DATA,
     TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
@@ -22,25 +24,27 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_CODE,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-    TIMEOUT_NEURO_LS,
-    TIMEOUT_NEURO_PS,
+    TIMEOUT_NEURO_KILL,
+    TIMEOUT_NEURO_RMDIR_CODE,
+    TIMEOUT_NEURO_RMDIR_DATA,
+    TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
 )
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    DEFAULT_TIMEOUT_SHORT,
+    JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
-    measure_time,
     neuro_ls,
-    neuro_ps,
     neuro_rm_dir,
     repeat_until_success,
     run,
+    wait_job_change_status_to,
 )
+from .utils import measure_time
 
 
 log = get_logger()
@@ -63,13 +67,12 @@ def test_project_structure() -> None:
 
 
 def test_make_help_works() -> None:
-    out = run("make help", debug=True)
+    out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
 @pytest.mark.run(order=1)
 def test_make_setup() -> None:
-
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -112,101 +115,79 @@ def test_make_setup() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
 
 @pytest.mark.run(order=2)
-def test_make_upload_clean_code() -> None:
-    neuro_rm_dir(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS, ignore_errors=True)
+def test_make_upload_code() -> None:
+    neuro_rm_dir(
+        MK_CODE_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_CODE, ignore_errors=True
+    )
 
     # Upload:
     make_cmd = "make upload-code"
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual = neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
-    assert actual == {"main.py"}
-
-    # Clean:
-    make_cmd = "make clean-code"
-    with measure_time(make_cmd):
-        run(
-            make_cmd,
-            debug=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
+    actual = neuro_ls(MK_CODE_PATH_STORAGE)
+    assert actual == PROJECT_CODE_DIR_CONTENT
 
 
-@pytest.mark.run(order=3)
-def test_make_upload_clean_data() -> None:
-    neuro_rm_dir(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS, ignore_errors=True)
+@pytest.mark.run(order=2)
+def test_make_upload_data() -> None:
+    neuro_rm_dir(
+        MK_DATA_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_DATA, ignore_errors=True
+    )
 
     make_cmd = "make upload-data"
     # Upload:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     # let storage sync
     sleep(5)
-    actual = neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
+    actual = neuro_ls(MK_DATA_PATH_STORAGE)
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
 
-    # Clean:
-    make_cmd = "make clean-data"
-    with measure_time(make_cmd):
-        run(
-            make_cmd,
-            debug=True,
-            timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
-            # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
 
-
-@pytest.mark.run(order=4)
-def test_make_upload_download_clean_notebooks() -> None:
-    files_set = {"00_notebook_tutorial.ipynb"}
-
+@pytest.mark.run(order=2)
+def test_make_upload_download_notebooks() -> None:
     # Upload:
     make_cmd = "make upload-notebooks"
     neuro_rm_dir(
-        MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS, ignore_errors=True
+        MK_NOTEBOOKS_PATH_STORAGE,
+        timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
+        ignore_errors=True,
     )
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
-    assert actual_remote == files_set
+    actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
+    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
     # Download:
     make_cmd = "make download-notebooks"
@@ -214,35 +195,20 @@ def test_make_upload_download_clean_notebooks() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_local = {f.name for f in Path(MK_NOTEBOOKS_PATH).iterdir()}
-    assert actual_local == files_set
+    assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
 
-    # Clean:
-    make_cmd = "make clean-notebooks"
-    with measure_time(make_cmd):
-        run(
-            make_cmd,
-            debug=True,
-            timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
-            # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
-
-
-# TODO: test 'make upload', 'make clean'
 
 # TODO: training, kill-training, connect-training
 
 
-@pytest.mark.run(order=4)
+@pytest.mark.run(order=3)
 @pytest.mark.parametrize(
     "target,path,timeout_run",
     [
@@ -252,35 +218,100 @@ def test_make_upload_download_clean_notebooks() -> None:
     ],
 )
 def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    # Can't test web UI with HTTP auth
-    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
-    with measure_time(make_cmd):
-        output = run(
-            make_cmd,
-            debug=True,
-            timeout_s=timeout_run,
-            expect_patterns=[r"Status:[^\n]+running"],
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
-        assert search, f"not found in output: `{repr(output)}`"
+    try:
+        # Can't test web UI with HTTP auth
+        make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+        with measure_time(make_cmd):
+            out = run(
+                make_cmd,
+                verbose=True,
+                timeout_s=timeout_run,
+                expect_patterns=[r"Status:[^\n]+running"],
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+
+        search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+        assert search, f"not found job-ID in output: `{out}`"
+        job_id = search.group(1)
+
+        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+        assert search, f"not found URL in output: `{out}`"
         url = search.group(1)
 
-    repeat_until_success(
-        f"curl --fail {url}{path}",
-        expect_patterns=["<html.*>"],
-        stop_patterns=["curl: "],
-    )
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            expect_patterns=["<html.*>"],
+            error_patterns=["curl: "],
+        )
 
-    make_cmd = f"make kill-{target}"
+        make_cmd = f"make kill-{target}"
+        with measure_time(make_cmd):
+            run(
+                make_cmd,
+                verbose=True,
+                timeout_s=TIMEOUT_NEURO_KILL,
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+        wait_job_change_status_to(job_id, "succeeded")
+
+    finally:
+        # cleanup
+        run(f"make kill-{target}", verbose=False, error_patterns=())
+
+
+@pytest.mark.run(order=4)
+def test_make_clean_code() -> None:
+    actual = neuro_ls(MK_CODE_PATH_STORAGE)
+    assert actual == {"main.py"}
+
+    make_cmd = "make clean-code"
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
-            timeout_s=DEFAULT_TIMEOUT_SHORT,
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
+            # TODO: add clean-specific error patterns
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()
+    with pytest.raises(RuntimeError, match="404: Not Found"):
+        neuro_ls(MK_CODE_PATH_STORAGE)
+
+
+@pytest.mark.run(order=4)
+def test_make_clean_data() -> None:
+    actual = neuro_ls(MK_DATA_PATH_STORAGE)
+    assert len(actual) == N_FILES
+    assert all(name.endswith(".tmp") for name in actual)
+
+    make_cmd = "make clean-data"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
+            # TODO: add clean-specific error patterns
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    with pytest.raises(RuntimeError, match="404: Not Found"):
+        neuro_ls(MK_DATA_PATH_STORAGE)
+
+
+@pytest.mark.run(order=4)
+def test_make_clean_notebooks() -> None:
+    actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
+    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+
+    make_cmd = "make clean-notebooks"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
+            # TODO: add clean-specific error patterns
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    with pytest.raises(RuntimeError, match="404: Not Found"):
+        neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
 
 
 # TODO: other tests
