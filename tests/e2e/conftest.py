@@ -337,11 +337,7 @@ def _read_till_end(child: pexpect.spawn) -> str:
 
 
 def detect_errors(
-    output: str,
-    error_patterns: t.Sequence[str] = (),
-    *,
-    verbose: bool = True,
-    ignore_case: bool = True,
+    output: str, error_patterns: t.Sequence[str] = (), *, verbose: bool = True
 ) -> t.Set[str]:
     r"""
     >>> output = r"1\r\n2\r\n3\r\n"
@@ -355,12 +351,9 @@ def detect_errors(
     if not error_patterns:
         return set()
 
-    compile_flags = re.DOTALL
-    if ignore_case:
-        compile_flags = compile_flags | re.IGNORECASE
     found = set()
     for p in error_patterns:
-        for err in re.findall(p, output, flags=compile_flags):
+        for err in re.findall(p, output):
             if err:
                 found.add(err)
                 if verbose:
