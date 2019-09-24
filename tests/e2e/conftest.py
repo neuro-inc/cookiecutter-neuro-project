@@ -89,7 +89,7 @@ def pytest_logger_config(logger_config: t.Any) -> None:
 
 JOB_ID_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
     re.IGNORECASE,
 )
 

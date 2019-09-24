@@ -229,13 +229,14 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 expect_patterns=[r"Status:[^\n]+running"],
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
-            search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
-            assert search, f"not found job-ID in output: `{out}`"
-            job_id = search.group(1)
+            log.info(f"Dump of make: {repr(out)}")
+        search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
+        assert search, f"not found job-ID in output: `{out}`"
+        job_id = search.group(1)
 
-            search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-            assert search, f"not found URL in output: `{out}`"
-            url = search.group(1)
+        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+        assert search, f"not found URL in output: `{out}`"
+        url = search.group(1)
 
         repeat_until_success(
             f"curl --fail {url}{path}",
