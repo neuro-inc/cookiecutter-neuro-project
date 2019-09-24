@@ -24,6 +24,7 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
+    TIMEOUT_NEURO_LS,
 )
 from tests.utils import inside_dir
 
@@ -176,7 +177,6 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
         captured = run(
             f"neuro config login-with-token {token} {url}",
             timeout_s=TIMEOUT_NEURO_LOGIN,
-            debug=False,
         )
         assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
         time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
@@ -187,7 +187,6 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
     finally:
         run(
             f"python {LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}",
-            debug=True,
             detect_new_jobs=False,
         )
         if os.environ.get("CI") == "true":
@@ -263,7 +262,12 @@ def repeat_until_success(
 
 
 def run(
-    cmd: str, error_patterns: t.Iterable[str] = DEFAULT_ERROR_PATTERNS, **kwargs: t.Any
+    cmd: str,
+    *,
+    expect_patterns: t.Sequence[str] = (),
+    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    verbose: bool = True,
+    **kwargs: t.Any,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -271,8 +275,8 @@ def run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
-    out = run_once(cmd, **kwargs)
-    errors = detect_errors(out, error_patterns)
+    out = run_once(cmd, expect_patterns, verbose=verbose, **kwargs)
+    errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {repr(errors)}")
     return out
@@ -280,20 +284,20 @@ def run(
 
 def run_once(
     cmd: str,
+    expect_patterns: t.Sequence[str] = (),
     *,
-    debug: bool = False,
+    verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
-    expect_patterns: t.Sequence[str] = (),
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
     searches for patterns defined in `expect_patterns` *in their order*
     (normally, `pexpect.expect([pattern1, pattern2, ...])` won't search
     them in a specified order). If any expected pattern was not found,
-    `RuntimeError` is raised.
-        Note: if you want `debug=True` to print all child process' output to
-        stdout, ensure that `PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout`
+    `RuntimeError` is raised. Use `verbose=True` to print useful information
+    to log (also to dump all child process' output to the handler defined
+    in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     >>> # Check expected-outputs:
     >>> run("echo 1 2 3", expect_patterns=['1', '3'])
     '1 2 3\r\n'
@@ -308,12 +312,12 @@ def run_once(
     ...     assert str(e) == "NOT FOUND: '4'", repr(str(e))
     """
 
-    if not any(verb in cmd for verb in VERBS_SECRET):
+    if verbose and not any(verb in cmd for verb in VERBS_SECRET):
         log.info(f"Running command: `{cmd}`")
     child = pexpect.spawn(
         cmd,
         timeout=timeout_s,
-        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if debug else None,
+        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
@@ -322,14 +326,17 @@ def run_once(
     need_dump = False
     try:
         for expected in expect_patterns:
-            log.info(f"Searching: {repr(expected)}")
+            if verbose:
+                log.info(f"Searching: {repr(expected)}")
             try:
                 child.expect(expected)
-                log.info("Found")
+                if verbose:
+                    log.info("Found")
             except pexpect.EOF:
                 need_dump = True
                 err = f"NOT FOUND: {repr(expected)}"
-                log.error(err)
+                if verbose:
+                    log.error(err)
                 raise RuntimeError(err)
             finally:
                 chunk = _get_chunk(child)
@@ -338,7 +345,7 @@ def run_once(
         output += _read_till_end(child)
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
-        if need_dump:
+        if verbose and need_dump:
             log.info(f"DUMP: {repr(output)}")
     return output
 
@@ -381,7 +388,11 @@ def _read_till_end(child: pexpect.spawn) -> str:
 
 
 def detect_errors(
-    output: str, error_patterns: t.Iterable[str] = (), ignore_case: bool = True
+    output: str,
+    error_patterns: t.Sequence[str] = (),
+    *,
+    verbose: bool = True,
+    ignore_case: bool = True,
 ) -> t.Set[str]:
     r"""
     >>> output = r"1\r\n2\r\n3\r\n"
@@ -403,8 +414,9 @@ def detect_errors(
         for err in re.findall(p, output, flags=compile_flags):
             if err:
                 found.add(err)
-                log.info(f"Detected error matching {repr(p)}: {repr(err)}")
-    if found:
+                if verbose:
+                    log.info(f"Detected error matching {repr(p)}: {repr(err)}")
+    if verbose and found:
         log.info(f"Overall {len(found)} patterns matched")
         log.info(f"DUMP: {repr(output)}")
     return found
@@ -469,11 +481,11 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 # == neuro helpers ==
 
 
-def neuro_ls(path: str, timeout: int) -> t.Set[str]:
+def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
-        timeout_s=timeout,
-        debug=False,
+        timeout_s=TIMEOUT_NEURO_LS,
+        verbose=False,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
@@ -483,22 +495,22 @@ def neuro_ls(path: str, timeout: int) -> t.Set[str]:
 
 
 def neuro_rm_dir(
-    project_relative_path: str, timeout: int, ignore_errors: bool = False
+    project_relative_path: str, timeout_s: int, ignore_errors: bool = False
 ) -> None:
     log.info(f"Deleting remote directory `{project_relative_path}`")
     run(
         f"neuro rm -r {project_relative_path}",
-        timeout_s=timeout,
-        debug=False,
+        timeout_s=timeout_s,
+        verbose=False,
         error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
 
 
-def neuro_ps(timeout: int) -> t.Set[str]:
+def neuro_ps(timeout_s: int) -> t.Set[str]:
     out = run(
         f"neuro --quiet ps",
-        timeout_s=timeout,
-        debug=True,
+        timeout_s=timeout_s,
+        verbose=False,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     return set(out.split())
