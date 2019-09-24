@@ -241,7 +241,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
         repeat_until_success(
             f"curl --fail {url}{path}",
             expect_patterns=["<html.*>"],
-            error_patterns=["curl: "],
+            error_patterns=["curl: .+"],
         )
 
         make_cmd = f"make kill-{target}"
