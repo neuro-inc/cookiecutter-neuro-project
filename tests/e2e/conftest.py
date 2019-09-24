@@ -186,7 +186,7 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
 
     finally:
         run(
-            f"python '{LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}'",
+            f"python {LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}",
             debug=True,
             detect_new_jobs=False,
         )
