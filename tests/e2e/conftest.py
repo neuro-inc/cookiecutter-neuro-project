@@ -263,8 +263,14 @@ def repeat_until_success(
 
 
 def run(
-    cmd: str, error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS, **kwargs: t.Any
+    cmd: str, error_patterns: t.Iterable[str] = DEFAULT_ERROR_PATTERNS, **kwargs: t.Any
 ) -> str:
+    """
+    This method wraps method `run_once` and accepts all its named arguments.
+    Once the command `cmd` is finished to be executed, the output is tested
+    against the set of error patterns `error_patterns`, and if any of them
+    was found, a `RuntimeError` will be raised.
+    """
     out = run_once(cmd, **kwargs)
     errors = detect_errors(out, error_patterns)
     if errors:
@@ -284,11 +290,10 @@ def run_once(
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
     searches for patterns defined in `expect_patterns` *in their order*
     (normally, `pexpect.expect([pattern1, pattern2, ...])` won't search
-    them in a specified order). Once it sees any pattern from `stop_patterns`,
-    it aborts its execution with `RuntimeError`. If any pattern from `expect_patterns`
-    wasn't found, also `RuntimeError` is raised.
-        Note: if you want `debug=True` to work,
-        set `PEXPECT_DEBUG_OUTPUT_LOGFILE=sys.output`
+    them in a specified order). If any expected pattern was not found,
+    `RuntimeError` is raised.
+        Note: if you want `debug=True` to print all child process' output to
+        stdout, ensure that `PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout`
     >>> # Check expected-outputs:
     >>> s = run("bash -c 'echo 1; echo 2; echo 3'", expect_patterns=['1', '3'])
     >>> assert s.split() == ['1', '2', '3']
@@ -376,7 +381,7 @@ def _read_till_end(child: pexpect.spawn) -> str:
 
 
 def detect_errors(
-    output: str, error_patterns: t.Sequence[str] = (), ignore_case: bool = True
+    output: str, error_patterns: t.Iterable[str] = (), ignore_case: bool = True
 ) -> t.Set[str]:
     """
     >>> output = r"1\\r\\n2\\r\\n3\\r\\n"
