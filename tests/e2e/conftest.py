@@ -455,15 +455,12 @@ def wait_job_change_status_to(
         out = run(
             f"neuro status {job_id}",
             timeout_s=TIMEOUT_NEURO_STATUS,
-            debug=False,
+            verbose=False,
             stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
         )
-        log.info(f"status check: {repr(out)}")
         search = re.search(r"Status: (\w+)", out)
-        log.info(f"search: {search}")
         assert search, f"not found job status in output: `{out}`"
         status = search.group(1)
-        log.info(f"status: {status}")
         if status == target_status:
             return
         if status in JOB_STATUSES_TERMINATED:
