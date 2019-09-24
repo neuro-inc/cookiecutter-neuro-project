@@ -59,6 +59,9 @@ jobs:
             export TRAINING_MACHINE_TYPE=cpu-small
             make test_e2e
 
+      - store_artifacts:
+          path: tests/e2e/logs/
+
       - run:
           name: clean up
           command: |
