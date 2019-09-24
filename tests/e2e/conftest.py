@@ -75,9 +75,9 @@ log = get_logger()
 
 
 def log_outer_exceptions(func: t.Callable[..., None]) -> t.Callable[..., None]:
-    def wrapper(**kwargs: t.Any) -> None:
+    def wrapper(*args: t.Any, **kwargs: t.Any) -> None:
         try:
-            func(**kwargs)
+            func(*args, **kwargs)
         except Exception as e:
             log.exception(f"Error: {repr(e)}")
             raise
