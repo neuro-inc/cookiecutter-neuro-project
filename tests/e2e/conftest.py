@@ -7,7 +7,6 @@ import sys
 import textwrap
 import time
 import typing as t
-from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
@@ -96,7 +95,6 @@ JOB_ID_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-RunOutput = namedtuple("RunOutput", "output errors")
 # == fixtures ==
 
 
@@ -348,17 +346,33 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
 
 
 def _read_till_end(child: pexpect.spawn) -> str:
+    """
+    >>> # _read_till_end() from the beginning:
+    >>> child = pexpect.spawn("echo 1 2 3", encoding="utf8")
+    >>> _read_till_end(child)
+    '1 2 3\\r\\n'
+    >>> _read_till_end(child)  # eof reached
+    ''
+    >>> _read_till_end(child)  # once again
+    ''
+    >>> # expect() and then _read_till_end():
+    >>> child = pexpect.spawn("echo 1 2 3", encoding="utf8")
+    >>> child.expect('2')
+    0
+    >>> _read_till_end(child)
+    ' 3\\r\\n'
+    >>> _read_till_end(child)  # eof reached
+    ''
+    """
     # read the rest:
     output = ""
-    try:
-        while True:
-            # TODO: read in fixed-size chunks
-            chunk = child.read()
-            if not chunk:
-                break
-            output += chunk
-    finally:
-        return output
+    while True:
+        # TODO: read in fixed-size chunks
+        chunk = child.read()
+        if not chunk:
+            break
+        output += chunk
+    return output
 
 
 def detect_errors(
@@ -390,15 +404,11 @@ def detect_errors(
     return found
 
 
-def _raise_if_contains_stop_pattern(
-    chunk: str, stop_patterns_compiled: t.List[t.Pattern[str]]
-) -> None:
-    for stop_p in stop_patterns_compiled:
-        if stop_p.search(chunk):
-            raise RuntimeError(f"Found stop-pattern: {stop_p}")
-
-
 def _detect_job_ids(stdout: str) -> t.Set[str]:
+    """
+    >>> _detect_job_ids("Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ...")
+    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
+    """
     return set(JOB_ID_PATTERN.findall(stdout))
 
 
