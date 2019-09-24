@@ -12,8 +12,7 @@ jobs:
     steps:
       - checkout
 
-      # Download and cache dependencies
-      - &step_restore_cache restore_cache:
+      - restore_cache:
           keys:
             - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
             # fallback to using the latest cache if no exact match is found
@@ -27,7 +26,7 @@ jobs:
             pip install --upgrade pip
             make init
 
-      - &step_save_cache save_cache:
+      - save_cache:
           paths:
             - ./venv
           key: *pip_packages_cache_key
@@ -68,10 +67,16 @@ jobs:
     working_directory: ~/neuromation-template
     steps:
       - checkout
-      - *step_restore_cache
-      - *pip_packages_cache_key
+      - restore_cache:
+          keys:
+            - *pip_packages_cache_key
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
       - *step_install_dependencies
-      - *step_save_cache
+      - save_cache:
+          paths:
+            - ./venv
+          key: *pip_packages_cache_key
       - *step_linter
       - *step_unit_tests
       - run:
@@ -93,4 +98,5 @@ workflows:
       - test_staging:
           filters:
             branches:
-              only: master
+#              only: master
+              only: /.*/
