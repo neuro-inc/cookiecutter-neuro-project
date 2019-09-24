@@ -63,7 +63,7 @@ jobs:
           name: clean up running jobs
           command: |
             . venv/bin/activate
-            python cleanup_jobs.py
+            python cleanup_jobs.py || echo "Cleanup failed"
           when: always
 
 workflows:

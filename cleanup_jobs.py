@@ -48,14 +48,14 @@ def cleanup_jobs_from_file() -> None:
 
 def cleanup_active_jobs() -> None:
     print("Killing active jobs:")
-    output = run("neuro --quiet ps", verbose=True, detect_new_jobs=False)
+    output = run("neuro --quiet ps", debug=True, detect_new_jobs=False)
     jobs = output.split()
     if jobs:
         _dump_jobs("FOUND ACTIVE JOBS", jobs)
         run(f"bash -c 'neuro kill {' '.join(jobs)}'", detect_new_jobs=False)
         print("-" * 53)
         print("Result:")
-        run("neuro ps", verbose=True, detect_new_jobs=False)
+        run("neuro ps", debug=True, detect_new_jobs=False)
         print("=" * 53)
 
 
