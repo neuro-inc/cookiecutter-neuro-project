@@ -262,10 +262,13 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             )
         log.info(f"waiting until killed")
         wait_job_change_status_to(job_id, "succeeded")
+        log.info("finish waiting")
 
     finally:
+        log.info("cleaning up")
         # cleanup
         run(f"make kill-{target}", verbose=False, error_patterns=())
+        log.info("finish cleaning up")
 
 
 @pytest.mark.run(order=4)
