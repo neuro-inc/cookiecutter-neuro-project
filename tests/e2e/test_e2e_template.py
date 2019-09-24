@@ -262,7 +262,7 @@ def test_make_clean_code() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_CODE_PATH_STORAGE)
@@ -281,7 +281,7 @@ def test_make_clean_data() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_DATA_PATH_STORAGE)
@@ -299,7 +299,7 @@ def test_make_clean_notebooks() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
