@@ -305,7 +305,7 @@ def run_once(
     ...     run('echo 1 2 3', expect_patterns=['4'])
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND: `4`", repr(str(e))
+    ...     assert str(e) == "NOT FOUND: '4'", repr(str(e))
     """
 
     if not any(verb in cmd for verb in VERBS_SECRET):
@@ -322,13 +322,13 @@ def run_once(
     need_dump = False
     try:
         for expected in expect_patterns:
-            log.info(f"Waiting: `{expected}`")
+            log.info(f"Searching: {repr(expected)}")
             try:
                 child.expect(expected)
-                log.info(f"Found:   `{expected}`")
+                log.info("Found")
             except pexpect.EOF:
                 need_dump = True
-                err = f"NOT FOUND: `{expected}`"
+                err = f"NOT FOUND: {repr(expected)}"
                 log.error(err)
                 raise RuntimeError(err)
             finally:
@@ -403,9 +403,9 @@ def detect_errors(
         for err in re.findall(p, output, flags=compile_flags):
             if err:
                 found.add(err)
-                log.info(f"DETECTED ERROR MATCHING {repr(p)}: {repr(err)}")
+                log.info(f"Detected error matching {repr(p)}: {repr(err)}")
     if found:
-        log.info(f"Overall {len(found)} error(s) detected")
+        log.info(f"Overall {len(found)} patterns matched")
         log.info(f"DUMP: {repr(output)}")
     return found
 
@@ -469,12 +469,12 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 # == neuro helpers ==
 
 
-def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]:
+def neuro_ls(path: str, timeout: int) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
         timeout_s=timeout,
-        debug=True,
-        error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
+        debug=False,
+        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
     if ".gitkeep" in result:
