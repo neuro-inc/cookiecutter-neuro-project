@@ -29,6 +29,10 @@ test_unit:
 	stat ../test-project
 	python -m doctest tests/e2e/conftest.py
 
-.PHONY: test_e2e
-test_e2e:
-	pytest -v -s --reruns=2 tests/e2e
+.PHONY: test_e2e_dev
+test_e2e_dev:
+	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s -x --environment=dev --tb=line tests/e2e
+
+.PHONY: test_e2e_staging
+test_e2e_staging:
+	TRAINING_MACHINE_TYPE=gpu-small pytest -v -s -x --environment=staging --tb=short --reruns=2 tests/e2e
