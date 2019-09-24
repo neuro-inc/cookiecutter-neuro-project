@@ -89,7 +89,7 @@ def pytest_logger_config(logger_config: t.Any) -> None:
 
 JOB_ID_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"(job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
+    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",
     re.IGNORECASE,
 )
 
@@ -358,8 +358,12 @@ def detect_errors(
 
 
 def _detect_job_ids(stdout: str) -> t.Set[str]:
-    """
-    >>> _detect_job_ids("Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ...")
+    r"""
+    >>> output = "Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ..."
+    >>> _detect_job_ids(output)
+    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
+    >>> output = r"\x1b[1mJob ID\x1b[0m: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 ..."
+    >>> _detect_job_ids(output)
     {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
     """
     return set(JOB_ID_PATTERN.findall(stdout))
