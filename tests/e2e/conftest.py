@@ -7,6 +7,7 @@ import sys
 import textwrap
 import time
 import typing as t
+from collections import namedtuple
 from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
@@ -95,7 +96,7 @@ JOB_ID_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-
+RunOutput = namedtuple("RunOutput", "output errors")
 # == fixtures ==
 
 
@@ -111,7 +112,7 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     run(
         f"cookiecutter --no-input "
         f"--config-file={LOCAL_PROJECT_CONFIG_PATH} {LOCAL_ROOT_PATH}",
-        stop_patterns=["raise .*Exception"],
+        error_patterns=["raise .*Exception"],
     )
     with inside_dir(MK_PROJECT_NAME):
         yield
@@ -260,15 +261,26 @@ def repeat_until_success(
             time.sleep(interval_s)
 
 
-# TODO: Move this helper to a separate file to use it from outside
+# TODO: Move these helpers to a separate file to use it from outside
+
+
 def run(
+    cmd: str, error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS, **kwargs: t.Any
+) -> str:
+    out = run_once(cmd, **kwargs)
+    errors = detect_errors(out, error_patterns)
+    if errors:
+        raise RuntimeError(f"Detected errors in output: {repr(errors)}")
+    return out
+
+
+def run_once(
     cmd: str,
     *,
     debug: bool = False,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
-    stop_patterns: t.Sequence[str] = (),  # ignore errors (and stderr) by default
 ) -> str:
     """
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -280,33 +292,17 @@ def run(
         Note: if you want `debug=True` to work,
         set `PEXPECT_DEBUG_OUTPUT_LOGFILE=sys.output`
     >>> # Check expected-outputs:
-    >>> s = run("bash -c 'echo 1; echo 2; echo 3'",
-    ...          debug=False,
-    ...          expect_patterns=['1', '2'])
-    >>> s.split()
-    ['1', '2', '3']
-    >>> # Check expected-outputs:
-    >>> try:
-    ...     run("bash -c 'echo 1; echo 2; echo 3'",
-    ...          debug=False,
-    ...          expect_patterns=['1', '3'],
-    ...          stop_patterns=['2'])
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Found stop-pattern: re.compile('2', re.DOTALL)"
-    >>> # Works with only stop-patterns:
-    >>> try:
-    ...     run("bash -c 'echo 1; echo 2; echo 3'",
-    ...          debug=False,
-    ...          stop_patterns=['2'])
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Found stop-pattern: re.compile('2', re.DOTALL)"
+    >>> s = run("bash -c 'echo 1; echo 2; echo 3'", expect_patterns=['1', '3'])
+    >>> assert s.split() == ['1', '2', '3']
     >>> # Pattern not found at all:
     >>> try:
-    ...     run("bash -c 'echo 1; echo 2; echo 3'",
-    ...          debug=False,
-    ...          expect_patterns=['1', '2', '3', '4'])
+    ...     run('echo 1', expect_patterns=['2'])
+    ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "Could not find pattern: `4`"
+    ...     assert str(e) == "NOT FOUND: `2`"
+    >>> # Empty pattern list:
+    >>> s = run('echo 1', expect_patterns=[])
+    >>> assert s.split() == ['1']
     """
 
     if not any(verb in cmd for verb in VERBS_SECRET):
@@ -319,48 +315,29 @@ def run(
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
     )
-
-    compile_flags = re.DOTALL
-    if child.ignorecase:
-        compile_flags = compile_flags | re.IGNORECASE
-    stop_patterns_compiled = [re.compile(p, compile_flags) for p in stop_patterns]
-    if stop_patterns:
-        log.info(f"Stop-patterns: {stop_patterns}")
-
     output = ""
+    need_dump = False
     try:
         for expected in expect_patterns:
             log.info(f"Waiting for pattern: `{expected}`")
-            expected_p = re.compile(expected, compile_flags)
             try:
-                child.expect_list([expected_p] + stop_patterns_compiled)
+                child.expect(expected)
                 log.info(f"Found: `{expected}`")
+            except pexpect.EOF:
+                need_dump = True
+                err = f"NOT FOUND: `{expected}`"
+                log.error(err)
+                raise RuntimeError(err)
+            finally:
                 chunk = _get_chunk(child)
                 output += chunk
-            except pexpect.EOF:
-                raise RuntimeError(f"Could not find pattern: `{expected}`")
-
-            _raise_if_contains_stop_pattern(chunk, stop_patterns_compiled)
-        # read the rest:
-        # child.wait()
-        while True:
-            # TODO: read huge chunk in chunks
-            chunk = child.read()
-            if not chunk:
-                break
-            output += chunk
-            _raise_if_contains_stop_pattern(chunk, stop_patterns_compiled)
-
-        return output
-
-    except RuntimeError as e:
-        log.error(str(e))
-        log.error(f"Dump: `{repr(output)}`")
-        raise
-
     finally:
+        output += _read_till_end(child)
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
+        if need_dump:
+            log.info(f"DUMP: {repr(output)}")
+    return output
 
 
 def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
@@ -368,6 +345,49 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
     if isinstance(child.after, child.allowed_string_types):
         chunk += child.after
     return chunk
+
+
+def _read_till_end(child: pexpect.spawn) -> str:
+    # read the rest:
+    output = ""
+    try:
+        while True:
+            # TODO: read in fixed-size chunks
+            chunk = child.read()
+            if not chunk:
+                break
+            output += chunk
+    finally:
+        return output
+
+
+def detect_errors(
+    output: str, error_patterns: t.Sequence[str] = (), ignore_case: bool = True
+) -> t.Set[str]:
+    """
+    >>> output = r"1\\r\\n2\\r\\n3\\r\\n"
+    >>> e = detect_errors(output, error_patterns=['2'])
+    >>> assert e == ['2'], e
+    >>> e = detect_errors(output, error_patterns=['3', '(2|3)'])
+    >>> assert e == ['2', '3'], e
+    >>> e = detect_errors(output, error_patterns=['3', r'\\d+'])
+    >>> assert e == ['1', '2', '3'], e
+    """
+    if not error_patterns:
+        return set()
+
+    compile_flags = re.DOTALL
+    if ignore_case:
+        compile_flags = compile_flags | re.IGNORECASE
+    found = set()
+    for p in error_patterns:
+        for err in re.findall(p, output, flags=compile_flags):
+            if err:
+                found.add(err)
+                log.info(f"DETECTED ERROR MATCHING {p}: {repr(output)}")
+    if found:
+        log.info(f"Overall {len(found)} error(s) detected")
+    return found
 
 
 def _raise_if_contains_stop_pattern(
@@ -438,7 +458,7 @@ def neuro_ls(path: str, timeout: int, ignore_errors: bool = False) -> t.Set[str]
         f"neuro ls {path}",
         timeout_s=timeout,
         debug=True,
-        stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
+        error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
     result = set(out.split())
     if ".gitkeep" in result:
@@ -454,7 +474,7 @@ def neuro_rm_dir(
         f"neuro rm -r {project_relative_path}",
         timeout_s=timeout,
         debug=False,
-        stop_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
+        error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
 
 
@@ -463,6 +483,6 @@ def neuro_ps(timeout: int) -> t.Set[str]:
         f"neuro --quiet ps",
         timeout_s=timeout,
         debug=True,
-        stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
+        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     return set(out.split())

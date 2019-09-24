@@ -116,7 +116,7 @@ def test_make_setup() -> None:
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
 
@@ -133,7 +133,7 @@ def test_make_upload_clean_code() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual = neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
     assert actual == {"main.py"}
@@ -146,7 +146,7 @@ def test_make_upload_clean_code() -> None:
             debug=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_CODE_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
@@ -165,7 +165,7 @@ def test_make_upload_clean_data() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     # let storage sync
     sleep(5)
@@ -181,7 +181,7 @@ def test_make_upload_clean_data() -> None:
             debug=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_DATA_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
@@ -203,7 +203,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
     assert actual_remote == files_set
@@ -218,7 +218,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
             # TODO: add upload-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_local = {f.name for f in Path(MK_NOTEBOOKS_PATH).iterdir()}
     assert actual_local == files_set
@@ -231,7 +231,7 @@ def test_make_upload_download_clean_notebooks() -> None:
             debug=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             # TODO: add clean-specific error patterns
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
         neuro_ls(MK_NOTEBOOKS_PATH_STORAGE, timeout=TIMEOUT_NEURO_LS)
@@ -260,7 +260,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             debug=True,
             timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
         search = re.search(r"Http URL.*: (https://.+neu\.ro)", output)
         assert search, f"not found in output: `{repr(output)}`"
@@ -269,7 +269,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
     repeat_until_success(
         f"curl --fail {url}{path}",
         expect_patterns=["<html.*>"],
-        stop_patterns=["curl: "],
+        error_patterns=["curl: "],
     )
 
     make_cmd = f"make kill-{target}"
@@ -278,7 +278,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             make_cmd,
             debug=True,
             timeout_s=DEFAULT_TIMEOUT_SHORT,
-            stop_patterns=DEFAULT_ERROR_PATTERNS,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert neuro_ps(timeout=TIMEOUT_NEURO_PS) == set()
 
