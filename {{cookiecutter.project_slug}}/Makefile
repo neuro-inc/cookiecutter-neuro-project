@@ -30,7 +30,7 @@ FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
 
 BASE_ENV_NAME?=neuromation/base
 CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
-TRAINING_MACHINE_TYPE?=cpu-small
+TRAINING_MACHINE_TYPE?=gpu-small
 
 # Set it to True (verbatim) to disable HTTP authentication for your jobs
 DISABLE_HTTP_AUTH:=
