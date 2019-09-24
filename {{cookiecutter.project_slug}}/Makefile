@@ -55,7 +55,7 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	neuro kill $(SETUP_NAME)
+	neuro kill $(SETUP_NAME) >/dev/null 2>&1
 	neuro run \
 		--name $(SETUP_NAME) \
 		--preset cpu-small \
@@ -69,7 +69,7 @@ setup: ### Setup remote environment
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
-	neuro kill $(SETUP_NAME)
+	neuro kill $(SETUP_NAME) >/dev/null 2>&1
 
 ##### STORAGE #####
 
@@ -123,7 +123,7 @@ training:  ### Run training job
 
 .PHONY: kill-training
 kill-training:  ### Stop training job
-	neuro kill $(TRAINING_NAME)
+	neuro kill $(TRAINING_NAME) >/dev/null 2>&1
 
 .PHONY: connect-training
 connect-training:  ### Execute shell to the training job
@@ -147,7 +147,7 @@ jupyter: upload-code upload-notebooks ### Run jupyter job
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Stop jupyter job
-	neuro kill $(JUPYTER_NAME)
+	neuro kill $(JUPYTER_NAME) >/dev/null 2>&1
 
 .PHONY: tensorboard
 tensorboard:  ### Run tensorboard job
@@ -164,7 +164,7 @@ tensorboard:  ### Run tensorboard job
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Kill tensorboard job
-	neuro kill $(TENSORBOARD_NAME)
+	neuro kill $(TENSORBOARD_NAME) >/dev/null 2>&1
 
 .PHONY: filebrowser
 filebrowser:  ### Run filebrowser job
@@ -180,7 +180,7 @@ filebrowser:  ### Run filebrowser job
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Kill filebrowser job
-	neuro kill $(FILEBROWSER_NAME)
+	neuro kill $(FILEBROWSER_NAME) >/dev/null 2>&1
 
 .PHONY: kill  ### Kill training, jupyter, tensorboard and filebrowser jobs (even if some of them are not running)
 kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
