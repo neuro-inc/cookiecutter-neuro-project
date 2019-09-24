@@ -60,10 +60,11 @@ jobs:
             make test_e2e
 
       - run:
-          name: clean up running jobs
+          name: clean up
           command: |
             . venv/bin/activate
             python cleanup_jobs.py
+            rm -f ~/.nmrc
           when: always
 
 workflows:

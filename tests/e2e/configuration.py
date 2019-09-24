@@ -1,3 +1,6 @@
+from .utils import unique_label
+
+
 TIMEOUT_MAKE_SETUP = 6 * 60
 TIMEOUT_MAKE_UPLOAD_CODE = 5
 TIMEOUT_MAKE_CLEAN_CODE = 3
@@ -5,18 +8,21 @@ TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
 TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
-# TIMEOUT_MAKE_DOWNLOAD
 
-TIMEOUT_NEURO_LOGIN = 5
-TIMEOUT_NEURO_RUN_CPU = 15
+TIMEOUT_NEURO_LOGIN = 15
+TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
-TIMEOUT_NEURO_LS = 4
-TIMEOUT_NEURO_PS = 4
+TIMEOUT_NEURO_RMDIR_CODE = 10
+TIMEOUT_NEURO_RMDIR_DATA = 60
+TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
+TIMEOUT_NEURO_LS = 10
+TIMEOUT_NEURO_PS = 10
 
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
-MK_PROJECT_NAME = "test-project"
+UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
+MK_PROJECT_NAME = UNIQUE_PROJECT_NAME.lower().replace(" ", "-").replace("_", " ")
 
 MK_CODE_PATH = "modules"
 MK_DATA_PATH = "data"
@@ -52,4 +58,7 @@ PROJECT_PIP_FILE_NAME = "requirements.txt"
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
-PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security==0.4.0", "neuromation"]
+PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+
+PROJECT_CODE_DIR_CONTENT = {"main.py"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"00_notebook_tutorial.ipynb", "__init__.py"}
