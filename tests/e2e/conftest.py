@@ -178,7 +178,7 @@ def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
 
     finally:
         run(
-            f"python '{LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}'",
+            f"python {LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}",
             debug=True,
             detect_new_jobs=False,
         )
@@ -306,6 +306,10 @@ def run(
         log.error(str(e))
         log.error(f"Dump: `{repr(output)}`")
         raise
+
+    except pexpect.TIMEOUT:
+        log.error(f"Timeout exceeded: {timeout_s} sec")
+        raise TimeoutError
 
     finally:
         if detect_new_jobs:

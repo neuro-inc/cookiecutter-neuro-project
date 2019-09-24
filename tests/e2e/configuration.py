@@ -8,13 +8,12 @@ TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
 TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
-# TIMEOUT_MAKE_DOWNLOAD
 
 TIMEOUT_NEURO_LOGIN = 5
-TIMEOUT_NEURO_RUN_CPU = 15
+TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
-TIMEOUT_NEURO_LS = 4
-TIMEOUT_NEURO_PS = 4
+TIMEOUT_NEURO_LS = 10
+TIMEOUT_NEURO_PS = 10
 
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
@@ -56,4 +55,4 @@ PROJECT_PIP_FILE_NAME = "requirements.txt"
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
-PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security==0.4.0", "neuromation"]
+PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
