@@ -161,30 +161,17 @@ def pip_install_neuromation() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def neuro_login(pip_install_neuromation: None) -> t.Iterator[None]:
+def neuro_login(pip_install_neuromation: None) -> None:
     token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
     url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
-    try:
-        captured = run(
-            f"neuro config login-with-token {token} {url}",
-            timeout_s=TIMEOUT_NEURO_LOGIN,
-        )
-        assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
-        time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
-        log.info(run("neuro config show"))
-
-        yield
-
-    finally:
-        run(
-            f"python {LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH.absolute()}",
-            detect_new_jobs=False,
-        )
-        if os.environ.get("CI") == "true":
-            nmrc = Path("~/.nmrc").expanduser()
-            log.info(f"Deleting {nmrc} file")
-            nmrc.unlink()
-            log.info("Deleted")
+    captured = run(
+        f"neuro config login-with-token {token} {url}",
+        timeout_s=TIMEOUT_NEURO_LOGIN,
+        verbose=False,
+    )
+    assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
+    time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
+    log.info(run("neuro config show"))
 
 
 # == execution helpers ==
