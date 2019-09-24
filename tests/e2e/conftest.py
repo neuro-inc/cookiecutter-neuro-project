@@ -19,6 +19,7 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
+    PROJECT_HIDDEN_FILES,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_LS,
@@ -467,8 +468,9 @@ def neuro_ls(path: str) -> t.Set[str]:
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
-    if ".gitkeep" in result:
-        result.remove(".gitkeep")
+    for hidden in PROJECT_HIDDEN_FILES:
+        if hidden in result:
+            result.remove(hidden)
     return result
 
 
