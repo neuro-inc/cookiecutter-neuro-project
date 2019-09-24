@@ -51,4 +51,4 @@ PROJECT_PIP_FILE_NAME = "requirements.txt"
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
-PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security==0.4.0", "neuromation"]
+PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
