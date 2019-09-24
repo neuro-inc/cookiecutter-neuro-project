@@ -386,11 +386,11 @@ def detect_errors(
     """
     >>> output = r"1\\r\\n2\\r\\n3\\r\\n"
     >>> e = detect_errors(output, error_patterns=['2'])
-    >>> assert e == ['2'], e
+    >>> assert e == {'2'}, e
     >>> e = detect_errors(output, error_patterns=['3', '(2|3)'])
-    >>> assert e == ['2', '3'], e
+    >>> assert e == {'2', '3'}, e
     >>> e = detect_errors(output, error_patterns=['3', r'\\d+'])
-    >>> assert e == ['1', '2', '3'], e
+    >>> assert e == {'1', '2', '3'}, e
     """
     if not error_patterns:
         return set()
