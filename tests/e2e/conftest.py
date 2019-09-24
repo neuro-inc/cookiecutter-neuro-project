@@ -207,15 +207,14 @@ def pip_install_neuromation() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def neuro_login(pip_install_neuromation: None) -> None:
-    token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
-    url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
+def neuro_login(pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]) -> None:
+    config = client_setup_factory()
     captured = run(
-        f"neuro config login-with-token {token} {url}",
+        f"neuro config login-with-token {config.token} {config.url}",
         timeout_s=TIMEOUT_NEURO_LOGIN,
         verbose=False,
     )
-    assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
+    assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log.info(run("neuro config show", verbose=False))
 
