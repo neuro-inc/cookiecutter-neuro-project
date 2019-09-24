@@ -205,7 +205,7 @@ def test_make_upload_download_notebooks() -> None:
     actual_local = {
         path.name
         for path in Path(MK_NOTEBOOKS_PATH).iterdir()
-        if path not in PROJECT_HIDDEN_FILES
+        if path.name not in PROJECT_HIDDEN_FILES
     }
     assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
 
