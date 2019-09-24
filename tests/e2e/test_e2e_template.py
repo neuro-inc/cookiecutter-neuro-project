@@ -261,7 +261,10 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
         log.info(f"waiting until killed")
-        wait_job_change_status_to(job_id, "succeeded")
+        try:
+            wait_job_change_status_to(job_id, "succeeded")
+        except Exception as e:
+            log.info(e)
         log.info("finish waiting")
 
     finally:
