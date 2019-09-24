@@ -299,17 +299,17 @@ def run_once(
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     >>> # Check expected-outputs:
-    >>> run("echo 1 2 3", expect_patterns=['1', '3'])
+    >>> run("echo 1 2 3", expect_patterns=['1', '3'], verbose=False)
     '1 2 3\r\n'
     >>> # Empty pattern list:
-    >>> run('echo 1 2 3', expect_patterns=[])
+    >>> run('echo 1 2 3', expect_patterns=[], verbose=False)
     '1 2 3\r\n'
     >>> # Pattern not found at all:
     >>> try:
-    ...     run('echo 1 2 3', expect_patterns=['4'])
+    ...     run('echo 1 2 3', expect_patterns=['4'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND: '4'", repr(str(e))
+    ...     assert str(e) == "NOT FOUND PATTERN: '4'", repr(str(e))
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
@@ -396,11 +396,11 @@ def detect_errors(
 ) -> t.Set[str]:
     r"""
     >>> output = r"1\r\n2\r\n3\r\n"
-    >>> errs = detect_errors(output, error_patterns=['2'])
+    >>> errs = detect_errors(output, error_patterns=['2'], verbose=False)
     >>> assert errs == {'2'}, repr(errs)
-    >>> errs = detect_errors(output, error_patterns=['3', '(2|3)'])
+    >>> errs = detect_errors(output, error_patterns=['3', '(2|3)'], verbose=False)
     >>> assert errs == {'2', '3'}, repr(errs)
-    >>> errs = detect_errors(output, error_patterns=['3', r'\d+'])
+    >>> errs = detect_errors(output, error_patterns=['3', r'\d+'], verbose=False)
     >>> assert errs == {'1', '2', '3'}, repr(errs)
     """
     if not error_patterns:
