@@ -51,10 +51,11 @@ jobs:
             make test_e2e_dev
 
       - &step_cleanup_jobs run:
-          name: clean up running jobs
+          name: clean up
           command: |
             . venv/bin/activate
             python cleanup_jobs.py
+            rm -f ~/.nmrc
           when: always
 
       - &step_store_job_cleanup_artifacts store_artifacts:
