@@ -34,7 +34,7 @@ from tests.e2e.configuration import (
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_SHORT,
-    JOB_ID_PATTERN,
+    JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
@@ -229,8 +229,8 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 expect_patterns=[r"Status:[^\n]+running"],
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
-            log.info(f"Dump of make: {repr(out)}")
-        search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
+
+        search = re.search(JOB_ID_DECLARATION_PATTERN, out)
         assert search, f"not found job-ID in output: `{out}`"
         job_id = search.group(1)
 

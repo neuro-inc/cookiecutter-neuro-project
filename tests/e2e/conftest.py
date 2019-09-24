@@ -87,7 +87,7 @@ def pytest_logger_config(logger_config: t.Any) -> None:
     logger_config.set_log_option_default(",".join(loggers))
 
 
-JOB_ID_PATTERN = re.compile(
+JOB_ID_DECLARATION_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
     r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
     re.IGNORECASE,
@@ -366,7 +366,7 @@ def _detect_job_ids(stdout: str) -> t.Set[str]:
     >>> _detect_job_ids(output)
     {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
     """
-    return set(JOB_ID_PATTERN.findall(stdout))
+    return set(JOB_ID_DECLARATION_PATTERN.findall(stdout))
 
 
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
