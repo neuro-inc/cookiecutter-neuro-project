@@ -462,7 +462,7 @@ def neuro_rm_dir(
     )
 
 
-def neuro_status(job_id: str, timeout: int) -> str:
+def get_job_status(job_id: str, timeout: int) -> str:
     out = run(
         f"neuro status {job_id}",
         timeout_s=timeout,

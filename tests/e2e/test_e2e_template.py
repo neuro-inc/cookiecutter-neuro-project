@@ -34,11 +34,11 @@ from .conftest import (
     JOB_ID_PATTERN,
     N_FILES,
     cleanup_local_dirs,
+    get_job_status,
     get_logger,
     measure_time,
     neuro_ls,
     neuro_rm_dir,
-    neuro_status,
     repeat_until_success,
     run,
 )
@@ -285,7 +285,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
             timeout_s=DEFAULT_TIMEOUT_SHORT,
             stop_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    assert neuro_status(job_id, timeout=TIMEOUT_NEURO_STATUS) == "succeeded"
+    assert get_job_status(job_id, timeout=TIMEOUT_NEURO_STATUS) == "succeeded"
 
 
 # TODO: other tests
