@@ -73,7 +73,6 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup() -> None:
-
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -219,39 +218,44 @@ def test_make_upload_download_notebooks() -> None:
     ],
 )
 def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    # Can't test web UI with HTTP auth
-    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
-    with measure_time(make_cmd):
-        out = run(
-            make_cmd,
-            verbose=True,
-            timeout_s=timeout_run,
-            expect_patterns=[r"Status:[^\n]+running"],
-            error_patterns=DEFAULT_ERROR_PATTERNS,
+    try:
+        # Can't test web UI with HTTP auth
+        make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+        with measure_time(make_cmd):
+            out = run(
+                make_cmd,
+                verbose=True,
+                timeout_s=timeout_run,
+                expect_patterns=[r"Status:[^\n]+running"],
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+            search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
+            assert search, f"not found job-ID in output: `{out}`"
+            job_id = search.group(1)
+
+            search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+            assert search, f"not found URL in output: `{out}`"
+            url = search.group(1)
+
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            expect_patterns=["<html.*>"],
+            error_patterns=["curl: "],
         )
-        search = re.search(f"Job ID.*: ({JOB_ID_PATTERN})", out)
-        assert search, f"not found job-ID in output: `{out}`"
-        job_id = search.group(1)
 
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-        assert search, f"not found URL in output: `{out}`"
-        url = search.group(1)
+        make_cmd = f"make kill-{target}"
+        with measure_time(make_cmd):
+            run(
+                make_cmd,
+                verbose=True,
+                timeout_s=DEFAULT_TIMEOUT_SHORT,
+                error_patterns=DEFAULT_ERROR_PATTERNS,
+            )
+        wait_job_change_status_to(job_id, "succeeded")
 
-    repeat_until_success(
-        f"curl --fail {url}{path}",
-        expect_patterns=["<html.*>"],
-        error_patterns=["curl: "],
-    )
-
-    make_cmd = f"make kill-{target}"
-    with measure_time(make_cmd):
-        run(
-            make_cmd,
-            verbose=True,
-            timeout_s=DEFAULT_TIMEOUT_SHORT,
-            error_patterns=DEFAULT_ERROR_PATTERNS,
-        )
-    wait_job_change_status_to(job_id, "succeeded")
+    finally:
+        # cleanup
+        run(f"make kill-{target}", verbose=False, error_patterns=())
 
 
 @pytest.mark.run(order=4)
