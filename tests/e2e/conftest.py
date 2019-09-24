@@ -324,17 +324,17 @@ def run_once(
     )
     output = ""
     need_dump = False
+    if verbose and expect_patterns:
+        log.info(f"Search patterns: {repr(expect_patterns)}")
     try:
         for expected in expect_patterns:
-            if verbose:
-                log.info(f"Searching: {repr(expected)}")
             try:
                 child.expect(expected)
                 if verbose:
-                    log.info("Found")
+                    log.info(f"Found pattern: {repr(expected)}")
             except pexpect.EOF:
                 need_dump = True
-                err = f"NOT FOUND: {repr(expected)}"
+                err = f"NOT FOUND PATTERN: {repr(expected)}"
                 if verbose:
                     log.error(err)
                 raise RuntimeError(err)
