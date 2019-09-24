@@ -6,7 +6,7 @@ TIMEOUT_MAKE_CLEAN_DATA = 50
 TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
 
-TIMEOUT_NEURO_LOGIN = 5
+TIMEOUT_NEURO_LOGIN = 15
 TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
 TIMEOUT_NEURO_LS = 10
@@ -52,3 +52,6 @@ PROJECT_PIP_FILE_NAME = "requirements.txt"
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+
+PROJECT_CODE_DIR_CONTENT = {"main.py"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"00_notebook_tutorial.ipynb", "__init__.py"}
