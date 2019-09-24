@@ -259,7 +259,7 @@ def test_make_clean_code() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -278,7 +278,7 @@ def test_make_clean_data() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
@@ -296,7 +296,7 @@ def test_make_clean_notebooks() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            debug=True,
+            verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             # TODO: add clean-specific error patterns
             stop_patterns=DEFAULT_ERROR_PATTERNS,
