@@ -456,7 +456,7 @@ def wait_job_change_status_to(
             f"neuro status {job_id}",
             timeout_s=TIMEOUT_NEURO_STATUS,
             verbose=False,
-            stop_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
+            error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
         )
         log.info(f"status check: {repr(out)}")
         search = re.search(r"Status: (\w+)", out)
