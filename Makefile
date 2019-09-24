@@ -31,10 +31,8 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	export TRAINING_MACHINE_TYPE=cpu-small
-	pytest -v -s --environment=dev tests/e2e
+	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=dev tests/e2e
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
-	export TRAINING_MACHINE_TYPE=gpu-small
-	pytest -v -s --environment=staging --reruns=2 tests/e2e
+	TRAINING_MACHINE_TYPE=gpu-small pytest -v -s --environment=staging --reruns=2 tests/e2e

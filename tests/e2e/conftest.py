@@ -141,6 +141,7 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
         f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
         f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
         error_patterns=["raise .*Exception"],
+        verbose=False,
     )
     with inside_dir(MK_PROJECT_NAME):
         yield
@@ -194,8 +195,8 @@ def generate_empty_project(run_cookiecutter: None) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation() -> None:
-    run("pip install -U neuromation")
-    assert "Name: neuromation" in run("pip show neuromation")
+    run("pip install -U neuromation", verbose=False)
+    assert "Name: neuromation" in run("pip show neuromation", verbose=False)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -209,7 +210,7 @@ def neuro_login(pip_install_neuromation: None) -> None:
     )
     assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
-    log.info(run("neuro config show"))
+    log.info(run("neuro config show", verbose=False))
 
 
 # == execution helpers ==
