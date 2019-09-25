@@ -257,7 +257,8 @@ def run(
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
-    **kwargs: t.Any,
+    detect_new_jobs: bool = True,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -265,7 +266,13 @@ def run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
-    out = run_once(cmd, expect_patterns, verbose=verbose, **kwargs)
+    out = run_once(
+        cmd,
+        expect_patterns,
+        verbose=verbose,
+        detect_new_jobs=detect_new_jobs,
+        timeout_s=timeout_s,
+    )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {repr(errors)}")
