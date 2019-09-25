@@ -16,9 +16,6 @@ jobs:
       - restore_cache: &step_restore_cache
           keys:
             - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
       - run: &step_install_dependencies
           name: install dependencies
           command: |
