@@ -50,6 +50,9 @@ jobs:
             . venv/bin/activate
             make test_e2e_dev
 
+      - store_artifacts:
+          path: tests/e2e/logs/
+
       - &step_cleanup_jobs run:
           name: clean up
           command: |
