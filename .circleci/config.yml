@@ -3,6 +3,8 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+cache_key: &cache_key
+  v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
 jobs:
   test_dev:
     docker:
@@ -15,7 +17,7 @@ jobs:
       # Download and cache dependencies
       - restore_cache: &step_restore_cache
           keys:
-            - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
+            - *cache_key
       - run: &step_install_dependencies
           name: install dependencies
           command: |
@@ -27,7 +29,7 @@ jobs:
       - save_cache: &step_save_cache
           paths:
             - ./venv
-          key: *pip_packages_cache_key
+          key: *cache_key
 
       - run: &step_linter
           name: run linter
