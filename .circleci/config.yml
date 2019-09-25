@@ -80,6 +80,8 @@ jobs:
           command: |
             . venv/bin/activate
             make test_e2e_staging
+      - store_artifacts:
+          path: tests/e2e/logs/
       - run: *step_cleanup_jobs
       - store_artifacts: *step_store_job_cleanup_artifacts
 
