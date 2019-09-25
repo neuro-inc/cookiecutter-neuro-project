@@ -9,4 +9,6 @@ pip-wheel-metadata
 .mypy_cache
 .tmontmp
 .testmondata
-submitted_jobs.txt
+/submitted_jobs.txt
+/tests/e2e/logs/
+.idea

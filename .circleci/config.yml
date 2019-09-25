@@ -3,31 +3,22 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+cache_key: &cache_key
+  v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
 jobs:
-  test:
+  test_dev:
     docker:
-      # specify the version you desire here
-      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
       - image: circleci/python:3.7.3
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
     working_directory: ~/neuromation-template
 
     steps:
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
+      - restore_cache: &step_restore_cache
           keys:
-            - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - run:
+            - *cache_key
+      - run: &step_install_dependencies
           name: install dependencies
           command: |
             python3 -m venv venv
@@ -35,18 +26,18 @@ jobs:
             pip install --upgrade pip
             make init
 
-      - save_cache:
+      - save_cache: &step_save_cache
           paths:
             - ./venv
-          key: *pip_packages_cache_key
+          key: *cache_key
 
-      - run:
+      - run: &step_linter
           name: run linter
           command: |
             . venv/bin/activate
             make lint
 
-      - run:
+      - run: &step_unit_tests
           name: run unit tests
           command: |
             . venv/bin/activate
@@ -56,19 +47,53 @@ jobs:
           name: run e2e tests
           command: |
             . venv/bin/activate
-            export TRAINING_MACHINE_TYPE=cpu-small
-            make test_e2e
+            make test_e2e_dev
 
-      - run:
-          name: clean up running jobs
+      - store_artifacts:
+          path: tests/e2e/logs/
+
+      - run: &step_cleanup_jobs
+          name: clean up
           command: |
             . venv/bin/activate
             python cleanup_jobs.py
+            rm -f ~/.nmrc
           when: always
+
+      - store_artifacts: &step_store_job_cleanup_artifacts
+          path: ./submitted_jobs.txt
+          destination: submitted-jobs
+
+  test_staging:
+    docker:
+      - image: circleci/python:3.7.3
+    working_directory: ~/neuromation-template
+    steps:
+      - checkout
+      - restore_cache: *step_restore_cache
+      - run: *step_install_dependencies
+      - save_cache: *step_save_cache
+      - run: *step_linter
+      - run: *step_unit_tests
+      - run:
+          name: run e2e tests
+          command: |
+            . venv/bin/activate
+            make test_e2e_staging
+      - store_artifacts:
+          path: tests/e2e/logs/
+      - run: *step_cleanup_jobs
+      - store_artifacts: *step_store_job_cleanup_artifacts
+
 
 workflows:
   version: 2
 
   main:
     jobs:
-      - test
+      - test_dev
+
+      - test_staging:
+          filters:
+            branches:
+              only: master
