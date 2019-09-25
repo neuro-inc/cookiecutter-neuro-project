@@ -55,7 +55,7 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	neuro kill $(SETUP_NAME)
+	neuro kill $(SETUP_NAME) >/dev/null 2>&1
 	neuro run \
 		--name $(SETUP_NAME) \
 		--preset cpu-small \
