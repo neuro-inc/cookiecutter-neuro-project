@@ -72,7 +72,7 @@ jobs:
       - checkout
       - restore_cache: *step_restore_cache
       - run: *step_install_dependencies
-      - save_cahe: *step_save_cache
+      - save_cache: *step_save_cache
       - run: *step_linter
       - run: *step_unit_tests
       - run:
