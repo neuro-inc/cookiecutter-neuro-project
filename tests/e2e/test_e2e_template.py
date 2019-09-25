@@ -15,6 +15,7 @@ from tests.e2e.configuration import (
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
     PROJECT_CODE_DIR_CONTENT,
+    PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_MAKE_CLEAN_DATA,
@@ -201,7 +202,11 @@ def test_make_upload_download_notebooks() -> None:
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual_local = {f.name for f in Path(MK_NOTEBOOKS_PATH).iterdir()}
+    actual_local = {
+        path.name
+        for path in Path(MK_NOTEBOOKS_PATH).iterdir()
+        if path.name not in PROJECT_HIDDEN_FILES
+    }
     assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
