@@ -95,4 +95,4 @@ workflows:
       - test_staging:
           filters:
             branches:
-              only: master
+              only: shagren/fix-staging
