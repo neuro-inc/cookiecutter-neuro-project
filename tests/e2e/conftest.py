@@ -55,6 +55,7 @@ LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
 LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
 LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
 LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
+LOCAL_TESTS_LOGS_PATH.mkdir(exist_ok=True)
 
 LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
 LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
@@ -67,7 +68,11 @@ JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
-PEXPECT_DEBUG_OUTPUT_LOGFILE = sys.stdout if os.environ.get("CI") != "true" else None
+PEXPECT_DEBUG_OUTPUT_LOGFILE = (
+    open(LOCAL_TESTS_LOGS_PATH / "e2e-output.log", "a")
+    if os.environ.get("CI") == "true"
+    else sys.stdout
+)
 
 # note: ERROR, being the most general error, must go the last
 DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[^:]*: .+")
@@ -119,6 +124,8 @@ def pytest_configure(config: t.Any) -> None:
 def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
         environment = request.config.getoption("--environment")
+        if environment:
+            log.info(f"Passed pytest option: `--environment={environment}`")
         if not environment or environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
@@ -126,7 +133,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
             env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
         else:
-            raise ValueError(f"invalid environment: {environment}")
+            raise ValueError(f"Invalid environment: {environment}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -206,15 +213,16 @@ def pip_install_neuromation() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def neuro_login(pip_install_neuromation: None) -> None:
-    token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
-    url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
+def neuro_login(
+    pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]
+) -> None:
+    config = client_setup_factory()
     captured = run(
-        f"neuro config login-with-token {token} {url}",
+        f"neuro config login-with-token {config.token} {config.url}",
         timeout_s=TIMEOUT_NEURO_LOGIN,
         verbose=False,
     )
-    assert f"Logged into {url}" in captured, f"stdout: `{captured}`"
+    assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log.info(run("neuro config show", verbose=False))
 

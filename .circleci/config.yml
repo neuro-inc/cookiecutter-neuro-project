@@ -3,6 +3,8 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+cache_key: &cache_key
+  v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
 jobs:
   test_dev:
     docker:
@@ -13,13 +15,10 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      - &step_restore_cache restore_cache:
+      - restore_cache: &step_restore_cache
           keys:
-            - &pip_packages_cache_key v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - &step_install_dependencies run:
+            - *cache_key
+      - run: &step_install_dependencies
           name: install dependencies
           command: |
             python3 -m venv venv
@@ -27,18 +26,18 @@ jobs:
             pip install --upgrade pip
             make init
 
-      - &step_save_cache save_cache:
+      - save_cache: &step_save_cache
           paths:
             - ./venv
-          key: *pip_packages_cache_key
+          key: *cache_key
 
-      - &step_linter run:
+      - run: &step_linter
           name: run linter
           command: |
             . venv/bin/activate
             make lint
 
-      - &step_unit_tests run:
+      - run: &step_unit_tests
           name: run unit tests
           command: |
             . venv/bin/activate
@@ -50,7 +49,10 @@ jobs:
             . venv/bin/activate
             make test_e2e_dev
 
-      - &step_cleanup_jobs run:
+      - store_artifacts:
+          path: tests/e2e/logs/
+
+      - run: &step_cleanup_jobs
           name: clean up
           command: |
             . venv/bin/activate
@@ -58,7 +60,7 @@ jobs:
             rm -f ~/.nmrc
           when: always
 
-      - &step_store_job_cleanup_artifacts store_artifacts:
+      - store_artifacts: &step_store_job_cleanup_artifacts
           path: ./submitted_jobs.txt
           destination: submitted-jobs
 
@@ -68,19 +70,18 @@ jobs:
     working_directory: ~/neuromation-template
     steps:
       - checkout
-      - *step_restore_cache
-      - *pip_packages_cache_key
-      - *step_install_dependencies
-      - *step_save_cache
-      - *step_linter
-      - *step_unit_tests
+      - restore_cache: *step_restore_cache
+      - run: *step_install_dependencies
+      - save_cache: *step_save_cache
+      - run: *step_linter
+      - run: *step_unit_tests
       - run:
           name: run e2e tests
           command: |
             . venv/bin/activate
             make test_e2e_staging
-      - *step_cleanup_jobs
-      - *step_store_job_cleanup_artifacts
+      - run: *step_cleanup_jobs
+      - store_artifacts: *step_store_job_cleanup_artifacts
 
 
 workflows:
