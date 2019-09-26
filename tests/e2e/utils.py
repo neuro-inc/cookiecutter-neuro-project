@@ -49,7 +49,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
 def measure_time(command_name: str = "") -> t.Iterator[None]:
     log.info("-" * 50)
     start_time = time.time()
-    log.info(f"  Running command: `{command_name}`")
+    log.info(f"Measuring time for command: `{command_name}`")
     yield
     elapsed_time = time.time() - start_time
     log.info("=" * 50)
