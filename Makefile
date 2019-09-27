@@ -31,7 +31,7 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=dev --tb=short --reruns=2 tests/e2e
+	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=dev --tb=short --reruns=2 tests/e2e -k test_make_setup
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
