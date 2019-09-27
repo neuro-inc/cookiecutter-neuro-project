@@ -10,6 +10,7 @@ from tests.e2e.configuration import (
     MK_DATA_PATH,
     MK_DATA_PATH_STORAGE,
     MK_NOTEBOOKS_PATH,
+    MK_NOTEBOOKS_PATH_ENV,
     MK_NOTEBOOKS_PATH_STORAGE,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -122,6 +123,27 @@ def test_make_setup() -> None:
             # TODO: add specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
+
+    # Test imports from a notebook:
+    out = run(
+        "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
+        verbose=True,
+        timeout_s=TIMEOUT_NEURO_RUN_CPU,
+    )
+    search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+    assert search, f"not found job-ID in output: `{out}`"
+    job_id = search.group(1)
+
+    cmd = (
+        "jupyter nbconvert --execute --no-prompt --no-input "
+        f"--to=asciidoc --output=out {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+        "grep 'Hello World' out.asciidoc"
+    )
+    run(
+        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        verbose=True,
+        error_patterns=["Error"],
+    )
 
 
 @pytest.mark.run(order=2)
