@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from time import sleep
 
@@ -36,12 +35,13 @@ from tests.e2e.configuration import (
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
     neuro_ls,
     neuro_rm_dir,
+    parse_job_id,
+    parse_job_url,
     repeat_until_success,
     run,
     wait_job_change_status_to,
@@ -124,26 +124,28 @@ def test_make_setup() -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
-    # Test imports from a notebook:
-    out = run(
-        "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
-        verbose=True,
-        timeout_s=TIMEOUT_NEURO_RUN_CPU,
-    )
-    search = re.search(JOB_ID_DECLARATION_PATTERN, out)
-    assert search, f"not found job-ID in output: `{out}`"
-    job_id = search.group(1)
+    try:
+        # Test imports from a notebook:
+        out = run(
+            "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
+            verbose=True,
+            timeout_s=TIMEOUT_NEURO_RUN_CPU,
+        )
+        job_id = parse_job_id(out)
 
-    cmd = (
-        "jupyter nbconvert --execute --no-prompt --no-input "
-        f"--to=asciidoc --output=out {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
-        "grep 'Hello World' out.asciidoc"
-    )
-    run(
-        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
-        verbose=True,
-        error_patterns=["Error"],
-    )
+        cmd = (
+            "jupyter nbconvert --execute --no-prompt --no-input "
+            f"--to=asciidoc --output=out {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+            "grep 'Hello World' out.asciidoc"
+        )
+        run(
+            f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+            verbose=True,
+            error_patterns=["Error"],
+        )
+    except Exception as e:
+        print(f"ERROR: {e}")
+        raise
 
 
 @pytest.mark.run(order=2)
@@ -257,13 +259,8 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
 
-        search = re.search(JOB_ID_DECLARATION_PATTERN, out)
-        assert search, f"not found job-ID in output: `{out}`"
-        job_id = search.group(1)
-
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-        assert search, f"not found URL in output: `{out}`"
-        url = search.group(1)
+        job_id = parse_job_id(out)
+        url = parse_job_url(out)
 
         repeat_until_success(
             f"curl --fail {url}{path}",
