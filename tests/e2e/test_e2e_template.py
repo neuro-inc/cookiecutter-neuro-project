@@ -102,6 +102,7 @@ def test_make_setup() -> None:
         # pip install
         # (pip works either with stupid progress bars, or completely silently)
         pip_deps_message,
+        # TODO: test PROJECT_PROJECT_PYTHON_FILES
         # neuro save
         r"Saving .+ \->",
         r"Creating image",
@@ -129,6 +130,7 @@ def test_make_setup() -> None:
         out = run(
             "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
             verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
             timeout_s=TIMEOUT_NEURO_RUN_CPU,
         )
         job_id = parse_job_id(out)
