@@ -140,7 +140,7 @@ def test_make_setup() -> None:
             "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
             f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
             f"cat {out_file}.asciidoc && "
-            f"grep \"Hello World\" {out_file}.asciidoc"
+            f'grep "Hello World" {out_file}.asciidoc'
         )
         run(
             f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
