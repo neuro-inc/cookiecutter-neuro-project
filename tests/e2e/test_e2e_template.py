@@ -138,11 +138,13 @@ def test_make_setup() -> None:
         cmd = (
             "jupyter nbconvert --execute --no-prompt --no-input "
             f"--to=asciidoc --output=out {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+            "cat out.asciidoc && "
             "grep 'Hello World' out.asciidoc"
         )
         run(
             f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
             verbose=True,
+            expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
             error_patterns=["Error"],
         )
     except Exception as e:
