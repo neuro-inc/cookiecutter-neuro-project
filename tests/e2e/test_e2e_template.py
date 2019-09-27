@@ -288,7 +288,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
 @pytest.mark.run(order=4)
 def test_make_clean_code() -> None:
     actual = neuro_ls(MK_CODE_PATH_STORAGE)
-    assert actual == {"main.py"}
+    assert actual == PROJECT_CODE_DIR_CONTENT
 
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
