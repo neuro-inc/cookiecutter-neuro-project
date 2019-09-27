@@ -135,11 +135,12 @@ def test_make_setup() -> None:
         )
         job_id = parse_job_id(out)
 
+        out_file = f"{MK_NOTEBOOKS_PATH_ENV}/out"
         cmd = (
-            "jupyter nbconvert --execute --no-prompt --no-input "
-            f"--to=asciidoc --output=out {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
-            "cat out.asciidoc && "
-            "grep 'Hello World' out.asciidoc"
+            "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
+            f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+            f"cat {out_file}.asciidoc && "
+            f"grep 'Hello World' {out_file}.asciidoc"
         )
         run(
             f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
