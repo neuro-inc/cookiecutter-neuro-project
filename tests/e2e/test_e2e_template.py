@@ -125,32 +125,28 @@ def test_make_setup() -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
-    try:
-        # Test imports from a notebook:
-        out = run(
-            "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
-            verbose=True,
-            expect_patterns=[r"Status:[^\n]+running"],
-            timeout_s=TIMEOUT_NEURO_RUN_CPU,
-        )
-        job_id = parse_job_id(out)
+    # Test imports from a notebook:
+    out = run(
+        "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
+        verbose=True,
+        expect_patterns=[r"Status:[^\n]+running"],
+        timeout_s=TIMEOUT_NEURO_RUN_CPU,
+    )
+    job_id = parse_job_id(out)
 
-        out_file = f"{MK_NOTEBOOKS_PATH_ENV}/out"
-        cmd = (
-            "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
-            f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
-            f"cat {out_file}.asciidoc && "
-            f'grep "Hello World" {out_file}.asciidoc'
-        )
-        run(
-            f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
-            verbose=True,
-            expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
-            error_patterns=["Error"],
-        )
-    except Exception as e:
-        print(f"ERROR: {e}")
-        raise
+    out_file = f"{MK_NOTEBOOKS_PATH_ENV}/out"
+    cmd = (
+        "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
+        f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+        f"cat {out_file}.asciidoc && "
+        f'grep "Hello World!" {out_file}.asciidoc && echo "pattern found"'
+    )
+    run(
+        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        verbose=True,
+        expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc", "pattern found"],
+        error_patterns=["Error"],
+    )
 
 
 @pytest.mark.run(order=2)
