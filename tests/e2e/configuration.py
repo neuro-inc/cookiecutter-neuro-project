@@ -56,7 +56,7 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_NAME}"
 
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
-PROJECT_PROJECT_PYTHON_FILES = ["setup.py", "setup.cfg", "README.md", "LICENSE"]
+PROJECT_PYTHON_FILES = ["setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]

@@ -18,6 +18,7 @@ from tests.e2e.configuration import (
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
+    PROJECT_PYTHON_FILES,
     TIMEOUT_MAKE_CLEAN_DATA,
     TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
@@ -74,6 +75,8 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup(tmp_path: Path) -> None:
+
+    project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -90,6 +93,8 @@ def test_make_setup(tmp_path: Path) -> None:
     expected_patterns = [
         # run
         r"Status:[^\n]+running",
+        # copy project files
+        *project_files_messages,
         # copy apt.txt
         f"Copy 'file://.*{PROJECT_APT_FILE_NAME}",
         rf"'{PROJECT_APT_FILE_NAME}' \d+B",
@@ -101,7 +106,6 @@ def test_make_setup(tmp_path: Path) -> None:
         # pip install
         # (pip works either with stupid progress bars, or completely silently)
         pip_deps_message,
-        # TODO: test PROJECT_PROJECT_PYTHON_FILES
         # neuro save
         r"Saving .+ \->",
         r"Creating image",
