@@ -74,7 +74,7 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=1)
-def test_make_setup(tmpdir: Path) -> None:
+def test_make_setup(tmp_path: Path) -> None:
 
     project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
     # TODO: test also pre-installed APT packages
@@ -137,7 +137,7 @@ def test_make_setup(tmpdir: Path) -> None:
     )
     job_id = parse_job_id(out)
 
-    out_file = tmpdir / "out"
+    out_file = (tmp_path / "out").absolute()
     cmd = (
         "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
         f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
