@@ -4,7 +4,7 @@ NOTEBOOKS_PATH?=notebooks
 REQUIREMENTS_PIP?=requirements.txt
 REQUIREMENTS_APT?=apt.txt
 RESULTS_PATH?=results
-PROJECT_PYTHON_FILES=setup.py setup.cfg README.md LICENSE
+PROJECT_PYTHON_FILES=setup.py setup.cfg
 
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 CODE_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(CODE_PATH)
