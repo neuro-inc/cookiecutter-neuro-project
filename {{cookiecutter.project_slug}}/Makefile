@@ -199,10 +199,6 @@ lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
-.PHONY: install
-install:  ### Install project as a python package locally
-	python setup.py install --user
-
 ##### MISC #####
 
 .PHONY: ps

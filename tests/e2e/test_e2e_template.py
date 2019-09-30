@@ -62,7 +62,6 @@ def test_project_structure() -> None:
         "LICENSE",
         PROJECT_APT_FILE_NAME,
         PROJECT_PIP_FILE_NAME,
-        "setup.py",
         "setup.cfg",
         ".gitignore",
     }
