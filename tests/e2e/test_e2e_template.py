@@ -74,7 +74,7 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=1)
-def test_make_setup() -> None:
+def test_make_setup(tmp_path: Path) -> None:
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -134,7 +134,7 @@ def test_make_setup() -> None:
     )
     job_id = parse_job_id(out)
 
-    out_file = f"{MK_NOTEBOOKS_PATH_ENV}/out"
+    out_file = tmp_path / "out"
     cmd = (
         "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
         f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
