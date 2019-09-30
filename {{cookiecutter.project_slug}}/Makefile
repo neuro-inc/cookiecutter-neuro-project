@@ -62,7 +62,7 @@ setup: ### Setup remote environment
 		--name $(SETUP_NAME) \
 		--preset cpu-small \
 		--detach \
-		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):rw \
+		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
