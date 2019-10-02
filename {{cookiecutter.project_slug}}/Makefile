@@ -79,7 +79,7 @@ upload-code:  ### Upload code directory to the platform storage
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory from the platform storage
-	neuro rm -r $(CODE_PATH_STORAGE)
+	neuro rm --recursive $(CODE_PATH_STORAGE)
 
 .PHONY: upload-data
 upload-data:  ### Upload data directory to the platform storage
@@ -87,7 +87,7 @@ upload-data:  ### Upload data directory to the platform storage
 
 .PHONY: clean-data
 clean-data:  ### Delete data directory from the platform storage
-	neuro rm -r $(DATA_PATH_STORAGE)
+	neuro rm --recursive $(DATA_PATH_STORAGE)
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
@@ -99,7 +99,7 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory from the platform storage
-	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
+	neuro rm --recursive $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
