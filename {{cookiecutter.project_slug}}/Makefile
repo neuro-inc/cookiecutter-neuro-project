@@ -66,8 +66,8 @@ setup: ### Setup remote environment
 		'sleep 1h'
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
+	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
 	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
@@ -79,7 +79,7 @@ upload-code:  ### Upload code directory to the platform storage
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory from the platform storage
-	neuro rm -r $(CODE_PATH_STORAGE)
+	neuro rm --recursive $(CODE_PATH_STORAGE)
 
 .PHONY: upload-data
 upload-data:  ### Upload data directory to the platform storage
@@ -87,7 +87,7 @@ upload-data:  ### Upload data directory to the platform storage
 
 .PHONY: clean-data
 clean-data:  ### Delete data directory from the platform storage
-	neuro rm -r $(DATA_PATH_STORAGE)
+	neuro rm --recursive $(DATA_PATH_STORAGE)
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
@@ -99,7 +99,7 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory from the platform storage
-	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
+	neuro rm --recursive $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
@@ -127,7 +127,7 @@ kill-training:  ### Terminate the training job
 
 .PHONY: connect-training
 connect-training:  ### Connect to the remote shell running on the training job
-	neuro exec --no-key-check $(TRAINING_NAME) bash
+	neuro exec --no-tty --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
