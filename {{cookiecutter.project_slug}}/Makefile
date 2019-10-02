@@ -134,7 +134,7 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 	neuro run \
 		--name $(JUPYTER_NAME) \
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--http 8888 --detach \
+		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
@@ -155,7 +155,7 @@ tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
 		--browse \
-		--http 6006 --detach \
+		--http 6006 \
 		$(HTTP_AUTH) \
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
@@ -171,7 +171,7 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 	neuro run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
-		--http 80 --detach \
+		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
