@@ -137,17 +137,19 @@ def test_make_setup(tmp_path: Path) -> None:
     )
     job_id = parse_job_id(out)
 
+    expected_string = "Hello World!"
+    tmp_path.mkdir(exist_ok=True)
     out_file = (tmp_path / "out").absolute()
     cmd = (
         "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
         f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
         f"cat {out_file}.asciidoc && "
-        f'grep "Hello World!" {out_file}.asciidoc && echo "pattern found"'
+        f'grep "{expected_string}" {out_file}.asciidoc'
     )
     run(
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
         verbose=True,
-        expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc", "pattern found"],
+        expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
         error_patterns=["Error"],
     )
 
