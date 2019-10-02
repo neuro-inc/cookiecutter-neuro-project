@@ -295,15 +295,25 @@ def run_once(
     `RuntimeError` is raised. Use `verbose=True` to print useful information
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
-    >>> # Check expected-outputs:
-    >>> run("echo 1 2 3", expect_patterns=['1', '3'], verbose=False)
+    >>> # Expect the first and the last output:
+    >>> run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
+    '1 2 3'
+    >>> # Abort once all the patterns have matched:
+    >>> run_once("bash -c 'echo 1 2 3 && sleep infinity'",
+    ...     expect_patterns=['1', '2'], verbose=False)
+    '1 2'
+    >>> # Empty pattern list: read until the process returns:
+    >>> run_once('echo 1 2 3', expect_patterns=[], verbose=False)
     '1 2 3\r\n'
-    >>> # Empty pattern list:
-    >>> run('echo 1 2 3', expect_patterns=[], verbose=False)
-    '1 2 3\r\n'
+    >>> # Wrong order of patterns:
+    >>> try:
+    ...     run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
+    ...     assert False, "must be unreachable"
+    ... except RuntimeError as e:
+    ...     assert str(e) == "NOT FOUND PATTERN: '1'", repr(str(e))
     >>> # Pattern not found at all:
     >>> try:
-    ...     run('echo 1 2 3', expect_patterns=['4'], verbose=False)
+    ...     run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
     ...     assert str(e) == "NOT FOUND PATTERN: '4'", repr(str(e))
@@ -321,8 +331,12 @@ def run_once(
     )
     output = ""
     need_dump = False
-    if verbose and expect_patterns:
-        log.info(f"Search patterns: {repr(expect_patterns)}")
+    if not expect_patterns:
+        # work until the process returns
+        expect_patterns = [pexpect.EOF]
+    else:
+        if verbose:
+            log.info(f"Search patterns: {repr(expect_patterns)}")
     try:
         for expected in expect_patterns:
             try:
@@ -339,7 +353,6 @@ def run_once(
                 chunk = _get_chunk(child)
                 output += chunk
     finally:
-        output += _read_till_end(child)
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
         if verbose and need_dump:
@@ -352,36 +365,6 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
     if isinstance(child.after, child.allowed_string_types):
         chunk += child.after
     return chunk
-
-
-def _read_till_end(child: pexpect.spawn) -> str:
-    r"""
-    >>> # _read_till_end() from the beginning:
-    >>> child = pexpect.spawn("echo 1 2 3", encoding="utf8")
-    >>> _read_till_end(child)
-    '1 2 3\r\n'
-    >>> _read_till_end(child)  # eof reached
-    ''
-    >>> _read_till_end(child)  # once again
-    ''
-    >>> # expect() and then _read_till_end():
-    >>> child = pexpect.spawn("echo 1 2 3", encoding="utf8")
-    >>> child.expect('2')
-    0
-    >>> _read_till_end(child)
-    ' 3\r\n'
-    >>> _read_till_end(child)  # eof reached
-    ''
-    """
-    # read the rest:
-    output = ""
-    while True:
-        # TODO: read in fixed-size chunks
-        chunk = child.read()
-        if not chunk:
-            break
-        output += chunk
-    return output
 
 
 def detect_errors(

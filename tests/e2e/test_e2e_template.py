@@ -47,7 +47,7 @@ from .conftest import (
     run,
     wait_job_change_status_to,
 )
-from .utils import measure_time
+from .utils import measure_time, timeout
 
 
 log = get_logger()
@@ -268,11 +268,12 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
         job_id = parse_job_id(out)
         url = parse_job_url(out)
 
-        repeat_until_success(
-            f"curl --fail {url}{path}",
-            expect_patterns=["<html.*>"],
-            error_patterns=["curl: .+"],
-        )
+        with timeout(2 * 60):
+            repeat_until_success(
+                f"curl --fail {url}{path}",
+                expect_patterns=["<html.*>"],
+                error_patterns=["curl: .+"],
+            )
 
         make_cmd = f"make kill-{target}"
         with measure_time(make_cmd):
@@ -283,6 +284,10 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
                 error_patterns=DEFAULT_ERROR_PATTERNS,
             )
         wait_job_change_status_to(job_id, "succeeded")
+
+    except Exception:
+        log.exception("Exception", exc_info=True)
+        raise
 
     finally:
         # cleanup
