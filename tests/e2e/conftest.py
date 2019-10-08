@@ -242,11 +242,12 @@ def neuro_login(
 
 
 def try_except_finally(finalizer_cmd: t.Optional[str] = None) -> t.Callable[..., t.Any]:
-    def _finalizer() -> None:
-        if finalizer_cmd:
-            run(finalizer_cmd, verbose=False, error_patterns=())
-
-    return finalize_call(_finalizer)
+    callback = (
+        lambda: run(finalizer_cmd, verbose=False, error_patterns=())
+        if finalizer_cmd is not None
+        else None
+    )
+    return finalize_call(callback)
 
 
 def repeat_until_success(
