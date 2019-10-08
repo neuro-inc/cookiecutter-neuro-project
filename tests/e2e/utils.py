@@ -47,7 +47,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 @contextmanager
 def measure_time(command_name: str = "") -> t.Iterator[None]:
-    log.info("-" * 50)
+    log.info("=" * 100)
     start_time = time.time()
     log.info(f"Measuring time for command: `{command_name}`")
     yield
