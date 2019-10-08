@@ -22,14 +22,15 @@ RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
 NEURO_CP=neuro cp --recursive --update --no-target-directory
 
-SETUP_NAME?=setup-{{cookiecutter.project_slug}}
-TRAINING_NAME?=training-{{cookiecutter.project_slug}}
-JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
-TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
-FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
+PROJECT_POSTFIX?={{cookiecutter.project_slug.replace('_', '-')}}
+SETUP_NAME?=setup-$(PROJECT_POSTFIX)
+TRAINING_NAME?=training-$(PROJECT_POSTFIX)
+JUPYTER_NAME?=jupyter-$(PROJECT_POSTFIX)
+TENSORBOARD_NAME?=tensorboard-$(PROJECT_POSTFIX)
+FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
 
 BASE_ENV_NAME?=neuromation/base
-CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 TRAINING_MACHINE_TYPE?=gpu-small
 
 # Set it to True (verbatim) to disable HTTP authentication for your jobs
