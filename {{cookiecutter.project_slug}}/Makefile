@@ -30,7 +30,7 @@ TENSORBOARD_NAME?=tensorboard-$(PROJECT_POSTFIX)
 FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
 
 BASE_ENV_NAME?=neuromation/base
-CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug.replace('_', '-')}}
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 TRAINING_MACHINE_TYPE?=gpu-small
 
 # Set it to True (verbatim) to disable HTTP authentication for your jobs
