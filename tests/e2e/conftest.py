@@ -272,11 +272,11 @@ def repeat_until_success(
 def run(
     cmd: str,
     *,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -284,26 +284,22 @@ def run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
-    out = run_once(
-        cmd,
-        expect_patterns,
-        verbose=verbose,
-        detect_new_jobs=detect_new_jobs,
-        timeout_s=timeout_s,
-    )
+    with timeout(timeout_s):
+        out = _run_once(
+            cmd, expect_patterns, verbose=verbose, detect_new_jobs=detect_new_jobs
+        )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {repr(errors)}")
     return out
 
 
-def run_once(
+def _run_once(
     cmd: str,
     expect_patterns: t.Sequence[str] = (),
     *,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -314,24 +310,24 @@ def run_once(
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     >>> # Expect the first and the last output:
-    >>> run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
+    >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
     '1 2 3'
     >>> # Abort once all the patterns have matched:
-    >>> run_once("bash -c 'echo 1 2 3 && sleep infinity'",
+    >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'",
     ...     expect_patterns=['1', '2'], verbose=False)
     '1 2'
     >>> # Empty pattern list: read until the process returns:
-    >>> run_once('echo 1 2 3', expect_patterns=[], verbose=False)
+    >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False)
     '1 2 3\r\n'
     >>> # Wrong order of patterns:
     >>> try:
-    ...     run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
+    ...     _run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
     ...     assert str(e) == "NOT Found expected pattern: '1'", repr(str(e))
     >>> # Pattern not found at all:
     >>> try:
-    ...     run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
+    ...     _run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
     ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
@@ -341,7 +337,7 @@ def run_once(
         log.info(f"Running command: `{cmd}`")
     child = pexpect.spawn(
         cmd,
-        timeout=timeout_s,
+        timeout=DEFAULT_TIMEOUT_LONG,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
