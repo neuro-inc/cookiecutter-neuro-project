@@ -91,9 +91,12 @@ workflows:
 
   main:
     jobs:
-      - test_dev
+      - test_dev:
+          filters:
+            branches:
+              only: master
 
       - test_staging:
           filters:
             branches:
-              only: master
+              only: /.*/
