@@ -160,7 +160,7 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
+def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
     run(
         f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
         f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
@@ -172,7 +172,7 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def generate_empty_project(run_cookiecutter: None) -> None:
+def generate_empty_project(cookiecutter_setup: None) -> None:
     log.info(f"Initializing empty project: `{Path().absolute()}`")
 
     apt_file = Path(PROJECT_APT_FILE_NAME)

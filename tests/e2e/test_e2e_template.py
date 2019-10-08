@@ -266,6 +266,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             f"curl --fail {url}{path}",
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
+            debug=False,
         )
 
     make_cmd = f"make kill-{target}"
