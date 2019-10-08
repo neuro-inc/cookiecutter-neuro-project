@@ -328,13 +328,13 @@ def run_once(
     ...     run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND PATTERN: '1'", repr(str(e))
+    ...     assert str(e) == "NOT Found expected pattern: '1'", repr(str(e))
     >>> # Pattern not found at all:
     >>> try:
     ...     run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND PATTERN: '4'", repr(str(e))
+    ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
