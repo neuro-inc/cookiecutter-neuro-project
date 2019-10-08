@@ -16,6 +16,7 @@ from tests.e2e.configuration import (
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
     MK_PROJECT_NAME,
+    MK_PROJECT_PATH_STORAGE,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -159,6 +160,8 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     )
     with inside_dir(MK_PROJECT_NAME):
         yield
+
+    neuro_rm_dir(MK_PROJECT_PATH_STORAGE, timeout_s=DEFAULT_TIMEOUT_LONG, verbose=True)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -452,7 +455,7 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
             log.info(f"Target `{target.absolute()}` already exists")
             continue
         log.info(f"Copying file `{f}` to `{target.absolute()}`")
-        shutil.copyfile(f, target, follow_symlinks=False)
+        shutil.copyfile(str(f), target, follow_symlinks=False)
 
 
 # == neuro helpers ==
@@ -473,15 +476,19 @@ def neuro_ls(path: str) -> t.Set[str]:
 
 
 def neuro_rm_dir(
-    project_relative_path: str, timeout_s: int, ignore_errors: bool = False
+    project_relative_path: str,
+    timeout_s: int,
+    ignore_errors: bool = False,
+    verbose: bool = False,
 ) -> None:
     log.info(f"Deleting remote directory `{project_relative_path}`")
     run(
         f"neuro rm -r {project_relative_path}",
         timeout_s=timeout_s,
-        verbose=False,
+        verbose=verbose,
         error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
+    log.info("Done.")
 
 
 def wait_job_change_status_to(
@@ -502,6 +509,7 @@ def wait_job_change_status_to(
         assert search, f"not found job status in output: `{out}`"
         status = search.group(1)
         if status == target_status:
+            log.info("Done.")
             return
         if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
