@@ -217,7 +217,7 @@ def pip_install_neuromation(generate_empty_project: None) -> None:
 @pytest.fixture(scope="session", autouse=True)
 def neuro_login(
     pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]
-) -> None:
+) -> t.Iterator[None]:
     config = client_setup_factory()
     captured = run(
         f"neuro config login-with-token {config.token} {config.url}",
