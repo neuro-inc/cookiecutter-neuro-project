@@ -26,7 +26,13 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_STATUS,
     UNIQUE_PROJECT_NAME,
 )
-from tests.e2e.utils import LOGGER_NAME, get_logger, timeout, unique_label
+from tests.e2e.utils import (
+    LOGGER_NAME,
+    finalize_call,
+    get_logger,
+    timeout,
+    unique_label,
+)
 from tests.utils import inside_dir
 
 
@@ -76,7 +82,11 @@ PEXPECT_DEBUG_OUTPUT_LOGFILE = (
 )
 
 # note: ERROR, being the most general error, must go the last
-DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[^:]*: .+")
+DEFAULT_NEURO_ERROR_PATTERNS = (
+    "404: Not Found",
+    r"Status:[^\n]+failed",
+    r"ERROR[^:]*: .+",
+)
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
 
@@ -231,6 +241,10 @@ def neuro_login(
 # == execution helpers ==
 
 
+def finalize(command: str) -> t.Callable[..., t.Any]:
+    return finalize_call(lambda: run(command, verbose=False, error_patterns=()))
+
+
 def repeat_until_success(
     cmd: str,
     timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
@@ -342,10 +356,10 @@ def run_once(
             try:
                 child.expect(expected)
                 if verbose:
-                    log.info(f"Found pattern: {repr(expected)}")
+                    log.info(f"Found expected pattern: {repr(expected)}")
             except pexpect.EOF:
                 need_dump = True
-                err = f"NOT FOUND PATTERN: {repr(expected)}"
+                err = f"NOT Found expected pattern: {repr(expected)}"
                 if verbose:
                     log.error(err)
                 raise RuntimeError(err)

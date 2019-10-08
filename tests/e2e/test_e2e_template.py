@@ -9,8 +9,12 @@ from tests.e2e.configuration import (
     MK_CODE_PATH_STORAGE,
     MK_DATA_PATH,
     MK_DATA_PATH_STORAGE,
+    MK_FILEBROWSER_NAME,
+    MK_JUPYTER_NAME,
     MK_NOTEBOOKS_PATH,
     MK_NOTEBOOKS_PATH_STORAGE,
+    MK_SETUP_NAME,
+    MK_TENSORBOARD_NAME,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -38,6 +42,7 @@ from .conftest import (
     JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
+    finalize,
     get_logger,
     neuro_ls,
     neuro_rm_dir,
@@ -72,6 +77,7 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=1)
+@finalize(f"neuro kill {MK_SETUP_NAME}")
 def test_make_setup() -> None:
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
@@ -213,59 +219,59 @@ def test_make_upload_download_notebooks() -> None:
 
 
 @pytest.mark.run(order=3)
-@pytest.mark.parametrize(
-    "target,path,timeout_run",
-    [
-        ("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU),
-        ("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU),
-        ("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU),
-    ],
-)
-def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    try:
-        # Can't test web UI with HTTP auth
-        make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
-        with measure_time(make_cmd):
-            out = run(
-                make_cmd,
-                verbose=True,
-                timeout_s=timeout_run,
-                expect_patterns=[r"Status:[^\n]+running"],
-                error_patterns=DEFAULT_ERROR_PATTERNS,
-            )
+@finalize(f"neuro kill {MK_JUPYTER_NAME}")
+def test_make_run_jupyter() -> None:
+    _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
-        search = re.search(JOB_ID_DECLARATION_PATTERN, out)
-        assert search, f"not found job-ID in output: `{out}`"
-        job_id = search.group(1)
 
-        search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-        assert search, f"not found URL in output: `{out}`"
-        url = search.group(1)
+@pytest.mark.run(order=3)
+@finalize(f"neuro kill {MK_TENSORBOARD_NAME}")
+def test_make_run_tensorboard() -> None:
+    _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
-        with timeout(2 * 60):
-            repeat_until_success(
-                f"curl --fail {url}{path}",
-                expect_patterns=["<html.*>"],
-                error_patterns=["curl: .+"],
-            )
 
-        make_cmd = f"make kill-{target}"
-        with measure_time(make_cmd):
-            run(
-                make_cmd,
-                verbose=True,
-                timeout_s=TIMEOUT_NEURO_KILL,
-                error_patterns=DEFAULT_ERROR_PATTERNS,
-            )
-        wait_job_change_status_to(job_id, "succeeded")
+@pytest.mark.run(order=3)
+@finalize(f"neuro kill {MK_FILEBROWSER_NAME}")
+def test_make_run_filebrowser() -> None:
+    _test_make_run_something_useful("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU)
 
-    except Exception:
-        log.exception("Exception", exc_info=True)
-        raise
 
-    finally:
-        # cleanup
-        run(f"make kill-{target}", verbose=False, error_patterns=())
+def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
+    # Can't test web UI with HTTP auth
+    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+    with measure_time(make_cmd):
+        out = run(
+            make_cmd,
+            verbose=True,
+            timeout_s=timeout_run,
+            expect_patterns=[r"Status:[^\n]+running"],
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+
+    search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+    assert search, f"not found job-ID in output: `{out}`"
+    job_id = search.group(1)
+
+    search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+    assert search, f"not found URL in output: `{out}`"
+    url = search.group(1)
+
+    with timeout(2 * 60):
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            expect_patterns=["<html.*>"],
+            error_patterns=["curl: .+"],
+        )
+
+    make_cmd = f"make kill-{target}"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_NEURO_KILL,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    wait_job_change_status_to(job_id, "succeeded")
 
 
 @pytest.mark.run(order=4)

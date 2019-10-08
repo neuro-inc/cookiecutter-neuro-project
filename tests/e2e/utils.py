@@ -55,3 +55,26 @@ def measure_time(command_name: str = "") -> t.Iterator[None]:
     log.info("=" * 50)
     log.info(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
     log.info("=" * 50)
+
+
+def finalize_call(
+    finalizer_callback: t.Optional[t.Callable[[], t.Any]] = None
+) -> t.Callable[..., t.Any]:
+    def finalize_decorator(func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
+        def wrapper(*args: t.Any, **kwargs: t.Any) -> None:
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                log.error("-" * 100)
+                log.error(f"Error: {e.__class__}: {e}", exc_info=True)
+                log.error("-" * 100)
+                raise
+            finally:
+                if finalizer_callback is not None:
+                    log.info("Running finalization callback...")
+                    finalizer_callback()
+                    log.info("Done")
+
+        return wrapper
+
+    return finalize_decorator
