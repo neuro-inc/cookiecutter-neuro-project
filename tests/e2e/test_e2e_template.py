@@ -42,12 +42,12 @@ from .conftest import (
     JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
-    finalize,
     get_logger,
     neuro_ls,
     neuro_rm_dir,
     repeat_until_success,
     run,
+    try_except_finally,
     wait_job_change_status_to,
 )
 from .utils import measure_time, timeout
@@ -56,6 +56,7 @@ from .utils import measure_time, timeout
 log = get_logger()
 
 
+@try_except_finally()
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
     assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
@@ -71,13 +72,14 @@ def test_project_structure() -> None:
     }
 
 
+@try_except_finally()
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
 @pytest.mark.run(order=1)
-@finalize(f"neuro kill {MK_SETUP_NAME}")
+@try_except_finally(f"neuro kill {MK_SETUP_NAME}")
 def test_make_setup() -> None:
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
@@ -130,6 +132,7 @@ def test_make_setup() -> None:
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_code() -> None:
     neuro_rm_dir(
         MK_CODE_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_CODE, ignore_errors=True
@@ -151,6 +154,7 @@ def test_make_upload_code() -> None:
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_data() -> None:
     neuro_rm_dir(
         MK_DATA_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_DATA, ignore_errors=True
@@ -167,7 +171,7 @@ def test_make_upload_data() -> None:
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    # let storage sync
+    # TODO: HACK: let storage sync
     sleep(5)
     actual = neuro_ls(MK_DATA_PATH_STORAGE)
     assert len(actual) == N_FILES
@@ -175,6 +179,7 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_download_notebooks() -> None:
     # Upload:
     make_cmd = "make upload-notebooks"
@@ -219,19 +224,19 @@ def test_make_upload_download_notebooks() -> None:
 
 
 @pytest.mark.run(order=3)
-@finalize(f"neuro kill {MK_JUPYTER_NAME}")
+@try_except_finally(f"neuro kill {MK_JUPYTER_NAME}")
 def test_make_run_jupyter() -> None:
     _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
 
 @pytest.mark.run(order=3)
-@finalize(f"neuro kill {MK_TENSORBOARD_NAME}")
+@try_except_finally(f"neuro kill {MK_TENSORBOARD_NAME}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
 @pytest.mark.run(order=3)
-@finalize(f"neuro kill {MK_FILEBROWSER_NAME}")
+@try_except_finally(f"neuro kill {MK_FILEBROWSER_NAME}")
 def test_make_run_filebrowser() -> None:
     _test_make_run_something_useful("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU)
 
@@ -275,6 +280,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_code() -> None:
     actual = neuro_ls(MK_CODE_PATH_STORAGE)
     assert actual == {"main.py"}
@@ -293,6 +299,7 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_data() -> None:
     actual = neuro_ls(MK_DATA_PATH_STORAGE)
     assert len(actual) == N_FILES
@@ -312,6 +319,7 @@ def test_make_clean_data() -> None:
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_notebooks() -> None:
     actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
