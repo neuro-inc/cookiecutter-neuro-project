@@ -64,7 +64,7 @@ jobs:
           path: ./submitted_jobs.txt
           destination: submitted-jobs
 
-  test_staging:
+  test_real:
     docker:
       - image: circleci/python:3.7.3
     working_directory: ~/neuromation-template
@@ -79,7 +79,7 @@ jobs:
           name: run e2e tests
           command: |
             . venv/bin/activate
-            make test_e2e_staging
+            make test_e2e_real
       - store_artifacts:
           path: tests/e2e/logs/
       - run: *step_cleanup_jobs
@@ -94,9 +94,9 @@ workflows:
       - test_dev:
           filters:
             branches:
-              only: master
+              only: /.*/
 
-      - test_staging:
+      - test_real:
           filters:
             branches:
-              only: /.*/
+              only: master

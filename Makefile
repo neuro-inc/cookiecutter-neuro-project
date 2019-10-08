@@ -31,8 +31,11 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=dev --tb=short --reruns=2 tests/e2e
+	# TODO(artem) Once the dev cluster is stable, test with `cpu-small` and `--environment=dev` for `test_e2e_dev`
+	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=staging --tb=short --reruns=2 tests/e2e
 
-.PHONY: test_e2e_staging
-test_e2e_staging:
+.PHONY: test_e2e_real
+test_e2e_real:
 	TRAINING_MACHINE_TYPE=gpu-small pytest -v -s --environment=staging --tb=short --reruns=2 tests/e2e
+	# TODO(artem) Once the dev cluster is stable, remove the line below:
+	TRAINING_MACHINE_TYPE=cpu-small pytest -v -s --environment=dev     --tb=short --reruns=2 tests/e2e
