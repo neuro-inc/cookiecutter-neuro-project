@@ -1,6 +1,4 @@
-ISORT_DIRS := tests cleanup_jobs.py
-BLACK_DIRS := $(ISORT_DIRS)
-MYPY_DIRS :=  tests
+LINTER_DIRS := tests
 
 .PHONY: init
 init:
@@ -12,15 +10,15 @@ cook:
 
 .PHONY: lint
 lint:
-	isort -c -rc ${ISORT_DIRS}
-	black --check $(BLACK_DIRS)
-	mypy $(MYPY_DIRS)
-	flake8 $(FLAKE8_DIRS)
+	isort -c -rc ${LINTER_DIRS}
+	black --check $(LINTER_DIRS)
+	mypy $(LINTER_DIRS)
+	flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
-	isort -rc $(ISORT_DIRS)
-	black $(BLACK_DIRS)
+	isort -rc $(LINTER_DIRS)
+	black $(LINTER_DIRS)
 
 .PHONY: test_unit
 test_unit:

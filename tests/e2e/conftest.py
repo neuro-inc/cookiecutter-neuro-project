@@ -32,7 +32,7 @@ from tests.utils import inside_dir
 
 
 SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
-CLEANUP_JOBS_SCRIPT_NAME = "cleanup_jobs.py"
+CREATED_DIRS_FILE_NAME = "created_dirs.txt"
 
 
 DEFAULT_TIMEOUT_SHORT = 10
@@ -60,7 +60,7 @@ LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
 LOCAL_TESTS_LOGS_PATH.mkdir(exist_ok=True)
 
 LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
-LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
+CREATED_DIRS_JOBS_FILE = LOCAL_ROOT_PATH / CREATED_DIRS_FILE_NAME
 
 JOB_STATUS_PENDING = "pending"
 JOB_STATUS_RUNNING = "running"
@@ -196,7 +196,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
             textwrap.dedent(
                 """\
         if __name__ == "__main__":
-            print("test script")
+            log.info("test script")
         """
             )
         )
@@ -209,7 +209,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def pip_install_neuromation() -> None:
+def pip_install_neuromation(generate_empty_project: None) -> None:
     run("pip install -U neuromation", verbose=False)
     assert "Name: neuromation" in run("pip show neuromation", verbose=False)
 
@@ -227,19 +227,38 @@ def neuro_login(
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log.info(run("neuro config show", verbose=False))
+    yield
+    run("neuro logout")
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup() -> t.Iterator[None]:
+def cleanup(neuro_login: None) -> t.Iterator[None]:
     try:
         yield
     finally:
-        neuro_rm_dir(
-            MK_PROJECT_PATH_STORAGE,
-            timeout_s=DEFAULT_TIMEOUT_LONG,
-            ignore_errors=True,
-            verbose=True,
-        )
+        log.info("-" * 100)
+        _cleanup_jobs()
+        _cleanup_storage()
+
+
+def _cleanup_jobs() -> None:
+    log.info("Cleanup jobs...")
+    try:
+        path = LOCAL_SUBMITTED_JOBS_FILE.absolute()
+        out = run(f"bash -c '[ -f {path} ] && cat {path} || true'")
+        if out:
+            run(f"bash -c 'neuro kill $(cat {path})'", detect_new_jobs=False)
+            run(f"rm {path}")
+    except Exception as e:
+        log.error(f"Failed to cleanup jobs: {e}")
+
+
+def _cleanup_storage() -> None:
+    log.info("Cleanup storage...")
+    try:
+        neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
+    except Exception as e:
+        log.error(f"Failed to cleanup storage: {e}")
 
 
 # == execution helpers ==
@@ -355,7 +374,7 @@ def run_once(
         for expected in expect_patterns:
             try:
                 child.expect(expected)
-                if verbose:
+                if verbose and expected is not pexpect.EOF:
                     log.info(f"Found pattern: {repr(expected)}")
             except pexpect.EOF:
                 need_dump = True
@@ -488,7 +507,7 @@ def neuro_ls(path: str) -> t.Set[str]:
 
 def neuro_rm_dir(
     project_relative_path: str,
-    timeout_s: int,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
