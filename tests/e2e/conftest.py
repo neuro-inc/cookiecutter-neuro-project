@@ -161,8 +161,6 @@ def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
     with inside_dir(MK_PROJECT_NAME):
         yield
 
-    neuro_rm_dir(MK_PROJECT_PATH_STORAGE, timeout_s=DEFAULT_TIMEOUT_LONG, verbose=True)
-
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(run_cookiecutter: None) -> None:
@@ -229,6 +227,19 @@ def neuro_login(
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log.info(run("neuro config show", verbose=False))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup() -> t.Iterator[None]:
+    try:
+        yield
+    finally:
+        neuro_rm_dir(
+            MK_PROJECT_PATH_STORAGE,
+            timeout_s=DEFAULT_TIMEOUT_LONG,
+            ignore_errors=True,
+            verbose=True,
+        )
 
 
 # == execution helpers ==
