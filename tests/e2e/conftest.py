@@ -196,7 +196,7 @@ def generate_empty_project(run_cookiecutter: None) -> None:
             textwrap.dedent(
                 """\
         if __name__ == "__main__":
-            log.info("test script")
+            print("test script")
         """
             )
         )
