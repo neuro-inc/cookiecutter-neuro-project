@@ -27,7 +27,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
     """
 
     def raise_timeout(signum: int, frame: t.Any) -> t.NoReturn:
-        raise TimeoutError
+        raise TimeoutError(time_s)
 
     # Register a function to raise a TimeoutError on the signal.
     signal.signal(signal.SIGALRM, raise_timeout)
@@ -36,8 +36,8 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
     try:
         yield
-    except TimeoutError:
-        log.error(f"TIMEOUT ERROR: {time_s}")
+    except TimeoutError as e:
+        log.error(f"TIMEOUT ERROR: {e}")
         raise
     finally:
         # Unregister the signal so it won't be triggered

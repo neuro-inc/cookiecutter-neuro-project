@@ -216,6 +216,7 @@ def test_make_upload_download_notebooks() -> None:
 @pytest.mark.parametrize(
     "target,path,timeout_run",
     [
+        # TODO(artem): Note, on dev we run jupyter with `-s cpu-small`
         ("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU),
         ("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU),
         ("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU),
