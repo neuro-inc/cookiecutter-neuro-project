@@ -458,6 +458,18 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 # == neuro helpers ==
 
 
+def parse_job_id(out: str) -> str:
+    search = re.search(JOB_ID_DECLARATION_PATTERN, out)
+    assert search, f"not found job-ID in output: `{out}`"
+    return search.group(1)
+
+
+def parse_job_url(out: str) -> str:
+    search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+    assert search, f"not found URL in output: `{out}`"
+    return search.group(1)
+
+
 def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
