@@ -60,7 +60,6 @@ def test_project_structure() -> None:
     assert files == {
         "Makefile",
         "README.md",
-        "LICENSE",
         PROJECT_APT_FILE_NAME,
         PROJECT_PIP_FILE_NAME,
         "setup.cfg",
