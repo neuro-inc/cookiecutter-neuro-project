@@ -271,6 +271,7 @@ def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> 
         with timeout(2 * 60):
             repeat_until_success(
                 f"curl --fail {url}{path}",
+                job_id,
                 expect_patterns=["<html.*>"],
                 error_patterns=["curl: .+"],
             )

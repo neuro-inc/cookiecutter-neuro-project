@@ -233,6 +233,7 @@ def neuro_login(
 
 def repeat_until_success(
     cmd: str,
+    job_id: str,
     timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
     interval_s: float = 1,
     **kwargs: t.Any,
@@ -241,6 +242,11 @@ def repeat_until_success(
         log.info(f"Running command until success: `{cmd}`")
     with timeout(timeout_total_s):
         while True:
+            job_status = get_job_status(job_id)
+            if job_status in JOB_STATUSES_TERMINATED:
+                raise RuntimeError(
+                    f"Job {job_id} has terminated with status {job_status}"
+                )
             try:
                 return run(cmd, **kwargs)
             except RuntimeError:
@@ -504,17 +510,22 @@ def wait_job_change_status_to(
 ) -> None:
     log.info(f"Waiting for job {job_id} to get status {target_status}...")
     with timeout(timeout_s):
-        out = run(
-            f"neuro status {job_id}",
-            timeout_s=TIMEOUT_NEURO_STATUS,
-            verbose=False,
-            error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
-        )
-        search = re.search(r"Status: (\w+)", out)
-        assert search, f"not found job status in output: `{out}`"
-        status = search.group(1)
+        status = get_job_status(job_id)
         if status == target_status:
             return
         if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
         time.sleep(delay_s)
+
+
+def get_job_status(job_id: str) -> str:
+    out = run(
+        f"neuro status {job_id}",
+        timeout_s=TIMEOUT_NEURO_STATUS,
+        verbose=False,
+        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
+    )
+    search = re.search(r"Status: (\w+)", out)
+    assert search, f"not found job status in output: `{out}`"
+    status = search.group(1)
+    return status
