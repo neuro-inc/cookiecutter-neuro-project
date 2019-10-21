@@ -162,7 +162,7 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
         verbose=True,
         expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
-        error_patterns=["Error"],
+        error_patterns=["(E|e)rror:"],
     )
 
 

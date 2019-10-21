@@ -299,7 +299,7 @@ def run(
         )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
-        raise RuntimeError(f"Detected errors in output: {repr(errors)}")
+        raise RuntimeError(f"Detected errors in output: {errors}")
     return out
 
 
@@ -366,9 +366,14 @@ def _run_once(
                 child.expect(expected)
                 if verbose:
                     log.info(f"Found expected pattern: {repr(expected)}")
-            except pexpect.EOF:
+            except pexpect.ExceptionPexpect as e:
                 need_dump = True
-                err = f"NOT Found expected pattern: {repr(expected)}"
+                if isinstance(e, pexpect.EOF):
+                    err = f"NOT Found expected pattern: {repr(expected)}"
+                elif isinstance(e, pexpect.TIMEOUT):
+                    err = f"Timeout exceeded for command: {cmd}"
+                else:
+                    err = f"Pexpect error: {e}"
                 if verbose:
                     log.error(err)
                 raise RuntimeError(err)
