@@ -260,24 +260,10 @@ def test_make_run_jupyter() -> None:
     _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
 
-
 @pytest.mark.run(order=3)
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_NAME}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
-
-
-###
-        job_id = parse_job_id(out)
-        url = parse_job_url(out)
-        with timeout(2 * 60):
-            repeat_until_success(
-                f"curl --fail {url}{path}",
-                expect_patterns=["<html.*>"],
-                error_patterns=["curl: .+"],
-            )
-###
-
 
 
 @pytest.mark.run(order=3)
@@ -298,14 +284,8 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
-    search = re.search(JOB_ID_DECLARATION_PATTERN, out)
-    assert search, f"not found job-ID in output: `{out}`"
-    job_id = search.group(1)
-
-    search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-    assert search, f"not found URL in output: `{out}`"
-    url = search.group(1)
-
+    job_id = parse_job_id(out)
+    url = parse_job_url(out)
     with timeout(2 * 60):
         repeat_until_success(
             f"curl --fail {url}{path}",
