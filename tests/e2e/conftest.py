@@ -15,7 +15,7 @@ from tests.e2e.configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
-    MK_PROJECT_NAME,
+    MK_PROJECT_SLUG,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -166,7 +166,7 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
         error_patterns=["raise .*Exception"],
         verbose=False,
     )
-    with inside_dir(MK_PROJECT_NAME):
+    with inside_dir(MK_PROJECT_SLUG):
         yield
 
 
