@@ -15,6 +15,7 @@ from tests.e2e.configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
+    MK_PROJECT_PATH_STORAGE,
     MK_PROJECT_SLUG,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -36,9 +37,8 @@ from tests.e2e.utils import (
 from tests.utils import inside_dir
 
 
-SUBMITTED_JOBS_FILE_NAME = "submitted_jobs.txt"
-CLEANUP_JOBS_SCRIPT_NAME = "cleanup_jobs.py"
-
+LOG_FILE_NAME = "e2e-output.log"
+SUBMITTED_JOBS_FILE_NAME = "cleanup_jobs.txt"
 
 DEFAULT_TIMEOUT_SHORT = 10
 DEFAULT_TIMEOUT_LONG = 10 * 60
@@ -61,11 +61,9 @@ LOCAL_TESTS_ROOT_PATH = LOCAL_ROOT_PATH / "tests"
 LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
 LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
 LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
-LOCAL_TESTS_LOGS_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "logs"
-LOCAL_TESTS_LOGS_PATH.mkdir(exist_ok=True)
-
-LOCAL_SUBMITTED_JOBS_FILE = LOCAL_ROOT_PATH / SUBMITTED_JOBS_FILE_NAME
-LOCAL_SUBMITTED_JOBS_CLEANER_SCRIPT_PATH = LOCAL_ROOT_PATH / CLEANUP_JOBS_SCRIPT_NAME
+LOCAL_TESTS_OUTPUT_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "output"
+LOCAL_TESTS_OUTPUT_PATH.mkdir(exist_ok=True)
+LOCAL_SUBMITTED_JOBS_FILE = LOCAL_TESTS_OUTPUT_PATH / SUBMITTED_JOBS_FILE_NAME
 
 JOB_STATUS_PENDING = "pending"
 JOB_STATUS_RUNNING = "running"
@@ -76,7 +74,7 @@ JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
 PEXPECT_DEBUG_OUTPUT_LOGFILE = (
-    open(LOCAL_TESTS_LOGS_PATH / "e2e-output.log", "a")
+    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a")
     if os.environ.get("CI") == "true"
     else sys.stdout
 )
@@ -217,7 +215,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def pip_install_neuromation() -> None:
+def pip_install_neuromation(generate_empty_project: None) -> None:
     run("pip install -U neuromation", verbose=False)
     assert "Name: neuromation" in run("pip show neuromation", verbose=False)
 
@@ -225,7 +223,7 @@ def pip_install_neuromation() -> None:
 @pytest.fixture(scope="session", autouse=True)
 def neuro_login(
     pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]
-) -> None:
+) -> t.Iterator[None]:
     config = client_setup_factory()
     captured = run(
         f"neuro config login-with-token {config.token} {config.url}",
@@ -235,6 +233,42 @@ def neuro_login(
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log.info(run("neuro config show", verbose=False))
+    yield
+    run("neuro logout")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(neuro_login: None) -> t.Iterator[None]:
+    try:
+        yield
+    finally:
+        log.info("-" * 100)
+        _cleanup_jobs()
+        _cleanup_storage()
+
+
+def _cleanup_jobs() -> None:
+    log.info("Cleanup jobs...")
+    try:
+        path = LOCAL_SUBMITTED_JOBS_FILE.absolute()
+        out = run(f"bash -c '[ -f {path} ] && cat {path} || true'")
+        if out:
+            run(f"bash -c 'neuro kill $(cat {path})'", detect_new_jobs=False)
+            run(f"rm {path}")
+    except Exception as e:
+        log.error(f"Failed to cleanup jobs: {e}")
+    finally:
+        log.info(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
+
+
+def _cleanup_storage() -> None:
+    log.info("Cleanup storage...")
+    try:
+        neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
+    except Exception as e:
+        log.error(f"Failed to cleanup storage: {e}")
+    finally:
+        log.info(f"Result: {run('neuro ls', verbose=False)}")
 
 
 # == execution helpers ==
@@ -480,7 +514,7 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
             log.info(f"Target `{target.absolute()}` already exists")
             continue
         log.info(f"Copying file `{f}` to `{target.absolute()}`")
-        shutil.copyfile(f, target, follow_symlinks=False)
+        shutil.copyfile(str(f), target, follow_symlinks=False)
 
 
 # == neuro helpers ==
@@ -513,15 +547,19 @@ def neuro_ls(path: str) -> t.Set[str]:
 
 
 def neuro_rm_dir(
-    project_relative_path: str, timeout_s: int, ignore_errors: bool = False
+    project_relative_path: str,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    ignore_errors: bool = False,
+    verbose: bool = False,
 ) -> None:
     log.info(f"Deleting remote directory `{project_relative_path}`")
     run(
         f"neuro rm -r {project_relative_path}",
         timeout_s=timeout_s,
-        verbose=False,
+        verbose=verbose,
         error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
+    log.info("Done.")
 
 
 def wait_job_change_status_to(
@@ -542,6 +580,7 @@ def wait_job_change_status_to(
         assert search, f"not found job status in output: `{out}`"
         status = search.group(1)
         if status == target_status:
+            log.info("Done.")
             return
         if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
