@@ -3,7 +3,7 @@ from time import sleep
 
 import pytest
 
-from .configuration import (
+from tests.e2e.configuration import (
     MK_CODE_PATH,
     MK_CODE_PATH_STORAGE,
     MK_DATA_PATH,

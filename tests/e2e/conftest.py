@@ -15,7 +15,7 @@ import pytest
 
 from tests.utils import inside_dir
 
-from .configuration import (
+from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
