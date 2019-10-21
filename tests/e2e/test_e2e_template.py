@@ -8,9 +8,13 @@ from tests.e2e.configuration import (
     MK_CODE_PATH_STORAGE,
     MK_DATA_PATH,
     MK_DATA_PATH_STORAGE,
+    MK_FILEBROWSER_NAME,
+    MK_JUPYTER_NAME,
     MK_NOTEBOOKS_PATH,
     MK_NOTEBOOKS_PATH_ENV,
     MK_NOTEBOOKS_PATH_STORAGE,
+    MK_SETUP_NAME,
+    MK_TENSORBOARD_NAME,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -45,6 +49,7 @@ from .conftest import (
     parse_job_url,
     repeat_until_success,
     run,
+    try_except_finally,
     wait_job_change_status_to,
 )
 from .utils import measure_time, timeout
@@ -53,6 +58,7 @@ from .utils import measure_time, timeout
 log = get_logger()
 
 
+@try_except_finally()
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
     assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
@@ -68,6 +74,8 @@ def test_project_structure() -> None:
     }
 
 
+@pytest.mark.run(order=0)
+@try_except_finally()
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
@@ -75,7 +83,11 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup(tmp_path: Path) -> None:
+    _run_make_setup_test(tmp_path)
 
+
+@try_except_finally(f"neuro kill {MK_SETUP_NAME}")
+def _run_make_setup_test(tmp_path: Path) -> None:
     project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
@@ -150,11 +162,12 @@ def test_make_setup(tmp_path: Path) -> None:
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
         verbose=True,
         expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
-        error_patterns=["Error"],
+        error_patterns=["(E|e)rror:"],
     )
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_code() -> None:
     neuro_rm_dir(
         MK_CODE_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_CODE, ignore_errors=True
@@ -176,6 +189,7 @@ def test_make_upload_code() -> None:
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_data() -> None:
     neuro_rm_dir(
         MK_DATA_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_DATA, ignore_errors=True
@@ -192,7 +206,7 @@ def test_make_upload_data() -> None:
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    # let storage sync
+    # TODO: HACK: let storage sync
     sleep(5)
     actual = neuro_ls(MK_DATA_PATH_STORAGE)
     assert len(actual) == N_FILES
@@ -200,6 +214,7 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=2)
+@try_except_finally()
 def test_make_upload_download_notebooks() -> None:
     # Upload:
     make_cmd = "make upload-notebooks"
@@ -244,58 +259,59 @@ def test_make_upload_download_notebooks() -> None:
 
 
 @pytest.mark.run(order=3)
-@pytest.mark.parametrize(
-    "target,path,timeout_run",
-    [
-        ("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU),
-        ("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU),
-        ("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU),
-    ],
-)
-def test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
-    try:
-        # Can't test web UI with HTTP auth
-        make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
-        with measure_time(make_cmd):
-            out = run(
-                make_cmd,
-                verbose=True,
-                timeout_s=timeout_run,
-                expect_patterns=[r"Status:[^\n]+running"],
-                error_patterns=DEFAULT_ERROR_PATTERNS,
-            )
+@try_except_finally(f"neuro kill {MK_JUPYTER_NAME}")
+def test_make_run_jupyter() -> None:
+    _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
-        job_id = parse_job_id(out)
-        url = parse_job_url(out)
 
-        with timeout(2 * 60):
-            repeat_until_success(
-                f"curl --fail {url}{path}",
-                job_id,
-                expect_patterns=["<html.*>"],
-                error_patterns=["curl: .+"],
-            )
+@pytest.mark.run(order=3)
+@try_except_finally(f"neuro kill {MK_TENSORBOARD_NAME}")
+def test_make_run_tensorboard() -> None:
+    _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
-        make_cmd = f"make kill-{target}"
-        with measure_time(make_cmd):
-            run(
-                make_cmd,
-                verbose=True,
-                timeout_s=TIMEOUT_NEURO_KILL,
-                error_patterns=DEFAULT_ERROR_PATTERNS,
-            )
-        wait_job_change_status_to(job_id, "succeeded")
 
-    except Exception:
-        log.exception("Exception", exc_info=True)
-        raise
+@pytest.mark.run(order=3)
+@try_except_finally(f"neuro kill {MK_FILEBROWSER_NAME}")
+def test_make_run_filebrowser() -> None:
+    _test_make_run_something_useful("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU)
 
-    finally:
-        # cleanup
-        run(f"make kill-{target}", verbose=False, error_patterns=())
+
+def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
+    # Can't test web UI with HTTP auth
+    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+    with measure_time(make_cmd):
+        out = run(
+            make_cmd,
+            verbose=True,
+            timeout_s=timeout_run,
+            expect_patterns=[r"Status:[^\n]+running"],
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+
+    job_id = parse_job_id(out)
+    url = parse_job_url(out)
+    with timeout(2 * 60):
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            job_id,
+            expect_patterns=["<html.*>"],
+            error_patterns=["curl: .+"],
+            verbose=False,
+        )
+
+    make_cmd = f"make kill-{target}"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_NEURO_KILL,
+            error_patterns=DEFAULT_ERROR_PATTERNS,
+        )
+    wait_job_change_status_to(job_id, "succeeded")
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_code() -> None:
     actual = neuro_ls(MK_CODE_PATH_STORAGE)
     assert actual == PROJECT_CODE_DIR_CONTENT
@@ -314,6 +330,7 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_data() -> None:
     actual = neuro_ls(MK_DATA_PATH_STORAGE)
     assert len(actual) == N_FILES
@@ -333,6 +350,7 @@ def test_make_clean_data() -> None:
 
 
 @pytest.mark.run(order=4)
+@try_except_finally()
 def test_make_clean_notebooks() -> None:
     actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
