@@ -4,6 +4,8 @@ NOTEBOOKS_PATH?=notebooks
 REQUIREMENTS_PIP?=requirements.txt
 REQUIREMENTS_APT?=apt.txt
 RESULTS_PATH?=results
+PROJECT_PYTHON_FILES=setup.cfg
+
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 CODE_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(CODE_PATH)
 DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)
@@ -22,14 +24,15 @@ RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
 NEURO_CP=neuro cp --recursive --update --no-target-directory
 
-SETUP_NAME?=setup-{{cookiecutter.project_slug}}
-TRAINING_NAME?=training-{{cookiecutter.project_slug}}
-JUPYTER_NAME?=jupyter-{{cookiecutter.project_slug}}
-TENSORBOARD_NAME?=tensorboard-{{cookiecutter.project_slug}}
-FILEBROWSER_NAME?=filebrowser-{{cookiecutter.project_slug}}
+PROJECT_POSTFIX?={{cookiecutter.project_slug.replace('_', '-')}}
+SETUP_NAME?=setup-$(PROJECT_POSTFIX)
+TRAINING_NAME?=training-$(PROJECT_POSTFIX)
+JUPYTER_NAME?=jupyter-$(PROJECT_POSTFIX)
+TENSORBOARD_NAME?=tensorboard-$(PROJECT_POSTFIX)
+FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
 
 BASE_ENV_NAME?=neuromation/base
-CUSTOM_ENV_NAME?=image:neuromation-{{cookiecutter.project_slug}}
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 TRAINING_MACHINE_TYPE?=gpu-small
 
 # Set it to True (verbatim) to disable HTTP authentication for your jobs
@@ -64,11 +67,12 @@ setup: ### Setup remote environment
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
+	for file in $(PROJECT_PYTHON_FILES); do neuro cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
 	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
 	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
 	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
-	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
+	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_NAME)
 
 ##### STORAGE #####
@@ -143,7 +147,7 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
-		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
+		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook

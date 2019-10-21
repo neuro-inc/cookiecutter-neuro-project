@@ -23,7 +23,7 @@ TIMEOUT_NEURO_KILL = 20
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-MK_PROJECT_NAME = UNIQUE_PROJECT_NAME.lower().replace(" ", "-").replace("_", " ")
+MK_PROJECT_NAME = UNIQUE_PROJECT_NAME.lower().replace(" ", "_").replace("-", "_")
 
 MK_CODE_PATH = "modules"
 MK_DATA_PATH = "data"
@@ -56,11 +56,12 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_NAME}"
 
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
+PROJECT_PYTHON_FILES = ["setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 PROJECT_HIDDEN_FILES = {".gitkeep"}
-PROJECT_CODE_DIR_CONTENT = {"main.py"}
-PROJECT_NOTEBOOKS_DIR_CONTENT = {"00_notebook_tutorial.ipynb"}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}

@@ -30,7 +30,7 @@ format:
 test_unit:
 	pytest -v -s tests/unit
 	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
-	stat ../test-project
+	stat ../test_project
 	python -m doctest tests/e2e/conftest.py
 	@echo OK
 

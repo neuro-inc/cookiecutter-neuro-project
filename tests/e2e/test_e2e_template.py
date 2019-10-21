@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from time import sleep
 
@@ -12,6 +11,7 @@ from tests.e2e.configuration import (
     MK_FILEBROWSER_NAME,
     MK_JUPYTER_NAME,
     MK_NOTEBOOKS_PATH,
+    MK_NOTEBOOKS_PATH_ENV,
     MK_NOTEBOOKS_PATH_STORAGE,
     MK_SETUP_NAME,
     MK_TENSORBOARD_NAME,
@@ -22,6 +22,7 @@ from tests.e2e.configuration import (
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
+    PROJECT_PYTHON_FILES,
     TIMEOUT_MAKE_CLEAN_DATA,
     TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
@@ -39,12 +40,13 @@ from tests.e2e.configuration import (
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    JOB_ID_DECLARATION_PATTERN,
     N_FILES,
     cleanup_local_dirs,
     get_logger,
     neuro_ls,
     neuro_rm_dir,
+    parse_job_id,
+    parse_job_url,
     repeat_until_success,
     run,
     try_except_finally,
@@ -72,6 +74,7 @@ def test_project_structure() -> None:
     }
 
 
+@pytest.mark.run(order=0)
 @try_except_finally()
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
@@ -80,7 +83,8 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 @try_except_finally(f"neuro kill {MK_SETUP_NAME}")
-def test_make_setup() -> None:
+def test_make_setup(tmp_path: Path) -> None:
+    project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -97,6 +101,8 @@ def test_make_setup() -> None:
     expected_patterns = [
         # run
         r"Status:[^\n]+running",
+        # copy project files
+        *project_files_messages,
         # copy apt.txt
         f"Copy 'file://.*{PROJECT_APT_FILE_NAME}",
         rf"'{PROJECT_APT_FILE_NAME}' \d+B",
@@ -129,6 +135,31 @@ def test_make_setup() -> None:
             # TODO: add specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
+
+    # Test imports from a notebook:
+    out = run(
+        "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
+        verbose=True,
+        expect_patterns=[r"Status:[^\n]+running"],
+        timeout_s=TIMEOUT_NEURO_RUN_CPU,
+    )
+    job_id = parse_job_id(out)
+
+    expected_string = "Hello World!"
+    tmp_path.mkdir(exist_ok=True)
+    out_file = (tmp_path / "out").absolute()
+    cmd = (
+        "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
+        f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+        f"cat {out_file}.asciidoc && "
+        f'grep "{expected_string}" {out_file}.asciidoc'
+    )
+    run(
+        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        verbose=True,
+        expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
+        error_patterns=["Error"],
+    )
 
 
 @pytest.mark.run(order=2)
@@ -229,10 +260,24 @@ def test_make_run_jupyter() -> None:
     _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
 
+
 @pytest.mark.run(order=3)
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_NAME}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
+
+
+###
+        job_id = parse_job_id(out)
+        url = parse_job_url(out)
+        with timeout(2 * 60):
+            repeat_until_success(
+                f"curl --fail {url}{path}",
+                expect_patterns=["<html.*>"],
+                error_patterns=["curl: .+"],
+            )
+###
+
 
 
 @pytest.mark.run(order=3)
@@ -284,7 +329,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 @try_except_finally()
 def test_make_clean_code() -> None:
     actual = neuro_ls(MK_CODE_PATH_STORAGE)
-    assert actual == {"main.py"}
+    assert actual == PROJECT_CODE_DIR_CONTENT
 
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
