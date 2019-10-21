@@ -15,6 +15,7 @@ from .configuration import (
     MK_NOTEBOOKS_PATH_STORAGE,
     MK_SETUP_NAME,
     MK_TENSORBOARD_NAME,
+    N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -39,7 +40,6 @@ from .configuration import (
 )
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    N_FILES,
     cleanup_local_dirs,
     get_logger,
     measure_time,

@@ -3,7 +3,6 @@ import os
 import re
 import shutil
 import signal
-import sys
 import textwrap
 import time
 import typing as t
@@ -17,13 +16,26 @@ import pytest
 from tests.utils import inside_dir
 
 from .configuration import (
+    DEFAULT_ERROR_PATTERNS,
+    DEFAULT_NEURO_ERROR_PATTERNS,
+    DEFAULT_TIMEOUT_LONG,
+    FILE_SIZE_B,
+    JOB_ID_DECLARATION_PATTERN,
+    JOB_STATUSES_TERMINATED,
+    LOCAL_PROJECT_CONFIG_PATH,
+    LOCAL_ROOT_PATH,
+    LOCAL_SUBMITTED_JOBS_FILE,
+    LOCAL_TESTS_SAMPLES_PATH,
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
     MK_PROJECT_PATH_STORAGE,
     MK_PROJECT_SLUG,
+    N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
+    PEXPECT_BUFFER_SIZE_BYTES,
+    PEXPECT_DEBUG_OUTPUT_LOGFILE,
     PROJECT_APT_FILE_NAME,
     PROJECT_HIDDEN_FILES,
     PROJECT_PIP_FILE_NAME,
@@ -31,69 +43,8 @@ from .configuration import (
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
     UNIQUE_PROJECT_NAME,
+    VERBS_SECRET,
     unique_label,
-)
-
-
-LOG_FILE_NAME = "e2e-output.log"
-SUBMITTED_JOBS_FILE_NAME = "cleanup_jobs.txt"
-
-DEFAULT_TIMEOUT_SHORT = 10
-DEFAULT_TIMEOUT_LONG = 10 * 60
-
-# TODO: use a real dataset after cleaning up docs
-FILE_SIZE_KB = 4
-FILE_SIZE_B = FILE_SIZE_KB * 1024
-N_FILES = 15
-
-
-VERBS_SECRET = ("login-with-token",)
-VERBS_JOB_RUN = ("run", "submit")
-
-# OutCode = namedtuple("OutCode", "output code")
-ESCAPE_LOG_CHARACTERS: t.Sequence[t.Tuple[str, str]] = [("\n", "\\n")]
-
-# all variables prefixed "LOCAL_" store paths to file on your local machine
-LOCAL_ROOT_PATH = Path(__file__).resolve().parent.parent.parent
-LOCAL_TESTS_ROOT_PATH = LOCAL_ROOT_PATH / "tests"
-LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
-LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
-LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
-LOCAL_TESTS_OUTPUT_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "output"
-LOCAL_TESTS_OUTPUT_PATH.mkdir(exist_ok=True)
-LOCAL_SUBMITTED_JOBS_FILE = LOCAL_TESTS_OUTPUT_PATH / SUBMITTED_JOBS_FILE_NAME
-
-JOB_STATUS_PENDING = "pending"
-JOB_STATUS_RUNNING = "running"
-JOB_STATUS_SUCCEEDED = "succeeded"
-JOB_STATUS_FAILED = "failed"
-JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
-
-# use `sys.stdout` to echo everything to standard output
-# use `open('mylog.txt','wb')` to log to a file
-# use `None` to disable logging to console
-PEXPECT_DEBUG_OUTPUT_LOGFILE = (
-    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a")
-    if os.environ.get("CI") == "true"
-    else sys.stdout
-)
-
-# note: ERROR, being the most general error, must go the last
-DEFAULT_NEURO_ERROR_PATTERNS = (
-    "404: Not Found",
-    r"Status:[^\n]+failed",
-    r"ERROR[^:]*: .+",
-)
-DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
-DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
-
-
-PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
-
-JOB_ID_DECLARATION_PATTERN = re.compile(
-    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
-    re.IGNORECASE,
 )
 
 
@@ -120,15 +71,12 @@ def get_logger() -> logging.Logger:
 log = get_logger()
 
 
-# == helpers ==
+# == general helpers ==
 
 
-def log_msg(
-    msg: str, logger: t.Callable[..., None] = log.info, verbose: bool = False
-) -> None:
-    if verbose:
-        logger(msg)
-        PEXPECT_DEBUG_OUTPUT_LOGFILE.write(msg + "\n")
+def log_msg(msg: str, *, logger: t.Callable[..., None] = log.info) -> None:
+    logger(msg)
+    PEXPECT_DEBUG_OUTPUT_LOGFILE.write(msg + "\n")
 
 
 @contextmanager
@@ -147,7 +95,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
     try:
         yield
     except TimeoutError:
-        log.error(f"TIMEOUT ERROR: {time_s} sec")
+        log_msg(f"TIMEOUT ERROR: {time_s} sec", logger=log.error)
         raise
     finally:
         # Unregister the signal so it won't be triggered
@@ -174,9 +122,9 @@ def log_errors_and_finalize(
     try:
         yield
     except Exception as e:
-        log.error("-" * 100)
-        log.error(f"Error: {e.__class__}: {e}", exc_info=True)
-        log.error("-" * 100)
+        log_msg("-" * 100, logger=log.error)
+        log_msg(f"Error: {e.__class__}: {e}", logger=log.error)
+        log_msg("-" * 100, logger=log.error)
         raise
     finally:
         if finalizer_callback is not None:
@@ -218,7 +166,6 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
         else:
             raise ValueError(f"Invalid environment: {environment}")
-        log_msg(f"Environment: {env_name_url}, {env_name_token}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -311,7 +258,6 @@ def neuro_login(
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
-    run("neuro logout")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -336,7 +282,7 @@ def _cleanup_jobs() -> None:
                 verbose=True,
             )
     except Exception as e:
-        log.error(f"Failed to cleanup jobs: {e}")
+        log_msg(f"Failed to cleanup jobs: {e}", logger=log.error)
     finally:
         log_msg(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
 
@@ -346,7 +292,7 @@ def _cleanup_storage() -> None:
     try:
         neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
     except Exception as e:
-        log.error(f"Failed to cleanup storage: {e}")
+        log_msg(f"Failed to cleanup storage: {e}", logger=log.error)
     finally:
         log_msg(f"Result: {run('neuro ls', verbose=False)}")
 
@@ -393,9 +339,6 @@ def repeat_until_success(
             except RuntimeError:
                 pass
             time.sleep(interval_s)
-
-
-# TODO: Move these helpers to a separate file to use it from outside
 
 
 def run(
