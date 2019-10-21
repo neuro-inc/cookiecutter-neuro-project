@@ -1,17 +1,22 @@
+import logging
 import os
 import re
 import shutil
+import signal
 import sys
 import textwrap
 import time
 import typing as t
 from collections import namedtuple
+from contextlib import contextmanager
 from pathlib import Path
 
 import pexpect
 import pytest
 
-from tests.e2e.configuration import (
+from tests.utils import inside_dir
+
+from .configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
@@ -26,15 +31,8 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
     UNIQUE_PROJECT_NAME,
-)
-from tests.e2e.utils import (
-    LOGGER_NAME,
-    get_logger,
-    log_errors_and_finalize,
-    timeout,
     unique_label,
 )
-from tests.utils import inside_dir
 
 
 LOG_FILE_NAME = "e2e-output.log"
@@ -70,6 +68,7 @@ JOB_STATUS_RUNNING = "running"
 JOB_STATUS_SUCCEEDED = "succeeded"
 JOB_STATUS_FAILED = "failed"
 JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
+
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
@@ -91,8 +90,14 @@ DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTE
 
 PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
 
+JOB_ID_DECLARATION_PATTERN = re.compile(
+    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
+    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    re.IGNORECASE,
+)
 
-log = get_logger()
+
+# == pytest config ==
 
 
 def pytest_logger_config(logger_config: t.Any) -> None:
@@ -102,11 +107,83 @@ def pytest_logger_config(logger_config: t.Any) -> None:
     logger_config.set_log_option_default(",".join(loggers))
 
 
-JOB_ID_DECLARATION_PATTERN = re.compile(
-    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
-    re.IGNORECASE,
-)
+# == logging ==
+
+LOGGER_NAME = "e2e"
+
+
+def get_logger() -> logging.Logger:
+    logger = logging.getLogger(LOGGER_NAME)
+    return logger
+
+
+log = get_logger()
+
+
+# == helpers ==
+
+
+def log_msg(
+    msg: str, logger: t.Callable[..., None] = log.info, verbose: bool = False
+) -> None:
+    if verbose:
+        logger(msg)
+        PEXPECT_DEBUG_OUTPUT_LOGFILE.write(msg + "\n")
+
+
+@contextmanager
+def timeout(time_s: int) -> t.Iterator[None]:
+    """ source: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
+    """
+
+    def raise_timeout(signum: int, frame: t.Any) -> t.NoReturn:
+        raise TimeoutError
+
+    # Register a function to raise a TimeoutError on the signal.
+    signal.signal(signal.SIGALRM, raise_timeout)
+    # Schedule the signal to be sent after ``time``.
+    signal.alarm(time_s)
+
+    try:
+        yield
+    except TimeoutError:
+        log.error(f"TIMEOUT ERROR: {time_s} sec")
+        raise
+    finally:
+        # Unregister the signal so it won't be triggered
+        # if the timeout is not reached.
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+
+@contextmanager
+def measure_time(command_name: str = "") -> t.Iterator[None]:
+    log_msg("=" * 100)
+    start_time = time.time()
+    log_msg(f"Measuring time for command: `{command_name}`")
+    yield
+    elapsed_time = time.time() - start_time
+    log_msg("=" * 50)
+    log_msg(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
+    log_msg("=" * 50)
+
+
+@contextmanager
+def log_errors_and_finalize(
+    finalizer_callback: t.Optional[t.Callable[[], t.Any]] = None
+) -> t.Iterator[None]:
+    try:
+        yield
+    except Exception as e:
+        log.error("-" * 100)
+        log.error(f"Error: {e.__class__}: {e}", exc_info=True)
+        log.error("-" * 100)
+        raise
+    finally:
+        if finalizer_callback is not None:
+            log_msg("Running finalization callback...")
+            finalizer_callback()
+            log_msg("Done")
+
 
 # == fixtures ==
 
@@ -141,7 +218,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
         else:
             raise ValueError(f"Invalid environment: {environment}")
-        log.info(f"Environment: {env_name_url}, {env_name_token}")
+        log_msg(f"Environment: {env_name_url}, {env_name_token}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -170,31 +247,31 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(cookiecutter_setup: None) -> None:
-    log.info(f"Initializing empty project: `{Path().absolute()}`")
+    log_msg(f"Initializing empty project: `{Path().absolute()}`")
 
     apt_file = Path(PROJECT_APT_FILE_NAME)
-    log.info(f"Copying `{apt_file}`")
+    log_msg(f"Copying `{apt_file}`")
     assert apt_file.is_file() and apt_file.exists()
     with apt_file.open("a") as f:
         for package in PACKAGES_APT_CUSTOM:
             f.write("\n" + package)
 
     pip_file = Path(PROJECT_PIP_FILE_NAME)
-    log.info(f"Copying `{pip_file}`")
+    log_msg(f"Copying `{pip_file}`")
     assert pip_file.is_file() and pip_file.exists()
     with pip_file.open("a") as f:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
     data_dir = Path(MK_DATA_PATH)
-    log.info(f"Generating data to `{data_dir}/`")
+    log_msg(f"Generating data to `{data_dir}/`")
     assert data_dir.is_dir() and data_dir.exists()
     for _ in range(N_FILES):
         generate_random_file(data_dir, FILE_SIZE_B)
     assert len(list(data_dir.iterdir())) >= N_FILES
 
     code_dir = Path(MK_CODE_PATH)
-    log.info(f"Generating code files to `{code_dir}/`")
+    log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
     with code_file.open("w") as f:
@@ -232,7 +309,7 @@ def neuro_login(
     )
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
-    log.info(run("neuro config show", verbose=False))
+    log_msg(run("neuro config show", verbose=False))
     yield
     run("neuro logout")
 
@@ -242,13 +319,13 @@ def cleanup(neuro_login: None) -> t.Iterator[None]:
     try:
         yield
     finally:
-        log.info("-" * 100)
+        log_msg("-" * 100)
         _cleanup_jobs()
         _cleanup_storage()
 
 
 def _cleanup_jobs() -> None:
-    log.info("Cleanup jobs...")
+    log_msg("Cleanup jobs...")
     try:
         path = LOCAL_SUBMITTED_JOBS_FILE.absolute()
         out = run(f"bash -c '[ -f {path} ] && cat {path} || true'")
@@ -261,17 +338,17 @@ def _cleanup_jobs() -> None:
     except Exception as e:
         log.error(f"Failed to cleanup jobs: {e}")
     finally:
-        log.info(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
+        log_msg(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
 
 
 def _cleanup_storage() -> None:
-    log.info("Cleanup storage...")
+    log_msg("Cleanup storage...")
     try:
         neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
     except Exception as e:
         log.error(f"Failed to cleanup storage: {e}")
     finally:
-        log.info(f"Result: {run('neuro ls', verbose=False)}")
+        log_msg(f"Result: {run('neuro ls', verbose=False)}")
 
 
 # == execution helpers ==
@@ -303,7 +380,7 @@ def repeat_until_success(
     **kwargs: t.Any,
 ) -> str:
     if not any(verb in cmd for verb in VERBS_SECRET):
-        log.info(f"Running command until success: `{cmd}`")
+        log_msg(f"Running command until success: `{cmd}`")
     with timeout(timeout_total_s):
         while True:
             job_status = get_job_status(job_id)
@@ -385,13 +462,8 @@ def _run_once(
     ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
     """
 
-    def write_log(msg: str, logger: t.Callable[..., None] = log.info) -> None:
-        if verbose:
-            logger(msg)
-            PEXPECT_DEBUG_OUTPUT_LOGFILE.write(msg + "\n")
-
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
-        write_log(f"[.] Running command: `{cmd}`")
+        log_msg(f"[.] Running command: `{cmd}`")
 
     child = pexpect.spawn(
         cmd,
@@ -408,13 +480,13 @@ def _run_once(
         expect_patterns = [pexpect.EOF]
     else:
         if verbose:
-            write_log(f"Search patterns: {repr(expect_patterns)}")
+            log_msg(f"Search patterns: {repr(expect_patterns)}")
     try:
         for expected in expect_patterns:
             try:
                 child.expect(expected)
                 if verbose:
-                    write_log(f"Found expected pattern: {repr(expected)}")
+                    log_msg(f"Found expected pattern: {repr(expected)}")
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -424,7 +496,7 @@ def _run_once(
                 else:
                     err = f"Pexpect error: {e}"
                 if verbose:
-                    write_log(err, logger=log.error)
+                    log_msg(err, logger=log.error)
                 raise RuntimeError(err)
             finally:
                 chunk = _get_chunk(child)
@@ -433,7 +505,7 @@ def _run_once(
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
         if verbose and need_dump:
-            write_log(f"DUMP: {repr(output)}")
+            log_msg(f"DUMP: {repr(output)}")
     return output
 
 
@@ -465,10 +537,10 @@ def detect_errors(
             if err:
                 found.add(err)
                 if verbose:
-                    log.info(f"Detected error matching {repr(p)}: {repr(err)}")
+                    log_msg(f"Detected error matching {repr(p)}: {repr(err)}")
     if verbose and found:
-        log.info(f"Overall {len(found)} patterns matched")
-        log.info(f"DUMP: {repr(output)}")
+        log_msg(f"Overall {len(found)} patterns matched")
+        log_msg(f"DUMP: {repr(output)}")
     return found
 
 
@@ -486,7 +558,7 @@ def _detect_job_ids(stdout: str) -> t.Set[str]:
 
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
     if jobs:
-        log.info(f"Dumped jobs: {jobs}")
+        log_msg(f"Dumped jobs: {jobs}")
         with LOCAL_SUBMITTED_JOBS_FILE.open("a") as f:
             f.write("\n" + "\n".join(jobs))
 
@@ -513,7 +585,7 @@ def cleanup_local_dirs(*dirs: t.Union[str, Path]) -> None:
             d = Path(d_or_name)
         else:
             d = d_or_name
-        log.info(f"Cleaning up local directory `{d.absolute()}`")
+        log_msg(f"Cleaning up local directory `{d.absolute()}`")
         for f in d.iterdir():
             if f.is_file():
                 f.unlink()
@@ -526,9 +598,9 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
             continue
         target = to_dir / f.name
         if target.exists():
-            log.info(f"Target `{target.absolute()}` already exists")
+            log_msg(f"Target `{target.absolute()}` already exists")
             continue
-        log.info(f"Copying file `{f}` to `{target.absolute()}`")
+        log_msg(f"Copying file `{f}` to `{target.absolute()}`")
         shutil.copyfile(str(f), target, follow_symlinks=False)
 
 
@@ -567,14 +639,14 @@ def neuro_rm_dir(
     ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
-    log.info(f"Deleting remote directory `{project_relative_path}`")
+    log_msg(f"Deleting remote directory `{project_relative_path}`")
     run(
         f"neuro rm -r {project_relative_path}",
         timeout_s=timeout_s,
         verbose=verbose,
         error_patterns=[] if ignore_errors else list(DEFAULT_NEURO_ERROR_PATTERNS),
     )
-    log.info("Done.")
+    log_msg("Done.")
 
 
 def wait_job_change_status_to(
@@ -583,11 +655,11 @@ def wait_job_change_status_to(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
 ) -> None:
-    log.info(f"Waiting for job {job_id} to get status {target_status}...")
+    log_msg(f"Waiting for job {job_id} to get status {target_status}...")
     with timeout(timeout_s):
         status = get_job_status(job_id)
         if status == target_status:
-            log.info("Done.")
+            log_msg("Done.")
             return
         if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")

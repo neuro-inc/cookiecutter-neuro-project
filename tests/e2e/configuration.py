@@ -1,4 +1,8 @@
-from .utils import unique_label
+from uuid import uuid4
+
+
+def unique_label() -> str:
+    return uuid4().hex[:8]
 
 
 TIMEOUT_MAKE_SETUP = 6 * 60
