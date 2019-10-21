@@ -253,8 +253,11 @@ def _cleanup_jobs() -> None:
         path = LOCAL_SUBMITTED_JOBS_FILE.absolute()
         out = run(f"bash -c '[ -f {path} ] && cat {path} || true'")
         if out:
-            run(f"bash -c 'neuro kill $(cat {path})'", detect_new_jobs=False)
-            run(f"rm {path}")
+            run(
+                f"bash -c 'neuro kill $(cat {path})'",
+                detect_new_jobs=False,
+                verbose=True,
+            )
     except Exception as e:
         log.error(f"Failed to cleanup jobs: {e}")
     finally:
@@ -382,8 +385,14 @@ def _run_once(
     ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
     """
 
+    def write_log(msg: str, logger: t.Callable[..., None] = log.info) -> None:
+        if verbose:
+            logger(msg)
+            PEXPECT_DEBUG_OUTPUT_LOGFILE.write(msg + "\n")
+
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
-        log.info(f"Running command: `{cmd}`")
+        write_log(f"[.] Running command: `{cmd}`")
+
     child = pexpect.spawn(
         cmd,
         timeout=DEFAULT_TIMEOUT_LONG,
@@ -399,13 +408,13 @@ def _run_once(
         expect_patterns = [pexpect.EOF]
     else:
         if verbose:
-            log.info(f"Search patterns: {repr(expect_patterns)}")
+            write_log(f"Search patterns: {repr(expect_patterns)}")
     try:
         for expected in expect_patterns:
             try:
                 child.expect(expected)
                 if verbose:
-                    log.info(f"Found expected pattern: {repr(expected)}")
+                    write_log(f"Found expected pattern: {repr(expected)}")
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -415,7 +424,7 @@ def _run_once(
                 else:
                     err = f"Pexpect error: {e}"
                 if verbose:
-                    log.error(err)
+                    write_log(err, logger=log.error)
                 raise RuntimeError(err)
             finally:
                 chunk = _get_chunk(child)
@@ -424,7 +433,7 @@ def _run_once(
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
         if verbose and need_dump:
-            log.info(f"DUMP: {repr(output)}")
+            write_log(f"DUMP: {repr(output)}")
     return output
 
 
