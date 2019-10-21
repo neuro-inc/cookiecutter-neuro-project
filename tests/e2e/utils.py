@@ -37,7 +37,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
     try:
         yield
     except TimeoutError:
-        log.error(f"TIMEOUT ERROR: {time_s}")
+        log.error(f"TIMEOUT ERROR: {time_s} sec")
         raise
     finally:
         # Unregister the signal so it won't be triggered
