@@ -50,7 +50,8 @@ jobs:
             make test_e2e_dev
 
       - store_artifacts:
-          path: tests/e2e/logs/
+          path: tests/e2e/logs/e2e-output.log
+          destination: e2e-output.log
 
       - run: &step_cleanup_jobs
           name: clean up
@@ -62,7 +63,7 @@ jobs:
 
       - store_artifacts: &step_store_job_cleanup_artifacts
           path: ./submitted_jobs.txt
-          destination: submitted-jobs
+          destination: submitted_jobs.txt
 
   test_staging:
     docker:

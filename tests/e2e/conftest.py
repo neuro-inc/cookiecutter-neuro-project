@@ -15,7 +15,7 @@ from tests.e2e.configuration import (
     MK_CODE_PATH,
     MK_DATA_PATH,
     MK_NOTEBOOKS_PATH,
-    MK_PROJECT_NAME,
+    MK_PROJECT_SLUG,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -26,7 +26,13 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_STATUS,
     UNIQUE_PROJECT_NAME,
 )
-from tests.e2e.utils import LOGGER_NAME, get_logger, timeout, unique_label
+from tests.e2e.utils import (
+    LOGGER_NAME,
+    get_logger,
+    log_errors_and_finalize,
+    timeout,
+    unique_label,
+)
 from tests.utils import inside_dir
 
 
@@ -76,7 +82,11 @@ PEXPECT_DEBUG_OUTPUT_LOGFILE = (
 )
 
 # note: ERROR, being the most general error, must go the last
-DEFAULT_NEURO_ERROR_PATTERNS = ("404: Not Found", "Status: failed", r"ERROR[^:]*: .+")
+DEFAULT_NEURO_ERROR_PATTERNS = (
+    "404: Not Found",
+    r"Status:[^\n]+failed",
+    r"ERROR[^:]*: .+",
+)
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
 
@@ -124,10 +134,8 @@ def pytest_configure(config: t.Any) -> None:
 @pytest.fixture(scope="session")
 def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        environment = request.config.getoption("--environment")
-        if environment:
-            log.info(f"Passed pytest option: `--environment={environment}`")
-        if not environment or environment == "dev":
+        environment = request.config.getoption("--environment", "dev")
+        if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
         elif environment == "staging":
@@ -135,6 +143,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
         else:
             raise ValueError(f"Invalid environment: {environment}")
+        log.info(f"Environment: {env_name_url}, {env_name_token}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -150,19 +159,19 @@ def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def run_cookiecutter(change_directory_to_temp: None) -> t.Iterator[None]:
+def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
     run(
         f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
         f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
         error_patterns=["raise .*Exception"],
         verbose=False,
     )
-    with inside_dir(MK_PROJECT_NAME):
+    with inside_dir(MK_PROJECT_SLUG):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
-def generate_empty_project(run_cookiecutter: None) -> None:
+def generate_empty_project(cookiecutter_setup: None) -> None:
     log.info(f"Initializing empty project: `{Path().absolute()}`")
 
     apt_file = Path(PROJECT_APT_FILE_NAME)
@@ -231,6 +240,24 @@ def neuro_login(
 # == execution helpers ==
 
 
+def try_except_finally(*finalizer_commands: str) -> t.Callable[..., t.Any]:
+    def callback() -> None:
+        for cmd in finalizer_commands:
+            run(cmd, verbose=True, error_patterns=())
+
+    def decorator(func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
+        # NOTE(artem) due to specifics of pytest fixture implementations,
+        #  this decorator won't work directly on test functions with fixtures
+        #  (use a separate function, see for example `test_make_setup`)
+        def wrapper(*args: t.Any, **kwargs: t.Any) -> None:
+            with log_errors_and_finalize(callback if finalizer_commands else None):
+                func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 def repeat_until_success(
     cmd: str,
     timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
@@ -254,11 +281,11 @@ def repeat_until_success(
 def run(
     cmd: str,
     *,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -266,26 +293,22 @@ def run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
-    out = run_once(
-        cmd,
-        expect_patterns,
-        verbose=verbose,
-        detect_new_jobs=detect_new_jobs,
-        timeout_s=timeout_s,
-    )
+    with timeout(timeout_s):
+        out = _run_once(
+            cmd, expect_patterns, verbose=verbose, detect_new_jobs=detect_new_jobs
+        )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
-        raise RuntimeError(f"Detected errors in output: {repr(errors)}")
+        raise RuntimeError(f"Detected errors in output: {errors}")
     return out
 
 
-def run_once(
+def _run_once(
     cmd: str,
     expect_patterns: t.Sequence[str] = (),
     *,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -296,34 +319,34 @@ def run_once(
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     >>> # Expect the first and the last output:
-    >>> run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
+    >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
     '1 2 3'
     >>> # Abort once all the patterns have matched:
-    >>> run_once("bash -c 'echo 1 2 3 && sleep infinity'",
+    >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'",
     ...     expect_patterns=['1', '2'], verbose=False)
     '1 2'
     >>> # Empty pattern list: read until the process returns:
-    >>> run_once('echo 1 2 3', expect_patterns=[], verbose=False)
+    >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False)
     '1 2 3\r\n'
     >>> # Wrong order of patterns:
     >>> try:
-    ...     run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
+    ...     _run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND PATTERN: '1'", repr(str(e))
+    ...     assert str(e) == "NOT Found expected pattern: '1'", repr(str(e))
     >>> # Pattern not found at all:
     >>> try:
-    ...     run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
+    ...     _run_once('echo 1 2 3', expect_patterns=['4'], verbose=False)
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
-    ...     assert str(e) == "NOT FOUND PATTERN: '4'", repr(str(e))
+    ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
         log.info(f"Running command: `{cmd}`")
     child = pexpect.spawn(
         cmd,
-        timeout=timeout_s,
+        timeout=DEFAULT_TIMEOUT_LONG,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
@@ -342,10 +365,15 @@ def run_once(
             try:
                 child.expect(expected)
                 if verbose:
-                    log.info(f"Found pattern: {repr(expected)}")
-            except pexpect.EOF:
+                    log.info(f"Found expected pattern: {repr(expected)}")
+            except pexpect.ExceptionPexpect as e:
                 need_dump = True
-                err = f"NOT FOUND PATTERN: {repr(expected)}"
+                if isinstance(e, pexpect.EOF):
+                    err = f"NOT Found expected pattern: {repr(expected)}"
+                elif isinstance(e, pexpect.TIMEOUT):
+                    err = f"Timeout exceeded for command: {cmd}"
+                else:
+                    err = f"Pexpect error: {e}"
                 if verbose:
                     log.error(err)
                 raise RuntimeError(err)
