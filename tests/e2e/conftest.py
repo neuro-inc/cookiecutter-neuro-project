@@ -258,7 +258,7 @@ def _cleanup_jobs() -> None:
     except Exception as e:
         log.error(f"Failed to cleanup jobs: {e}")
     finally:
-        log.info(f"Result: {run('neuro ps', detect_new_jobs=False)}")
+        log.info(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
 
 
 def _cleanup_storage() -> None:
@@ -268,7 +268,7 @@ def _cleanup_storage() -> None:
     except Exception as e:
         log.error(f"Failed to cleanup storage: {e}")
     finally:
-        log.info(f"Result: {run('neuro ls')}")
+        log.info(f"Result: {run('neuro ls', verbose=False)}")
 
 
 # == execution helpers ==
