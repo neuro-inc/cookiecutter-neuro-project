@@ -257,6 +257,8 @@ def _cleanup_jobs() -> None:
             run(f"rm {path}")
     except Exception as e:
         log.error(f"Failed to cleanup jobs: {e}")
+    finally:
+        log.info(f"Result: {run('neuro ps', detect_new_jobs=False)}")
 
 
 def _cleanup_storage() -> None:
@@ -265,6 +267,8 @@ def _cleanup_storage() -> None:
         neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
     except Exception as e:
         log.error(f"Failed to cleanup storage: {e}")
+    finally:
+        log.info(f"Result: {run('neuro ls')}")
 
 
 # == execution helpers ==
