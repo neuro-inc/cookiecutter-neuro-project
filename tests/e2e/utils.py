@@ -37,7 +37,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
     try:
         yield
     except TimeoutError:
-        log.error(f"TIMEOUT ERROR: {time_s}")
+        log.error(f"TIMEOUT ERROR: {time_s} sec")
         raise
     finally:
         # Unregister the signal so it won't be triggered
@@ -47,7 +47,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 @contextmanager
 def measure_time(command_name: str = "") -> t.Iterator[None]:
-    log.info("-" * 50)
+    log.info("=" * 100)
     start_time = time.time()
     log.info(f"Measuring time for command: `{command_name}`")
     yield
@@ -55,3 +55,21 @@ def measure_time(command_name: str = "") -> t.Iterator[None]:
     log.info("=" * 50)
     log.info(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
     log.info("=" * 50)
+
+
+@contextmanager
+def log_errors_and_finalize(
+    finalizer_callback: t.Optional[t.Callable[[], t.Any]] = None
+) -> t.Iterator[None]:
+    try:
+        yield
+    except Exception as e:
+        log.error("-" * 100)
+        log.error(f"Error: {e.__class__}: {e}", exc_info=True)
+        log.error("-" * 100)
+        raise
+    finally:
+        if finalizer_callback is not None:
+            log.info("Running finalization callback...")
+            finalizer_callback()
+            log.info("Done")

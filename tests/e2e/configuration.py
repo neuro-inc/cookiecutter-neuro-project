@@ -2,7 +2,7 @@ from .utils import unique_label
 
 
 TIMEOUT_MAKE_SETUP = 6 * 60
-TIMEOUT_MAKE_UPLOAD_CODE = 5
+TIMEOUT_MAKE_UPLOAD_CODE = 10
 TIMEOUT_MAKE_CLEAN_CODE = 3
 TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
@@ -23,14 +23,15 @@ TIMEOUT_NEURO_KILL = 20
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-MK_PROJECT_NAME = UNIQUE_PROJECT_NAME.lower().replace(" ", "_").replace("-", "_")
+MK_PROJECT_POSTFIX = UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
+MK_PROJECT_SLUG = MK_PROJECT_POSTFIX.replace("-", "_")
 
 MK_CODE_PATH = "modules"
 MK_DATA_PATH = "data"
 MK_NOTEBOOKS_PATH = "notebooks"
 MK_REQUIREMENTS_PATH = "requirements"
 MK_RESULTS_PATH = "results"
-MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_NAME}"
+MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_SLUG}"
 MK_CODE_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_PATH}"
 MK_DATA_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_PATH}"
 MK_NOTEBOOKS_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_PATH}"
@@ -44,23 +45,24 @@ MK_NOTEBOOKS_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_PATH}"
 MK_REQUIREMENTS_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_REQUIREMENTS_PATH}"
 MK_RESULTS_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_RESULTS_PATH}"
 
-MK_SETUP_NAME = f"setup-{MK_PROJECT_NAME}"
-MK_TRAINING_NAME = f"training-{MK_PROJECT_NAME}"
-MK_JUPYTER_NAME = f"jupyter-{MK_PROJECT_NAME}"
-MK_TENSORBOARD_NAME = f"tensorboard-{MK_PROJECT_NAME}"
-MK_FILEBROWSER_NAME = f"filebrowser-{MK_PROJECT_NAME}"
+MK_SETUP_NAME = f"setup-{MK_PROJECT_POSTFIX}"
+MK_TRAINING_NAME = f"training-{MK_PROJECT_POSTFIX}"
+MK_JUPYTER_NAME = f"jupyter-{MK_PROJECT_POSTFIX}"
+MK_TENSORBOARD_NAME = f"tensorboard-{MK_PROJECT_POSTFIX}"
+MK_FILEBROWSER_NAME = f"filebrowser-{MK_PROJECT_POSTFIX}"
 
-MK_BASE_ENV_NAME = "neuromation/base"
-MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_NAME}"
+# MK_BASE_ENV_NAME = "neuromation/base"
+# MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_POSTFIX}"
 
 
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
+PROJECT_PYTHON_FILES = ["setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 PROJECT_HIDDEN_FILES = {".gitkeep"}
-PROJECT_CODE_DIR_CONTENT = {"main.py"}
-PROJECT_NOTEBOOKS_DIR_CONTENT = {"00_notebook_tutorial.ipynb"}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
