@@ -13,8 +13,6 @@ from pathlib import Path
 import pexpect
 import pytest
 
-from tests.utils import inside_dir
-
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
@@ -46,6 +44,7 @@ from tests.e2e.configuration import (
     VERBS_SECRET,
     unique_label,
 )
+from tests.utils import inside_dir
 
 
 # == pytest config ==

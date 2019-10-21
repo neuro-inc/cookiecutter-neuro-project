@@ -38,6 +38,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
 )
+
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
     cleanup_local_dirs,
