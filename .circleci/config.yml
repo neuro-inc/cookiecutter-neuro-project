@@ -49,20 +49,10 @@ jobs:
             . venv/bin/activate
             make test_e2e_dev
 
-      - store_artifacts:
-          path: tests/e2e/logs/
+      - store_artifacts: &step_store_artifacts
+          path: tests/e2e/output
+          destination: ouptut
 
-      - run: &step_cleanup_jobs
-          name: clean up
-          command: |
-            . venv/bin/activate
-            python cleanup_jobs.py
-            rm -f ~/.nmrc
-          when: always
-
-      - store_artifacts: &step_store_job_cleanup_artifacts
-          path: ./submitted_jobs.txt
-          destination: submitted-jobs
 
   test_staging:
     docker:
@@ -80,10 +70,7 @@ jobs:
           command: |
             . venv/bin/activate
             make test_e2e_staging
-      - store_artifacts:
-          path: tests/e2e/logs/
-      - run: *step_cleanup_jobs
-      - store_artifacts: *step_store_job_cleanup_artifacts
+      - store_artifacts: *step_store_artifacts
 
 
 workflows:
