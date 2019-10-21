@@ -28,8 +28,8 @@ from tests.e2e.configuration import (
 )
 from tests.e2e.utils import (
     LOGGER_NAME,
-    finalize_call,
     get_logger,
+    log_errors_and_finalize,
     timeout,
     unique_label,
 )
@@ -134,10 +134,8 @@ def pytest_configure(config: t.Any) -> None:
 @pytest.fixture(scope="session")
 def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        environment = request.config.getoption("--environment")
-        if environment:
-            log.info(f"Passed pytest option: `--environment={environment}`")
-        if not environment or environment == "dev":
+        environment = request.config.getoption("--environment", "dev")
+        if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
         elif environment == "staging":
@@ -145,6 +143,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
         else:
             raise ValueError(f"Invalid environment: {environment}")
+        log.info(f"Environment: {env_name_url}, {env_name_token}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -244,9 +243,19 @@ def neuro_login(
 def try_except_finally(*finalizer_commands: str) -> t.Callable[..., t.Any]:
     def callback() -> None:
         for cmd in finalizer_commands:
-            run(cmd, verbose=False, error_patterns=())
+            run(cmd, verbose=True, error_patterns=())
 
-    return finalize_call(callback if finalizer_commands else None)
+    def decorator(func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
+        # NOTE(artem) due to specifics of pytest fixture implementations,
+        #  this decorator won't work directly on test functions with fixtures
+        #  (use a separate function, see for example `test_make_setup`)
+        def wrapper(*args: t.Any, **kwargs: t.Any) -> None:
+            with log_errors_and_finalize(callback if finalizer_commands else None):
+                func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def repeat_until_success(
