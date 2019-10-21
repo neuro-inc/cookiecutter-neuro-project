@@ -49,13 +49,10 @@ jobs:
             . venv/bin/activate
             make test_e2e_dev
 
-      - store_artifacts:
-          path: tests/e2e/logs/e2e-output.log
-          destination: e2e-output.log
+      - store_artifacts: &step_store_artifacts
+          path: tests/e2e/output
+          destination: ouptut
 
-      - store_artifacts: &step_store_job_cleanup_artifacts
-          path: ./submitted_jobs.txt
-          destination: submitted_jobs.txt
 
   test_staging:
     docker:
@@ -73,9 +70,7 @@ jobs:
           command: |
             . venv/bin/activate
             make test_e2e_staging
-      - store_artifacts:
-          path: tests/e2e/logs/
-      - store_artifacts: *step_store_job_cleanup_artifacts
+      - store_artifacts: *step_store_artifacts
 
 
 workflows:
