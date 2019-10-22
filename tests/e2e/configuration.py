@@ -9,6 +9,8 @@ def unique_label() -> str:
     return uuid4().hex[:8]
 
 
+LOGGER_NAME = "e2e"
+
 # == timeouts ==
 
 DEFAULT_TIMEOUT_SHORT = 10

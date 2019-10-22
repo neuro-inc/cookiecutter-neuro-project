@@ -4,6 +4,7 @@ from time import sleep
 import pytest
 
 from tests.e2e.configuration import (
+    DEFAULT_ERROR_PATTERNS,
     MK_CODE_PATH,
     MK_CODE_PATH_STORAGE,
     MK_DATA_PATH,
@@ -38,25 +39,17 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
 )
-
-from .conftest import (
-    DEFAULT_ERROR_PATTERNS,
-    cleanup_local_dirs,
-    get_logger,
-    measure_time,
+from tests.e2e.helpers.runners import (
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
     parse_job_url,
     repeat_until_success,
     run,
-    timeout,
     try_except_finally,
     wait_job_change_status_to,
 )
-
-
-log = get_logger()
+from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
 
 
 @try_except_finally()
