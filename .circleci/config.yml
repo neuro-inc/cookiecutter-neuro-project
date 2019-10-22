@@ -49,15 +49,17 @@ jobs:
             . venv/bin/activate
             make test_e2e_dev
 
-      - run:
+      - run: &step_cleanup_e2e
           name: cleanup e2e
           command: |
             . venv/bin/activate
             make cleanup_e2e
+          when: always
 
       - store_artifacts: &step_store_artifacts
           path: tests/e2e/output
           destination: ouptut
+          when: always
 
 
   test_staging:
@@ -76,6 +78,7 @@ jobs:
           command: |
             . venv/bin/activate
             make test_e2e_staging
+      - run: *step_cleanup_e2e
       - store_artifacts: *step_store_artifacts
 
 
