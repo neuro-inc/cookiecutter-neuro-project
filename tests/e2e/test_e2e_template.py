@@ -38,6 +38,8 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
+    _pattern_copy_file_finished,
+    _pattern_copy_file_started,
 )
 from tests.e2e.helpers.runners import (
     neuro_ls,
@@ -62,7 +64,7 @@ def test_project_structure() -> None:
         "README.md",
         PROJECT_APT_FILE_NAME,
         PROJECT_PIP_FILE_NAME,
-        "setup.cfg",
+        *PROJECT_PYTHON_FILES,
         ".gitignore",
     }
 
@@ -79,9 +81,11 @@ def test_make_setup(tmp_path: Path) -> None:
     _run_make_setup_test(tmp_path)
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_NAME}")
+@try_except_finally(f"neuro kill {MK_SETUP_NAME}", "neuro kill-jupyter")
 def _run_make_setup_test(tmp_path: Path) -> None:
-    project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
+    project_files_messages = [
+        _pattern_copy_file_started(file) for file in PROJECT_PYTHON_FILES
+    ]
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -101,11 +105,11 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         # copy project files
         *project_files_messages,
         # copy apt.txt
-        f"Copy 'file://.*{PROJECT_APT_FILE_NAME}",
-        rf"'{PROJECT_APT_FILE_NAME}' \d+B",
+        _pattern_copy_file_started(PROJECT_APT_FILE_NAME),
+        _pattern_copy_file_finished(PROJECT_APT_FILE_NAME),
         # copy pep.txt
-        f"Copy 'file://.*{PROJECT_PIP_FILE_NAME}",
-        rf"'{PROJECT_PIP_FILE_NAME}' \d+B",
+        _pattern_copy_file_started(PROJECT_PIP_FILE_NAME),
+        _pattern_copy_file_finished(PROJECT_PIP_FILE_NAME),
         # apt-get install
         *apt_deps_messages,
         # pip install

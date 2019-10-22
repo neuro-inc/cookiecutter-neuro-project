@@ -10,7 +10,7 @@ from tests.e2e.configuration import (
     DEFAULT_TIMEOUT_LONG,
     JOB_ID_DECLARATION_PATTERN,
     JOB_STATUSES_TERMINATED,
-    LOCAL_SUBMITTED_JOBS_FILE,
+    LOCAL_CLEANUP_JOBS_FILE,
     PEXPECT_BUFFER_SIZE_BYTES,
     PEXPECT_DEBUG_OUTPUT_LOGFILE,
     VERBS_SECRET,
@@ -221,7 +221,7 @@ def _detect_job_ids(stdout: str) -> t.Set[str]:
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
     if jobs:
         log_msg(f"Dumped jobs: {jobs}")
-        with LOCAL_SUBMITTED_JOBS_FILE.open("a") as f:
+        with LOCAL_CLEANUP_JOBS_FILE.open("a") as f:
             f.write("\n" + "\n".join(jobs))
 
 

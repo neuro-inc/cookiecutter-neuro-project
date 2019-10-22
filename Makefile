@@ -34,3 +34,7 @@ test_e2e_dev:
 .PHONY: test_e2e_staging
 test_e2e_staging:
 	TRAINING_MACHINE_TYPE=gpu-small pytest -s --environment=staging --tb=short tests/e2e
+
+.PHONY: cleanup_e2e
+cleanup_e2e:
+	bash -c tests/e2e/cleanup.sh
