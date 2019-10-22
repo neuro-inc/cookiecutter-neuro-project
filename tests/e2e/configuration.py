@@ -132,11 +132,12 @@ PEXPECT_DEBUG_OUTPUT_LOGFILE = (
     if os.environ.get("CI") == "true"
     else sys.stdout
 )
-# note: ERROR, being the most general error, must go the last
+# note: ERROR, being the most general error, should go the last
 DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
+    r"Docker API error: .+",
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS

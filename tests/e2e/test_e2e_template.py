@@ -172,6 +172,7 @@ def test_make_upload_code() -> None:
         run(
             make_cmd,
             verbose=True,
+            attempts=3,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
             # TODO: add upload-specific error patterns

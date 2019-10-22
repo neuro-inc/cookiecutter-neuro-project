@@ -22,11 +22,52 @@ from tests.e2e.helpers.utils import log_errors_and_finalize, timeout
 def run(
     cmd: str,
     *,
+    attempts: int = 1,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
     detect_new_jobs: bool = True,
+) -> str:
+    """
+    This procedure wraps method `_run`. If an exception raised, it repeats to run
+    it so that overall the command `cmd` is executed not more than `attempts` times.
+    """
+    errors: t.List[Exception] = []
+    try:
+        while True:
+            try:
+                return _run(
+                    cmd,
+                    expect_patterns=expect_patterns,
+                    error_patterns=error_patterns,
+                    verbose=verbose,
+                    detect_new_jobs=detect_new_jobs,
+                    timeout_s=timeout_s,
+                )
+            except Exception as e:
+                errors.append(e)
+                num_retries = len(errors)
+                if num_retries == attempts:
+                    raise RuntimeError(
+                        f"Failed to run command `{cmd}` in {attempts} attempts"
+                    )
+                log_msg(f"Retry #{num_retries}...")
+    finally:
+        if errors:
+            log_msg(f"During retries, collected {len(errors)} errors:")
+            for exc in errors:
+                log_msg(f"    {exc}")
+
+
+def _run(
+    cmd: str,
+    *,
+    expect_patterns: t.Sequence[str] = (),
+    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    verbose: bool = True,
+    detect_new_jobs: bool = True,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
