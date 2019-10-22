@@ -34,4 +34,8 @@ test_e2e_dev:
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
-	TRAINING_MACHINE_TYPE=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=staging --tb=short --reruns=2 tests/e2e
+	TRAINING_MACHINE_TYPE=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=staging --tb=line--reruns=2 tests/e2e
+
+.PHONY: cleanup_e2e
+cleanup_e2e:
+	bash -c tests/e2e/cleanup.sh

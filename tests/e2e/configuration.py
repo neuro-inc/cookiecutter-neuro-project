@@ -5,6 +5,9 @@ from pathlib import Path
 from uuid import uuid4
 
 
+CI = os.environ.get("CI") == "true"
+
+
 def unique_label() -> str:
     return uuid4().hex[:8]
 
@@ -87,7 +90,9 @@ PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 # == tests constants ==
 
 LOG_FILE_NAME = "e2e-output.log"
-SUBMITTED_JOBS_FILE_NAME = "cleanup_jobs.txt"
+CLEANUP_JOBS_FILE_NAME = "cleanup_jobs.txt"
+CLEANUP_STORAGE_FILE_NAME = "cleanup_storage.txt"
+CLEANUP_SCRIPT_FILE_NAME = "cleanup.sh"
 
 # TODO: use a real dataset after cleaning up docs
 FILE_SIZE_KB = 4
@@ -102,8 +107,9 @@ LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
 LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
 LOCAL_TESTS_OUTPUT_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "output"
 LOCAL_TESTS_OUTPUT_PATH.mkdir(exist_ok=True)
-LOCAL_SUBMITTED_JOBS_FILE = LOCAL_TESTS_OUTPUT_PATH / SUBMITTED_JOBS_FILE_NAME
-
+LOCAL_CLEANUP_JOBS_FILE = LOCAL_TESTS_OUTPUT_PATH / CLEANUP_JOBS_FILE_NAME
+LOCAL_CLEANUP_STORAGE_FILE = LOCAL_TESTS_OUTPUT_PATH / CLEANUP_STORAGE_FILE_NAME
+LOCAL_CLEANUP_SCRIPT_PATH = LOCAL_TESTS_E2E_ROOT_PATH / CLEANUP_SCRIPT_FILE_NAME
 
 # == neuro constants ==
 
@@ -128,9 +134,7 @@ PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
 PEXPECT_DEBUG_OUTPUT_LOGFILE = (
-    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a")
-    if os.environ.get("CI") == "true"
-    else sys.stdout
+    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a") if CI else sys.stdout
 )
 # note: ERROR, being the most general error, must go the last
 DEFAULT_NEURO_ERROR_PATTERNS = (
@@ -140,3 +144,11 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
+
+
+def _pattern_copy_file_started(file_name: str) -> str:
+    return f"Copy[^']+'file://.*{file_name}'"
+
+
+def _pattern_copy_file_finished(file_name: str) -> str:
+    return rf"'{file_name}' \d+B"
