@@ -15,6 +15,7 @@ from tests.e2e.configuration import (
     MK_NOTEBOOKS_PATH_STORAGE,
     MK_SETUP_NAME,
     MK_TENSORBOARD_NAME,
+    N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -40,19 +41,19 @@ from tests.e2e.configuration import (
 
 from .conftest import (
     DEFAULT_ERROR_PATTERNS,
-    N_FILES,
     cleanup_local_dirs,
     get_logger,
+    measure_time,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
     parse_job_url,
     repeat_until_success,
     run,
+    timeout,
     try_except_finally,
     wait_job_change_status_to,
 )
-from .utils import measure_time, timeout
 
 
 log = get_logger()
