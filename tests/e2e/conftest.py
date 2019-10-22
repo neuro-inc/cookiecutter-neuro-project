@@ -1,5 +1,4 @@
 import os
-import textwrap
 import time
 import typing as t
 from collections import namedtuple
@@ -8,10 +7,12 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.configuration import (
+    CI,
     FILE_SIZE_B,
+    LOCAL_CLEANUP_SCRIPT_PATH,
+    LOCAL_CLEANUP_STORAGE_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
-    LOCAL_SUBMITTED_JOBS_FILE,
     LOCAL_TESTS_SAMPLES_PATH,
     LOGGER_NAME,
     MK_CODE_PATH,
@@ -27,8 +28,8 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGIN,
     UNIQUE_PROJECT_NAME,
 )
-from tests.e2e.helpers.logging import LOGGER, log_msg
-from tests.e2e.helpers.runners import neuro_rm_dir, run
+from tests.e2e.helpers.logging import log_msg
+from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
 
@@ -131,21 +132,16 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
-    with code_file.open("w") as f:
-        f.write(
-            textwrap.dedent(
-                """\
-        if __name__ == "__main__":
-            print("test script")
-        """
-            )
-        )
+    code_file.write_text("print('Hello world!')")
     assert code_file.exists()
 
     notebooks_dir = Path(MK_NOTEBOOKS_PATH)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
     assert list(notebooks_dir.iterdir())
+
+    # Save project directory on storage for further cleanup:
+    LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -175,33 +171,10 @@ def cleanup(neuro_login: None) -> t.Iterator[None]:
     try:
         yield
     finally:
-        log_msg("-" * 100)
-        _cleanup_jobs()
-        _cleanup_storage()
-
-
-def _cleanup_jobs() -> None:
-    log_msg("Cleanup jobs...")
-    try:
-        path = LOCAL_SUBMITTED_JOBS_FILE.absolute()
-        out = run(f"bash -c '[ -f {path} ] && cat {path} || true'")
-        if out:
+        if not CI:
+            # On CI, we run this script as a separate CI step "when: always"
             run(
-                f"bash -c 'neuro kill $(cat {path})'",
+                f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()}",
                 detect_new_jobs=False,
                 verbose=True,
             )
-    except Exception as e:
-        log_msg(f"Failed to cleanup jobs: {e}", logger=LOGGER.error)
-    finally:
-        log_msg(f"Result: {run('neuro ps', detect_new_jobs=False, verbose=False)}")
-
-
-def _cleanup_storage() -> None:
-    log_msg("Cleanup storage...")
-    try:
-        neuro_rm_dir(MK_PROJECT_PATH_STORAGE, ignore_errors=True, verbose=True)
-    except Exception as e:
-        log_msg(f"Failed to cleanup storage: {e}", logger=LOGGER.error)
-    finally:
-        log_msg(f"Result: {run('neuro ls', verbose=False)}")
