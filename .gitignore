@@ -9,6 +9,6 @@ pip-wheel-metadata
 .mypy_cache
 .tmontmp
 .testmondata
-/tests/e2e/output/*
-/tests/e2e/logs/*
+/tests/e2e/output/
+/tests/e2e/logs/
 .idea
