@@ -171,10 +171,10 @@ def cleanup(neuro_login: None) -> t.Iterator[None]:
     try:
         yield
     finally:
-        if not CI:
-            # On CI, we run this script as a separate CI step "when: always"
-            run(
-                f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()}",
-                detect_new_jobs=False,
-                verbose=True,
-            )
+        # if not CI:
+        # On CI, we run this script as a separate CI step "when: always"
+        run(
+            f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()}",
+            detect_new_jobs=False,
+            verbose=True,
+        )
