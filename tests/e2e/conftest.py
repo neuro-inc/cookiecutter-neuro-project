@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.configuration import (
-    CI,
     FILE_SIZE_B,
     LOCAL_CLEANUP_SCRIPT_PATH,
     LOCAL_CLEANUP_STORAGE_FILE,
