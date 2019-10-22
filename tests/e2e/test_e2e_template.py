@@ -4,6 +4,7 @@ from time import sleep
 import pytest
 
 from tests.e2e.configuration import (
+    DEFAULT_ERROR_PATTERNS,
     MK_CODE_PATH,
     MK_CODE_PATH_STORAGE,
     MK_DATA_PATH,
@@ -15,6 +16,7 @@ from tests.e2e.configuration import (
     MK_NOTEBOOKS_PATH_STORAGE,
     MK_SETUP_NAME,
     MK_TENSORBOARD_NAME,
+    N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
@@ -37,12 +39,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
 )
-
-from .conftest import (
-    DEFAULT_ERROR_PATTERNS,
-    N_FILES,
-    cleanup_local_dirs,
-    get_logger,
+from tests.e2e.helpers.runners import (
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -52,10 +49,7 @@ from .conftest import (
     try_except_finally,
     wait_job_change_status_to,
 )
-from .utils import measure_time, timeout
-
-
-log = get_logger()
+from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
 
 
 @try_except_finally()
@@ -66,7 +60,6 @@ def test_project_structure() -> None:
     assert files == {
         "Makefile",
         "README.md",
-        "LICENSE",
         PROJECT_APT_FILE_NAME,
         PROJECT_PIP_FILE_NAME,
         "setup.cfg",
@@ -293,6 +286,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
     with timeout(2 * 60):
         repeat_until_success(
             f"curl --fail {url}{path}",
+            job_id,
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,

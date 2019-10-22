@@ -1,5 +1,20 @@
-from .utils import unique_label
+import os
+import re
+import sys
+from pathlib import Path
+from uuid import uuid4
 
+
+def unique_label() -> str:
+    return uuid4().hex[:8]
+
+
+LOGGER_NAME = "e2e"
+
+# == timeouts ==
+
+DEFAULT_TIMEOUT_SHORT = 10
+DEFAULT_TIMEOUT_LONG = 10 * 60
 
 TIMEOUT_MAKE_SETUP = 6 * 60
 TIMEOUT_MAKE_UPLOAD_CODE = 10
@@ -19,6 +34,7 @@ TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 20
 TIMEOUT_NEURO_KILL = 20
 
+# == Makefile constants ==
 
 # all variables prefixed "MK_" are taken from Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
@@ -38,7 +54,7 @@ MK_NOTEBOOKS_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_PATH}"
 MK_REQUIREMENTS_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_REQUIREMENTS_PATH}"
 MK_RESULTS_PATH_STORAGE = f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_PATH}"
 
-MK_PROJECT_PATH_ENV = "/project"
+MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 MK_CODE_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_CODE_PATH}"
 MK_DATA_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_DATA_PATH}"
 MK_NOTEBOOKS_PATH_ENV = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_PATH}"
@@ -66,3 +82,61 @@ PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10
 PROJECT_HIDDEN_FILES = {".gitkeep"}
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
+
+
+# == tests constants ==
+
+LOG_FILE_NAME = "e2e-output.log"
+SUBMITTED_JOBS_FILE_NAME = "cleanup_jobs.txt"
+
+# TODO: use a real dataset after cleaning up docs
+FILE_SIZE_KB = 4
+FILE_SIZE_B = FILE_SIZE_KB * 1024
+N_FILES = 15
+
+# all variables prefixed "LOCAL_" store paths to file on your local machine
+LOCAL_ROOT_PATH = Path(__file__).resolve().parent.parent.parent
+LOCAL_TESTS_ROOT_PATH = LOCAL_ROOT_PATH / "tests"
+LOCAL_PROJECT_CONFIG_PATH = LOCAL_TESTS_ROOT_PATH / "cookiecutter.yaml"
+LOCAL_TESTS_E2E_ROOT_PATH = LOCAL_TESTS_ROOT_PATH / "e2e"
+LOCAL_TESTS_SAMPLES_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "samples"
+LOCAL_TESTS_OUTPUT_PATH = LOCAL_TESTS_E2E_ROOT_PATH / "output"
+LOCAL_TESTS_OUTPUT_PATH.mkdir(exist_ok=True)
+LOCAL_SUBMITTED_JOBS_FILE = LOCAL_TESTS_OUTPUT_PATH / SUBMITTED_JOBS_FILE_NAME
+
+
+# == neuro constants ==
+
+VERBS_SECRET = ("login-with-token",)
+VERBS_JOB_RUN = ("run", "submit")
+JOB_STATUS_PENDING = "pending"
+JOB_STATUS_RUNNING = "running"
+JOB_STATUS_SUCCEEDED = "succeeded"
+JOB_STATUS_FAILED = "failed"
+JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
+JOB_ID_DECLARATION_PATTERN = re.compile(
+    # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
+    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    re.IGNORECASE,
+)
+
+
+# == pexpect config ==
+
+PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
+# use `sys.stdout` to echo everything to standard output
+# use `open('mylog.txt','wb')` to log to a file
+# use `None` to disable logging to console
+PEXPECT_DEBUG_OUTPUT_LOGFILE = (
+    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a")
+    if os.environ.get("CI") == "true"
+    else sys.stdout
+)
+# note: ERROR, being the most general error, must go the last
+DEFAULT_NEURO_ERROR_PATTERNS = (
+    "404: Not Found",
+    r"Status:[^\n]+failed",
+    r"ERROR[^:]*: .+",
+)
+DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
+DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
