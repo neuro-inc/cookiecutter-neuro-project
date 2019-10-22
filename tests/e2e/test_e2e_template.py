@@ -79,7 +79,7 @@ def test_make_setup(tmp_path: Path) -> None:
     _run_make_setup_test(tmp_path)
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_NAME}")
+@try_except_finally(f"neuro kill {MK_SETUP_NAME}", "neuro kill-jupyter")
 def _run_make_setup_test(tmp_path: Path) -> None:
     project_files_messages = [f"Copy 'file://.*{file}" for file in PROJECT_PYTHON_FILES]
     # TODO: test also pre-installed APT packages
