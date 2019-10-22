@@ -81,7 +81,7 @@ def test_make_setup(tmp_path: Path) -> None:
     _run_make_setup_test(tmp_path)
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_NAME}", "neuro kill-jupyter")
+@try_except_finally(f"neuro kill {MK_SETUP_NAME}", f"neuro kill {MK_JUPYTER_NAME}")
 def _run_make_setup_test(tmp_path: Path) -> None:
     project_files_messages = [
         _pattern_copy_file_started(file) for file in PROJECT_PYTHON_FILES
