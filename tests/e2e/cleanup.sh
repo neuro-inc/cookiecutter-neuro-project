@@ -9,7 +9,7 @@ echo "Cleaning up jobs..."
 
 echo "Reading jobs file: $JOBS_FILE"
 jobs=$([ -f $JOBS_FILE ] && cat $JOBS_FILE || true)
-echo "Found $(wc -w <<< $jobs) jobs: $jobs"
+echo "About to kill $(wc -w <<< $jobs) jobs: $jobs"
 
 echo "-------"
 echo "Before:"
@@ -25,7 +25,7 @@ echo "Cleaning up storage..."
 
 echo "Reading storage file: $STORAGE_FILE"
 dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE || true)
-echo "Found $(wc -w <<< $dirs) directories: $dirs"
+echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
 echo "Before:"
