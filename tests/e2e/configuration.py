@@ -143,7 +143,7 @@ DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTE
 
 
 def _pattern_copy_file_started(file_name: str) -> str:
-    return f"Copy 'file://.*{file_name}'"
+    return f"Copy[^']+'file://.*{file_name}'"
 
 
 def _pattern_copy_file_finished(file_name: str) -> str:
