@@ -1,7 +1,1 @@
-torchvision
-torch
-tqdm
-matplotlib
-numpy
-tensorboardX
-scikit-learn
+tqdm==4.32.1
