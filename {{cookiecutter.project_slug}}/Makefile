@@ -165,7 +165,7 @@ tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
-		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
+		'tensorboard --host=0.0.0.0 --logdir=$(RESULTS_PATH_ENV)'
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
