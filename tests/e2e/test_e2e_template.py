@@ -122,8 +122,7 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         r"Pushing image .+ => .+",
         r"image://.*",
         # neuro kill
-        "neuro kill",
-        r"job\-[^\n]+",
+        r"neuro[\w\- ]* kill [\w\- ]+\r\njob\-[^\n]+",
     ]
 
     make_cmd = "make setup"

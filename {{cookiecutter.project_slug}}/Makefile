@@ -22,7 +22,8 @@ REQUIREMENTS_PIP_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_PIP)
 REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
 RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
 
-NEURO_CP=neuro cp --recursive --update --no-target-directory
+NEURO?=neuro
+NEURO_CP=$(NEURO) cp --recursive --update --no-target-directory
 
 PROJECT_POSTFIX?={{cookiecutter.project_slug.replace('_', '-')}}
 SETUP_NAME?=setup-$(PROJECT_POSTFIX)
@@ -58,8 +59,8 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	neuro kill $(SETUP_NAME) >/dev/null 2>&1
-	neuro run \
+	$(NEURO) kill $(SETUP_NAME) >/dev/null 2>&1
+	$(NEURO) run \
 		--name $(SETUP_NAME) \
 		--preset cpu-small \
 		--detach \
@@ -67,13 +68,13 @@ setup: ### Setup remote environment
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	for file in $(PROJECT_PYTHON_FILES); do neuro cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
-	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-tty --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
-	neuro job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
-	neuro kill $(SETUP_NAME)
+	for file in $(PROJECT_PYTHON_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
+	$(NEURO) cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
+	$(NEURO) cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_NAME) "bash -c '$(PIP_INSTALL_COMMAND) -r $(REQUIREMENTS_PIP_ENV)'"
+	$(NEURO) --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
+	$(NEURO) kill $(SETUP_NAME)
 
 ##### STORAGE #####
 
@@ -83,7 +84,7 @@ upload-code:  ### Upload code directory to the platform storage
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory from the platform storage
-	neuro rm --recursive $(CODE_PATH_STORAGE)
+	$(NEURO) rm --recursive $(CODE_PATH_STORAGE)
 
 .PHONY: upload-data
 upload-data:  ### Upload data directory to the platform storage
@@ -91,7 +92,7 @@ upload-data:  ### Upload data directory to the platform storage
 
 .PHONY: clean-data
 clean-data:  ### Delete data directory from the platform storage
-	neuro rm --recursive $(DATA_PATH_STORAGE)
+	$(NEURO) rm --recursive $(DATA_PATH_STORAGE)
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
@@ -103,7 +104,7 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory from the platform storage
-	neuro rm --recursive $(NOTEBOOKS_PATH_STORAGE)
+	$(NEURO) rm --recursive $(NOTEBOOKS_PATH_STORAGE)
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
@@ -115,7 +116,7 @@ clean: clean-code clean-data clean-notebooks
 
 .PHONY: training
 training:  ### Run a training job
-	neuro run \
+	$(NEURO) run \
 		--name $(TRAINING_NAME) \
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
@@ -127,15 +128,15 @@ training:  ### Run a training job
 
 .PHONY: kill-training
 kill-training:  ### Terminate the training job
-	neuro kill $(TRAINING_NAME)
+	$(NEURO) kill $(TRAINING_NAME)
 
 .PHONY: connect-training
 connect-training:  ### Connect to the remote shell running on the training job
-	neuro exec --no-tty --no-key-check $(TRAINING_NAME) bash
+	$(NEURO) exec --no-tty --no-key-check $(TRAINING_NAME) bash
 
 .PHONY: jupyter
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
-	neuro run \
+	$(NEURO) run \
 		--name $(JUPYTER_NAME) \
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 \
@@ -151,11 +152,11 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
-	neuro kill $(JUPYTER_NAME)
+	$(NEURO) kill $(JUPYTER_NAME)
 
 .PHONY: tensorboard
 tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
-	neuro run \
+	$(NEURO) run \
 		--name $(TENSORBOARD_NAME) \
 		--preset cpu-small \
 		--browse \
@@ -164,15 +165,15 @@ tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
-		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
+		'tensorboard --host=0.0.0.0 --logdir=$(RESULTS_PATH_ENV)'
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
-	neuro kill $(TENSORBOARD_NAME)
+	$(NEURO) kill $(TENSORBOARD_NAME)
 
 .PHONY: filebrowser
 filebrowser:  ### Run a job with File Browser and open UI in the default browser
-	neuro run \
+	$(NEURO) run \
 		--name $(FILEBROWSER_NAME) \
 		--preset cpu-small \
 		--http 80 \
@@ -184,7 +185,7 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser
-	neuro kill $(FILEBROWSER_NAME)
+	$(NEURO) kill $(FILEBROWSER_NAME)
 
 .PHONY: kill  ### Terminate all jobs of this project
 kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
@@ -204,4 +205,4 @@ lint:  ### Run static code analysis locally
 
 .PHONY: ps
 ps:  ### List all running and pending jobs
-	neuro ps
+	$(NEURO) ps
