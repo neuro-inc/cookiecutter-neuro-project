@@ -138,7 +138,7 @@ def _run_make_setup_test(tmp_path: Path) -> None:
 
     # Test imports from a notebook:
     out = run(
-        "make jupyter DISABLE_HTTP_AUTH=True TRAINING_MACHINE_TYPE=cpu-small",
+        "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
         verbose=True,
         expect_patterns=[r"Status:[^\n]+running"],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
