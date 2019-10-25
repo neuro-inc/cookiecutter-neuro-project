@@ -2,9 +2,8 @@
 
 # Description
 
-{{ cookiecutter.project_short_description }}
-
-Created by {{ cookiecutter.full_name }} ({{ cookiecutter.email }})
+This project is created from 
+[Neuro Platform Project Template](https://github.com/neuromation/cookiecutter-neuro-project).
 
 # Development Environment
 
