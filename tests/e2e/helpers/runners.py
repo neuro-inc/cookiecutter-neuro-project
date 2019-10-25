@@ -34,30 +34,29 @@ def run(
     it so that overall the command `cmd` is executed not more than `attempts` times.
     """
     errors: t.List[Exception] = []
-    try:
-        while True:
-            try:
-                return _run(
-                    cmd,
-                    expect_patterns=expect_patterns,
-                    error_patterns=error_patterns,
-                    verbose=verbose,
-                    detect_new_jobs=detect_new_jobs,
-                    timeout_s=timeout_s,
-                )
-            except Exception as e:
-                errors.append(e)
-                num_retries = len(errors)
-                if num_retries == attempts:
-                    raise RuntimeError(
-                        f"Failed to run command `{cmd}` in {attempts} attempts"
-                    )
+    while True:
+        try:
+            return _run(
+                cmd,
+                expect_patterns=expect_patterns,
+                error_patterns=error_patterns,
+                verbose=verbose,
+                detect_new_jobs=detect_new_jobs,
+                timeout_s=timeout_s,
+            )
+        except Exception as exc:
+            errors.append(exc)
+            num_retries = len(errors)
+            if num_retries < attempts:
                 log_msg(f"Retry #{num_retries}...")
-    finally:
-        if errors:
-            log_msg(f"During retries, collected {len(errors)} errors:")
-            for exc in errors:
-                log_msg(f"    {exc}")
+            else:
+                err_msg = (
+                    f"Failed to run command `{cmd}` in {attempts} attempts."
+                    " Errors:\n"
+                )
+                for err in errors:
+                    err_msg += f"  {err}\n"
+                raise RuntimeError(err_msg)
 
 
 def _run(
