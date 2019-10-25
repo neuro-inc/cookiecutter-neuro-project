@@ -6,16 +6,6 @@ from math import floor
 from tests.e2e.configuration import CI, LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE
 
 
-# == logging ==
-
-
-def get_logger() -> logging.Logger:
-    logger = logging.getLogger(LOGGER_NAME)
-    return logger
-
-
-LOGGER = get_logger()
-
 TIME_START = datetime.now()
 
 
@@ -27,7 +17,12 @@ def _timestamp() -> str:
     return f"{str(m).zfill(2)}:{s:.3f}"
 
 
-# == general helpers ==
+def get_logger() -> logging.Logger:
+    logger = logging.getLogger(LOGGER_NAME)
+    return logger
+
+
+LOGGER = get_logger()
 
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:

@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 
-CI = True or os.environ.get("CI") == "true"
+CI = os.environ.get("CI") == "true"
 
 
 def unique_label() -> str:
