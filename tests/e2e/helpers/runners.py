@@ -15,7 +15,7 @@ from tests.e2e.configuration import (
     PEXPECT_DEBUG_OUTPUT_LOGFILE,
     VERBS_SECRET,
 )
-from tests.e2e.helpers.logging import LOGGER, log_msg
+from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.utils import log_errors_and_finalize, timeout
 
 
@@ -147,7 +147,10 @@ def _run_once(
             try:
                 child.expect(expected)
                 if verbose:
-                    log_msg(f"Found expected pattern: {repr(expected)}")
+                    if isinstance(expected, pexpect.EOF):
+                        log_msg("OK")
+                    else:
+                        log_msg(f"Found expected pattern: {repr(expected)}")
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
