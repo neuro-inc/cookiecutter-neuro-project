@@ -30,11 +30,11 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	TRAINING_MACHINE_TYPE=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=dev --tb=short --reruns=2 tests/e2e
+	TRAINING_MACHINE_TYPE=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=dev --tb=short tests/e2e
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
-	TRAINING_MACHINE_TYPE=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=staging --tb=line--reruns=2 tests/e2e
+	TRAINING_MACHINE_TYPE=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s --environment=staging --tb=short tests/e2e
 
 .PHONY: cleanup_e2e
 cleanup_e2e:
