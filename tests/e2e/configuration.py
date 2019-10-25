@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 
-CI = os.environ.get("CI") == "true"
+CI = True or os.environ.get("CI") == "true"
 
 
 def unique_label() -> str:
@@ -89,7 +89,7 @@ PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 # == tests constants ==
 
-LOG_FILE_NAME = "e2e-output.log"
+LOG_FILE_NAME = f"output_{MK_PROJECT_SLUG}.log"
 CLEANUP_JOBS_FILE_NAME = "cleanup_jobs.txt"
 CLEANUP_STORAGE_FILE_NAME = "cleanup_storage.txt"
 CLEANUP_SCRIPT_FILE_NAME = "cleanup.sh"

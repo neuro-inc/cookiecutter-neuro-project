@@ -20,6 +20,9 @@ echo "-------"
 echo "After:"
 neuro ps
 echo "-------"
+echo "Removing file $JOBS_FILE"
+rm $JOBS_FILE
+echo "OK"
 
 echo "Cleaning up storage..."
 
@@ -36,3 +39,6 @@ echo "-------"
 echo "After:"
 neuro ls
 echo "-------"
+echo "Removing file $STORAGE_FILE"
+rm $STORAGE_FILE
+echo "OK"

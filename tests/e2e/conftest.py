@@ -28,7 +28,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGIN,
     UNIQUE_PROJECT_NAME,
 )
-from tests.e2e.helpers.logging import log_msg
+from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir

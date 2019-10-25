@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from tests.e2e.configuration import unique_label
-from tests.e2e.helpers.logging import LOGGER, log_msg
+from tests.e2e.helpers.logs import LOGGER, log_msg
 
 
 # == local file helpers ==
@@ -52,8 +52,6 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 
 
 # == helpers ==
-
-
 @contextmanager
 def timeout(time_s: int) -> t.Iterator[None]:
     """ source: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
