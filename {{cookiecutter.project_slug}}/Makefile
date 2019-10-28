@@ -26,12 +26,6 @@ FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
 BASE_ENV_NAME?=neuromation/base
 CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 
-##### COMMANDS #####
-
-APT?=apt-get -qq
-PIP?=pip install --progress-bar=off
-NEURO?=neuro
-
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
 # Location of your dataset on the platform storage. Example:
@@ -39,11 +33,19 @@ NEURO?=neuro
 DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)
 # The type of the training machine (run `neuro config show` to see the list of available types).
 TRAINING_MACHINE_TYPE?=gpu-small
-# HTTP authentication for the forwarded HTTP port (set `--no-http-auth` to disable it).
+# HTTP authentication (via cookies) for the job's HTTP link.
+# Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
+# WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
 # Command to run training inside the environment. Example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
+
+##### COMMANDS #####
+
+APT?=apt-get -qq
+PIP?=pip install --progress-bar=off
+NEURO?=neuro
 
 ##### HELP #####
 
