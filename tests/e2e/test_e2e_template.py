@@ -260,7 +260,7 @@ def test_make_run_filebrowser() -> None:
 
 def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     # Can't test web UI with HTTP auth
-    make_cmd = f"make {target} DISABLE_HTTP_AUTH=True"
+    make_cmd = f"make {target} HTTP_AUTH=--no-http-auth"
     with measure_time(make_cmd):
         out = run(
             make_cmd,
