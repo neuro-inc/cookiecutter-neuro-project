@@ -14,17 +14,15 @@ from tests.e2e.configuration import (
     MK_NOTEBOOKS_PATH,
     MK_NOTEBOOKS_PATH_ENV,
     MK_NOTEBOOKS_PATH_STORAGE,
+    MK_PROJECT_FILES,
     MK_SETUP_NAME,
     MK_TENSORBOARD_NAME,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
-    PROJECT_APT_FILE_NAME,
     PROJECT_CODE_DIR_CONTENT,
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
-    PROJECT_PIP_FILE_NAME,
-    PROJECT_PYTHON_FILES,
     TIMEOUT_MAKE_CLEAN_DATA,
     TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
@@ -59,14 +57,7 @@ def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
     assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
     files = {f.name for f in Path().iterdir() if f.is_file()}
-    assert files == {
-        "Makefile",
-        "README.md",
-        PROJECT_APT_FILE_NAME,
-        PROJECT_PIP_FILE_NAME,
-        *PROJECT_PYTHON_FILES,
-        ".gitignore",
-    }
+    assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=0)
@@ -83,9 +74,10 @@ def test_make_setup(tmp_path: Path) -> None:
 
 @try_except_finally(f"neuro kill {MK_SETUP_NAME}", f"neuro kill {MK_JUPYTER_NAME}")
 def _run_make_setup_test(tmp_path: Path) -> None:
-    project_files_messages = [
-        _pattern_copy_file_started(file) for file in PROJECT_PYTHON_FILES
-    ]
+    project_files_messages = []
+    for file in MK_PROJECT_FILES:
+        project_files_messages.append(_pattern_copy_file_started(file))
+        project_files_messages.append(_pattern_copy_file_finished(file))
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
@@ -104,12 +96,6 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         r"Status:[^\n]+running",
         # copy project files
         *project_files_messages,
-        # copy apt.txt
-        _pattern_copy_file_started(PROJECT_APT_FILE_NAME),
-        _pattern_copy_file_finished(PROJECT_APT_FILE_NAME),
-        # copy pep.txt
-        _pattern_copy_file_started(PROJECT_PIP_FILE_NAME),
-        _pattern_copy_file_finished(PROJECT_PIP_FILE_NAME),
         # apt-get install
         *apt_deps_messages,
         # pip install
