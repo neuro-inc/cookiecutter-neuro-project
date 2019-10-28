@@ -24,7 +24,10 @@ FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
 ##### ENVIRONMENTS #####
 
 BASE_ENV_NAME?=neuromation/base
-CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
+CUSTOM_ENV_POSTFIX?=neuromation-$(PROJECT_POSTFIX)
+USER_NAME := $(shell neuro config show | grep -oP 'User Name: \K\w+')
+CUSTOM_ENV_NAME?=image://$(USER_NAME)/$(CUSTOM_ENV_POSTFIX)
+TRAINING_MACHINE_TYPE?=gpu-small
 
 ##### COMMANDS #####
 
@@ -45,6 +48,13 @@ HTTP_AUTH?=--http-auth
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
+FORCE_SETUP?=no
+ifeq (yes,$(FORCE_SETUP))
+  PRE_SETUP_EXIT_CODE=0
+else
+  PRE_SETUP_EXIT_CODE=1
+endif
+
 ##### HELP #####
 
 .PHONY: help
@@ -54,8 +64,13 @@ help:
 
 ##### SETUP #####
 
+.PHONY: pre-setup
+pre-setup: ### Check environment before setup
+	# Check if the target image already exists:
+	$(NEURO) images | grep $(CUSTOM_ENV_NAME) && { echo "Image already exists"; exit $(PRE_SETUP_EXIT_CODE); } || { echo "Image does not exist"; }
+
 .PHONY: setup
-setup: ### Setup remote environment
+setup: pre-setup ### Setup remote environment
 	$(NEURO) kill $(SETUP_NAME) >/dev/null 2>&1
 	$(NEURO) run \
 		--name $(SETUP_NAME) \
