@@ -1,9 +1,5 @@
 {
-    "full_name": "Your name",
-    "email": "Your email address (e.g. you@example.com)",
     "project_name": "Name of the project",
     "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
-    "project_short_description": "A short description of the project",
-    "code_directory": "modules",
-    "_extensions": ["jinja2_time.TimeExtension"]
+    "code_directory": "modules"
 }

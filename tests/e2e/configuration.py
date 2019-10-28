@@ -76,7 +76,9 @@ MK_FILEBROWSER_NAME = f"filebrowser-{MK_PROJECT_POSTFIX}"
 
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
-PROJECT_PYTHON_FILES = ["setup.cfg"]
+
+# NOTE: order of these constants must be the same as in Makefile
+MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
