@@ -38,7 +38,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_GPU,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
-)
+    MK_PROJECT_POSTFIX)
 from tests.e2e.helpers.runners import (
     neuro_ls,
     neuro_rm_dir,
@@ -63,8 +63,17 @@ def test_project_structure() -> None:
 @pytest.mark.run(order=0)
 @try_except_finally()
 def test_make_help_works() -> None:
-    out = run("make help", verbose=True)
+    out = run("make help")
     assert "setup" in out, f"not found in output: `{out}`"
+
+
+@pytest.mark.run(order=0)
+@try_except_finally()
+def test_make_pre_setup() -> None:
+    images = run("neuro images").splitlines()
+
+    out = run("make pre-setup")
+
 
 
 @pytest.mark.run(order=1)
