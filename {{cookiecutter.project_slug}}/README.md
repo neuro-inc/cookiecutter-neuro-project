@@ -20,7 +20,7 @@ This project is designed to run on [Neuro Platform](https://neu.ro), so you can 
 
 ## Development
 
-Follow the instructions below in order to setup the environment and start Jupyter development session.
+Follow the instructions below to set up the environment and start Jupyter development session.
 
 ### Setup development environment 
 
@@ -55,7 +55,7 @@ Follow the instructions below in order to setup the environment and start Jupyte
 ### Uploading via Web UI
 
 On local machine run `make filebrowser` and open job's URL on your mobile device or desktop.
-Through a simple file explorer interface you can upload test images and perform file operations.
+Through a simple file explorer interface, you can upload test images and perform file operations.
 
 ### Uploading via CLI
 
@@ -65,15 +65,15 @@ into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development 
 ## Customization
 
 Several variables in `Makefile` are intended to be modified according to the project specifics. 
-To change them find the corresponding line in `Makefile` and update.
+To change them, find the corresponding line in `Makefile` and update.
 
 ### Data location
 
 `DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)`
 
-This project template implies that your data is stored alongside the project. If this is the case you don't have 
-to change this variable. However, if your data is shared between several projects on the platform, you need to 
-change the following line to point to it's location. For example:
+This project template implies that your data is stored alongside the project. If this is the case, you don't 
+have to change this variable. However, if your data is shared between several projects on the platform, 
+you need to change the following line to point to its location. For example:
 
 `DATA_PATH_STORAGE?=storage:datasets/cifar10`
 
@@ -88,7 +88,7 @@ There are several machine types supported on the platform. Run `neuro config sho
 `HTTP_AUTH?=--http-auth`
 
 When jobs with HTTP interface are executed (for example, with Jupyter Notebooks or TensorBoard), this interface requires
-user to be authenticated on the platform. However, if you want to share the link with someone who is not registered on
+a user to be authenticated on the platform. However, if you want to share the link with someone who is not registered on
 the platform, you may disable the authentication updating this line to `HTTP_AUTH?=--no-http-auth`.
 
 ### Training command
