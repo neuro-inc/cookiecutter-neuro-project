@@ -5,18 +5,16 @@ import pytest
 
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
-    MK_CODE_PATH,
-    MK_CODE_PATH_STORAGE,
-    MK_DATA_PATH,
-    MK_DATA_PATH_STORAGE,
-    MK_FILEBROWSER_NAME,
-    MK_JUPYTER_NAME,
-    MK_NOTEBOOKS_PATH,
-    MK_NOTEBOOKS_PATH_ENV,
-    MK_NOTEBOOKS_PATH_STORAGE,
+    MK_CODE_DIR,
+    MK_DATA_DIR,
+    MK_FILEBROWSER_JOB,
+    MK_JUPYTER_JOB,
+    MK_NOTEBOOKS_DIR,
     MK_PROJECT_FILES,
-    MK_SETUP_NAME,
-    MK_TENSORBOARD_NAME,
+    MK_PROJECT_PATH_ENV,
+    MK_PROJECT_PATH_STORAGE,
+    MK_SETUP_JOB,
+    MK_TENSORBOARD_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -55,7 +53,7 @@ from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
 @try_except_finally()
 def test_project_structure() -> None:
     dirs = {f.name for f in Path().iterdir() if f.is_dir()}
-    assert dirs == {MK_DATA_PATH, MK_CODE_PATH, MK_NOTEBOOKS_PATH}
+    assert dirs == {MK_DATA_DIR, MK_CODE_DIR, MK_NOTEBOOKS_DIR}
     files = {f.name for f in Path().iterdir() if f.is_file()}
     assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
@@ -72,7 +70,7 @@ def test_make_setup(tmp_path: Path) -> None:
     _run_make_setup_test(tmp_path)
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_NAME}", f"neuro kill {MK_JUPYTER_NAME}")
+@try_except_finally(f"neuro kill {MK_SETUP_JOB}", f"neuro kill {MK_JUPYTER_JOB}")
 def _run_make_setup_test(tmp_path: Path) -> None:
     project_files_messages = []
     for file in MK_PROJECT_FILES:
@@ -84,12 +82,10 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         for entry in PACKAGES_APT_CUSTOM
     ]
     # TODO: test also pre-installed PIP packages
-    pip_deps_entries = sorted(
+    pip_deps = sorted(
         [entry.replace("==", "-").replace("_", "-") for entry in PACKAGES_PIP_CUSTOM]
     )
-    pip_deps_message = r"Successfully installed [^\n]* " + r"[^\n]*".join(
-        pip_deps_entries
-    )
+    pip_deps_message = r"Successfully installed [^\n]*" + r"[^\n]*".join(pip_deps)
 
     expected_patterns = [
         # run
@@ -135,8 +131,9 @@ def _run_make_setup_test(tmp_path: Path) -> None:
     tmp_path.mkdir(exist_ok=True)
     out_file = (tmp_path / "out").absolute()
     cmd = (
-        "jupyter nbconvert --execute --no-prompt --no-input --to=asciidoc "
-        f"--output={out_file} {MK_NOTEBOOKS_PATH_ENV}/Untitled.ipynb && "
+        "jupyter nbconvert --execute --no-prompt --no-input "
+        f"--to=asciidoc --output={out_file} "
+        f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb && "
         f"cat {out_file}.asciidoc && "
         f'grep "{expected_string}" {out_file}.asciidoc'
     )
@@ -152,7 +149,9 @@ def _run_make_setup_test(tmp_path: Path) -> None:
 @try_except_finally()
 def test_make_upload_code() -> None:
     neuro_rm_dir(
-        MK_CODE_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_CODE, ignore_errors=True
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}",
+        timeout_s=TIMEOUT_NEURO_RMDIR_CODE,
+        ignore_errors=True,
     )
 
     # Upload:
@@ -163,11 +162,11 @@ def test_make_upload_code() -> None:
             verbose=True,
             attempts=3,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[rf"'file://.*/{MK_CODE_PATH}' DONE"],
+            expect_patterns=[rf"'file://.*/{MK_CODE_DIR}' DONE"],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual = neuro_ls(MK_CODE_PATH_STORAGE)
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
 
 
@@ -175,7 +174,9 @@ def test_make_upload_code() -> None:
 @try_except_finally()
 def test_make_upload_data() -> None:
     neuro_rm_dir(
-        MK_DATA_PATH_STORAGE, timeout_s=TIMEOUT_NEURO_RMDIR_DATA, ignore_errors=True
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}",
+        timeout_s=TIMEOUT_NEURO_RMDIR_DATA,
+        ignore_errors=True,
     )
 
     make_cmd = "make upload-data"
@@ -185,13 +186,13 @@ def test_make_upload_data() -> None:
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
-            expect_patterns=[rf"'file://.*/{MK_DATA_PATH}' DONE"],
+            expect_patterns=[rf"'file://.*/{MK_DATA_DIR}' DONE"],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     # TODO: HACK: let storage sync
     sleep(5)
-    actual = neuro_ls(MK_DATA_PATH_STORAGE)
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
 
@@ -202,7 +203,7 @@ def test_make_upload_download_notebooks() -> None:
     # Upload:
     make_cmd = "make upload-notebooks"
     neuro_rm_dir(
-        MK_NOTEBOOKS_PATH_STORAGE,
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
         ignore_errors=True,
     )
@@ -211,28 +212,28 @@ def test_make_upload_download_notebooks() -> None:
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_PATH}' DONE"],
+            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_DIR}' DONE"],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
     # Download:
     make_cmd = "make download-notebooks"
-    cleanup_local_dirs(MK_NOTEBOOKS_PATH)
+    cleanup_local_dirs(MK_NOTEBOOKS_DIR)
     with measure_time(make_cmd):
         run(
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_PATH}' DONE"],
+            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_DIR}' DONE"],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_local = {
         path.name
-        for path in Path(MK_NOTEBOOKS_PATH).iterdir()
+        for path in Path(MK_NOTEBOOKS_DIR).iterdir()
         if path.name not in PROJECT_HIDDEN_FILES
     }
     assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -242,19 +243,19 @@ def test_make_upload_download_notebooks() -> None:
 
 
 @pytest.mark.run(order=3)
-@try_except_finally(f"neuro kill {MK_JUPYTER_NAME}")
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def test_make_run_jupyter() -> None:
     _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
 
 @pytest.mark.run(order=3)
-@try_except_finally(f"neuro kill {MK_TENSORBOARD_NAME}")
+@try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
 @pytest.mark.run(order=3)
-@try_except_finally(f"neuro kill {MK_FILEBROWSER_NAME}")
+@try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser() -> None:
     _test_make_run_something_useful("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU)
 
@@ -279,7 +280,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             job_id,
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
-            verbose=False,
+            verbose=True,
         )
 
     make_cmd = f"make kill-{target}"
@@ -296,7 +297,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 @pytest.mark.run(order=4)
 @try_except_finally()
 def test_make_clean_code() -> None:
-    actual = neuro_ls(MK_CODE_PATH_STORAGE)
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
 
     make_cmd = "make clean-code"
@@ -309,13 +310,13 @@ def test_make_clean_code() -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_CODE_PATH_STORAGE)
+        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
 
 @pytest.mark.run(order=4)
 @try_except_finally()
 def test_make_clean_data() -> None:
-    actual = neuro_ls(MK_DATA_PATH_STORAGE)
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
 
@@ -329,13 +330,13 @@ def test_make_clean_data() -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_DATA_PATH_STORAGE)
+        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
 
 
 @pytest.mark.run(order=4)
 @try_except_finally()
 def test_make_clean_notebooks() -> None:
-    actual_remote = neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
     make_cmd = "make clean-notebooks"
@@ -348,7 +349,7 @@ def test_make_clean_notebooks() -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(MK_NOTEBOOKS_PATH_STORAGE)
+        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
 
 
 # TODO: other tests
