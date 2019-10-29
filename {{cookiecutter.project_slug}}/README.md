@@ -69,13 +69,13 @@ To change them, find the corresponding line in `Makefile` and update.
 
 ### Data location
 
-`DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)`
+`DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)`
 
 This project template implies that your data is stored alongside the project. If this is the case, you don't 
 have to change this variable. However, if your data is shared between several projects on the platform, 
 you need to change the following line to point to its location. For example:
 
-`DATA_PATH_STORAGE?=storage:datasets/cifar10`
+`DATA_DIR_STORAGE?=storage:datasets/cifar10`
 
 ### Training machine type
 
@@ -97,5 +97,5 @@ the platform, you may disable the authentication updating this line to `HTTP_AUT
 
 If you want to train some models from code instead of Jupyter Notebooks, you need to update this line. For example:
 
-`TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH)'"`
+`TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"`
 
