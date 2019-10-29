@@ -1,9 +1,9 @@
 ##### PATHS #####
 
-DATA_PATH?=data
-CODE_PATH?={{cookiecutter.code_directory}}
-NOTEBOOKS_PATH?=notebooks
-RESULTS_PATH?=results
+DATA_DIR?=data
+CODE_DIR?={{cookiecutter.code_directory}}
+NOTEBOOKS_DIR?=notebooks
+RESULTS_DIR?=results
 
 PROJECT_FILES=requirements.txt apt.txt setup.cfg
 
@@ -15,11 +15,11 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 
 PROJECT_POSTFIX?={{cookiecutter.project_slug.replace('_', '-')}}
 
-SETUP_NAME?=setup-$(PROJECT_POSTFIX)
-TRAINING_NAME?=training-$(PROJECT_POSTFIX)
-JUPYTER_NAME?=jupyter-$(PROJECT_POSTFIX)
-TENSORBOARD_NAME?=tensorboard-$(PROJECT_POSTFIX)
-FILEBROWSER_NAME?=filebrowser-$(PROJECT_POSTFIX)
+SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+TRAINING_JOB?=training-$(PROJECT_POSTFIX)
+JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
+TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
+FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
 
 ##### ENVIRONMENTS #####
 
@@ -29,8 +29,9 @@ CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
 # Location of your dataset on the platform storage. Example:
-# DATA_PATH_STORAGE?=storage:datasets/cifar10
-DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)
+# DATA_DIR_STORAGE?=storage:datasets/cifar10
+DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
+
 # The type of the training machine (run `neuro config show` to see the list of available types).
 TRAINING_MACHINE_TYPE?=gpu-small
 # HTTP authentication (via cookies) for the job's HTTP link.
@@ -38,7 +39,7 @@ TRAINING_MACHINE_TYPE?=gpu-small
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
 # Command to run training inside the environment. Example:
-# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH)'"
+# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
 ##### COMMANDS #####
@@ -51,6 +52,7 @@ NEURO?=neuro
 
 .PHONY: help
 help:
+	@# generate help message by parsing current Makefile
 	@# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 	@grep -hE '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -58,9 +60,9 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	$(NEURO) kill $(SETUP_NAME) >/dev/null 2>&1
+	$(NEURO) kill $(SETUP_JOB) >/dev/null 2>&1
 	$(NEURO) run \
-		--name $(SETUP_NAME) \
+		--name $(SETUP_JOB) \
 		--preset cpu-small \
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
@@ -68,40 +70,40 @@ setup: ### Setup remote environment
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
-	$(NEURO) exec --no-tty --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	$(NEURO) exec --no-tty --no-key-check $(SETUP_NAME) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
-	$(NEURO) --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
-	$(NEURO) kill $(SETUP_NAME)
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
+	$(NEURO) kill $(SETUP_JOB)
 
 ##### STORAGE #####
 
 .PHONY: upload-code
 upload-code:  ### Upload code directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_PATH) $(PROJECT_PATH_STORAGE)/$(CODE_PATH)
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_PATH)
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: upload-data
 upload-data:  ### Upload data directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_PATH) $(DATA_PATH_STORAGE)
+	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
 
 .PHONY: clean-data
 clean-data:  ### Delete data directory from the platform storage
-	$(NEURO) rm --recursive $(DATA_PATH_STORAGE)
+	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_PATH) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_PATH)
+	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
 download-notebooks:  ### Download notebooks directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_PATH)
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
@@ -114,64 +116,64 @@ clean: clean-code clean-data clean-notebooks
 .PHONY: training
 training:  ### Run a training job
 	$(NEURO) run \
-		--name $(TRAINING_NAME) \
+		--name $(TRAINING_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--volume $(DATA_PATH_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_PATH):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CODE_PATH):$(PROJECT_PATH_ENV)/$(CODE_PATH):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_PATH):$(PROJECT_PATH_ENV)/$(RESULTS_PATH):rw \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-training
 kill-training:  ### Terminate the training job
-	$(NEURO) kill $(TRAINING_NAME)
+	$(NEURO) kill $(TRAINING_JOB)
 
 .PHONY: connect-training
 connect-training:  ### Connect to the remote shell running on the training job
-	$(NEURO) exec --no-tty --no-key-check $(TRAINING_NAME) bash
+	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
-		--name $(JUPYTER_NAME) \
+		--name $(JUPYTER_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
-		--volume $(DATA_PATH_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_PATH):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CODE_PATH):$(PROJECT_PATH_ENV)/$(CODE_PATH):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_PATH):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_PATH):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_PATH):$(PROJECT_PATH_ENV)/$(RESULTS_PATH):rw \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
-	$(NEURO) kill $(JUPYTER_NAME)
+	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
 tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 	$(NEURO) run \
-		--name $(TENSORBOARD_NAME) \
+		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_PATH):$(PROJECT_PATH_ENV)/$(RESULTS_PATH):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(CUSTOM_ENV_NAME) \
-		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)'
+		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
-	$(NEURO) kill $(TENSORBOARD_NAME)
+	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
 filebrowser:  ### Run a job with File Browser and open UI in the default browser
 	$(NEURO) run \
-		--name $(FILEBROWSER_NAME) \
+		--name $(FILEBROWSER_JOB) \
 		--preset cpu-small \
 		--http 80 \
 		$(HTTP_AUTH) \
@@ -182,7 +184,7 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser
-	$(NEURO) kill $(FILEBROWSER_NAME)
+	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill  ### Terminate all jobs of this project
 kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser

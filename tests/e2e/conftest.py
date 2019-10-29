@@ -15,9 +15,9 @@ from tests.e2e.configuration import (
     LOCAL_ROOT_PATH,
     LOCAL_TESTS_SAMPLES_PATH,
     LOGGER_NAME,
-    MK_CODE_PATH,
-    MK_DATA_PATH,
-    MK_NOTEBOOKS_PATH,
+    MK_CODE_DIR,
+    MK_DATA_DIR,
+    MK_NOTEBOOKS_DIR,
     MK_PROJECT_PATH_STORAGE,
     MK_PROJECT_SLUG,
     N_FILES,
@@ -68,7 +68,7 @@ def pytest_configure(config: t.Any) -> None:
 @pytest.fixture(scope="session")
 def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        environment = request.config.getoption("--environment", "dev")
+        environment = request.config.getoption("--environment") or "dev"
         if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
@@ -121,21 +121,21 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
-    data_dir = Path(MK_DATA_PATH)
+    data_dir = Path(MK_DATA_DIR)
     log_msg(f"Generating data to `{data_dir}/`")
     assert data_dir.is_dir() and data_dir.exists()
     for _ in range(N_FILES):
         generate_random_file(data_dir, FILE_SIZE_B)
     assert len(list(data_dir.iterdir())) >= N_FILES
 
-    code_dir = Path(MK_CODE_PATH)
+    code_dir = Path(MK_CODE_DIR)
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
     code_file.write_text("print('Hello world!')")
     assert code_file.exists()
 
-    notebooks_dir = Path(MK_NOTEBOOKS_PATH)
+    notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
     assert list(notebooks_dir.iterdir())
