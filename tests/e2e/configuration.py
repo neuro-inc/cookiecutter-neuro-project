@@ -39,7 +39,7 @@ TIMEOUT_NEURO_KILL = 20
 
 # == Makefile constants ==
 
-# all variables prefixed "MK_" are taken from Makefile (without prefix)
+# all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
 MK_PROJECT_POSTFIX = UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
