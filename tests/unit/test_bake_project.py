@@ -7,20 +7,20 @@ from tests.utils import inside_dir
 
 
 def test_project_tree(cookies: t.Any) -> None:
-    result = cookies.bake(extra_context={"project_slug": "test_project"})
+    result = cookies.bake(extra_context={"project_slug": "test-project"})
     assert result.exit_code == 0
     assert result.exception is None
     assert result.project.basename == "test_project"
 
 
 def test_run_flake8(cookies: t.Any) -> None:
-    result = cookies.bake(extra_context={"project_slug": "flake8_compat"})
+    result = cookies.bake(extra_context={"project_slug": "flake8-compat"})
     with inside_dir(str(result.project)):
         subprocess.check_call(["flake8"])
 
 
 def test_project_slug_regex_hook(cookies: t.Any) -> None:
-    result = cookies.bake(extra_context={"project_slug": "test-project"})
+    result = cookies.bake(extra_context={"project_slug": "test_project"})
     assert result.exit_code != 0
     assert isinstance(result.exception, FailedHookException)
 
