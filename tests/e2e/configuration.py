@@ -42,25 +42,25 @@ TIMEOUT_NEURO_KILL = 20
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-MK_PROJECT_POSTFIX = UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
+MK_PROJECT_SLUG = UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
 MK_DATA_DIR = "data"
 MK_NOTEBOOKS_DIR = "notebooks"
 MK_RESULTS_DIR = "results"
 
-MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_POSTFIX}"
-MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_POSTFIX}"
+MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_SLUG}"
+MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 
 
-MK_SETUP_JOB = f"setup-{MK_PROJECT_POSTFIX}"
-MK_TRAINING_JOB = f"training-{MK_PROJECT_POSTFIX}"
-MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_POSTFIX}"
-MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_POSTFIX}"
-MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_POSTFIX}"
+MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
+MK_TRAINING_JOB = f"training-{MK_PROJECT_SLUG}"
+MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
+MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
+MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
 
 MK_BASE_ENV_NAME = "neuromation/base"
-MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_POSTFIX}"
+MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 
 
 PROJECT_APT_FILE_NAME = "apt.txt"
@@ -80,7 +80,7 @@ PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 # == tests constants ==
 
-LOG_FILE_NAME = f"output_{MK_PROJECT_POSTFIX}.log"
+LOG_FILE_NAME = f"output_{MK_PROJECT_SLUG}.log"
 CLEANUP_JOBS_FILE_NAME = "cleanup_jobs.txt"
 CLEANUP_STORAGE_FILE_NAME = "cleanup_storage.txt"
 CLEANUP_SCRIPT_FILE_NAME = "cleanup.sh"
