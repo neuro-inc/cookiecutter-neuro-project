@@ -10,7 +10,7 @@ def test_project_tree(cookies: t.Any) -> None:
     result = cookies.bake(extra_context={"project_slug": "test-project"})
     assert result.exit_code == 0
     assert result.exception is None
-    assert result.project.basename == "test_project"
+    assert result.project.basename == "test-project"
 
 
 def test_run_flake8(cookies: t.Any) -> None:
