@@ -13,7 +13,7 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 
 ##### JOB NAMES #####
 
-PROJECT_POSTFIX?={{cookiecutter.project_slug.replace('_', '-')}}
+PROJECT_POSTFIX?={{cookiecutter.project_slug}}
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
 TRAINING_JOB?=training-$(PROJECT_POSTFIX)
