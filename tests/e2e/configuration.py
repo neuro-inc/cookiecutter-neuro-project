@@ -43,15 +43,14 @@ TIMEOUT_NEURO_KILL = 20
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
 MK_PROJECT_POSTFIX = UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
-MK_PROJECT_SLUG = MK_PROJECT_POSTFIX.replace("-", "_")
 
 MK_CODE_DIR = "modules"
 MK_DATA_DIR = "data"
 MK_NOTEBOOKS_DIR = "notebooks"
 MK_RESULTS_DIR = "results"
 
-MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_SLUG}"
-MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
+MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_POSTFIX}"
+MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_POSTFIX}"
 
 
 MK_SETUP_JOB = f"setup-{MK_PROJECT_POSTFIX}"
@@ -81,7 +80,7 @@ PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 # == tests constants ==
 
-LOG_FILE_NAME = f"output_{MK_PROJECT_SLUG}.log"
+LOG_FILE_NAME = f"output_{MK_PROJECT_POSTFIX}.log"
 CLEANUP_JOBS_FILE_NAME = "cleanup_jobs.txt"
 CLEANUP_STORAGE_FILE_NAME = "cleanup_storage.txt"
 CLEANUP_SCRIPT_FILE_NAME = "cleanup.sh"
