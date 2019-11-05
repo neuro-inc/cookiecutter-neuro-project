@@ -25,7 +25,7 @@ format:
 test_unit:
 	pytest -v -s tests/unit
 	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir .. .
-	stat ../test_project
+	stat ../test-project
 	python -m doctest tests/e2e/conftest.py
 
 .PHONY: test_e2e_dev
