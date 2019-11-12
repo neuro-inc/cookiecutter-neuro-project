@@ -1,4 +1,4 @@
-def hello_world():
+def hello_world() -> None:
     print("Hello World!")
 
 
