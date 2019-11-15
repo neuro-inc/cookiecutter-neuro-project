@@ -67,7 +67,11 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup(tmp_path: Path) -> None:
-    _run_make_setup_test(tmp_path)
+    try:
+        _run_make_setup_test(tmp_path)
+    except Exception:
+        pytest.exit(f"Test on `make setup` failed, aborting the whole test suite.")
+        raise
 
 
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}", f"neuro kill {MK_JUPYTER_JOB}")
