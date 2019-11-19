@@ -123,7 +123,9 @@ def _run_make_setup_test(tmp_path: Path) -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
-    # Test imports from a notebook:
+@pytest.mark.run(order=2)
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
+def test_import_code_in_notebooks(tmp_path: Path) -> None:
     out = run(
         "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
         verbose=True,
