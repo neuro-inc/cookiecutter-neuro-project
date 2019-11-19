@@ -67,16 +67,16 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=1)
-def test_make_setup(tmp_path: Path) -> None:
+def test_make_setup() -> None:
     try:
-        _run_make_setup_test(tmp_path)
+        _run_make_setup_test()
     except Exception:
         pytest.exit(f"Test on `make setup` failed, aborting the whole test suite.")
         raise
 
 
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}", f"neuro kill {MK_JUPYTER_JOB}")
-def _run_make_setup_test(tmp_path: Path) -> None:
+def _run_make_setup_test() -> None:
     project_files_messages = []
     for file in MK_PROJECT_FILES:
         project_files_messages.append(_pattern_copy_file_started(file))
@@ -123,9 +123,14 @@ def _run_make_setup_test(tmp_path: Path) -> None:
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
 
+
 @pytest.mark.run(order=2)
+def test_import_code_in_notebooks() -> None:
+    _run_import_code_in_notebooks_test()
+
+
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def test_import_code_in_notebooks(tmp_path: Path) -> None:
+def _run_import_code_in_notebooks_test() -> None:
     out = run(
         "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
         verbose=True,
@@ -134,21 +139,20 @@ def test_import_code_in_notebooks(tmp_path: Path) -> None:
     )
     job_id = parse_job_id(out)
 
-    expected_string = "Hello World!"
-    tmp_path.mkdir(exist_ok=True)
+    expected_string = "----\r\nHello World!\r\n----"
+
     out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
+    jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     cmd = (
-        "jupyter nbconvert --execute --no-prompt --no-input "
-        f"--to=asciidoc --output={out_file} "
-        f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb && "
-        f"cat {out_file}.asciidoc && "
-        f'grep "{expected_string}" {out_file}.asciidoc'
+        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
+        f"cat {out_file}.asciidoc"
     )
     run(
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
         verbose=True,
-        expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
-        error_patterns=["Error: "],
+        expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
+        error_patterns=["Error: ", "CRITICAL"],
         detect_new_jobs=False,
     )
 
