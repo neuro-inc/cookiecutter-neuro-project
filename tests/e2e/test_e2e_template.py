@@ -13,6 +13,7 @@ from tests.e2e.configuration import (
     MK_PROJECT_FILES,
     MK_PROJECT_PATH_ENV,
     MK_PROJECT_PATH_STORAGE,
+    MK_PROJECT_SLUG,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
     N_FILES,
@@ -133,7 +134,7 @@ def _run_make_setup_test(tmp_path: Path) -> None:
 
     expected_string = "Hello World!"
     tmp_path.mkdir(exist_ok=True)
-    out_file = (tmp_path / "out").absolute()
+    out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
     cmd = (
         "jupyter nbconvert --execute --no-prompt --no-input "
         f"--to=asciidoc --output={out_file} "
@@ -145,7 +146,8 @@ def _run_make_setup_test(tmp_path: Path) -> None:
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
         verbose=True,
         expect_patterns=[r"Writing \d+ bytes to .*out.asciidoc"],
-        error_patterns=["(E|e)rror:"],
+        error_patterns=["Error: "],
+        detect_new_jobs=False,
     )
 
 
@@ -284,7 +286,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             job_id,
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
-            verbose=True,
+            verbose=False,
         )
 
     make_cmd = f"make kill-{target}"
