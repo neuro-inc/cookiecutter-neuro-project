@@ -120,7 +120,7 @@ JOB_ID_DECLARATION_PATTERN = re.compile(
 
 # == pexpect config ==
 
-PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
+PEXPECT_BUFFER_SIZE_BYTES = 100 * 1024
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
