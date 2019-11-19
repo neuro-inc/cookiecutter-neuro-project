@@ -189,7 +189,7 @@ kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	$(PIP) -r $(REQUIREMENTS_PIP)
+	$(PIP) -r requirements.txt
 
 .PHONY: lint
 lint:  ### Run static code analysis locally
