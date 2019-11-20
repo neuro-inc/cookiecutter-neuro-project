@@ -73,7 +73,9 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
-PROJECT_HIDDEN_FILES = {".gitkeep"}
+# TODO(artem): hidden files is a hack, see issue #93
+PROJECT_HIDDEN_FILES = {".gitkeep", "__pycache__"}
+
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
@@ -120,7 +122,7 @@ JOB_ID_DECLARATION_PATTERN = re.compile(
 
 # == pexpect config ==
 
-PEXPECT_BUFFER_SIZE_BYTES = 50 * 1024
+PEXPECT_BUFFER_SIZE_BYTES = 100 * 1024
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
