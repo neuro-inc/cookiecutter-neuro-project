@@ -88,7 +88,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
 
 @pytest.fixture(scope="session", autouse=True)
 def change_directory_to_temp() -> t.Iterator[None]:
-    tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter", MK_PROJECT_SLUG)
+    tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter")
     os.makedirs(tmp, exist_ok=True)
     with inside_dir(tmp):
         yield
