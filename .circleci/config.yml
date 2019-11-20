@@ -81,6 +81,7 @@ jobs:
       - run: *step_cleanup_e2e
       - store_artifacts: *step_store_artifacts
 
+
 workflows:
   version: 2
 
@@ -96,7 +97,7 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "50 * * * *"
+          cron: "* * * * *"
           filters:
             branches:
               only:
