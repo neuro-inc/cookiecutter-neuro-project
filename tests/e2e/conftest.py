@@ -109,44 +109,46 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(cookiecutter_setup: None) -> None:
-    if not EXISTING_PROJECT_SLUG:
-        log_msg(f"Initializing empty project: `{Path().absolute()}`")
+    if EXISTING_PROJECT_SLUG:
+        return
 
-        apt_file = Path(PROJECT_APT_FILE_NAME)
-        log_msg(f"Copying `{apt_file}`")
-        assert apt_file.is_file() and apt_file.exists()
-        with apt_file.open("a") as f:
-            for package in PACKAGES_APT_CUSTOM:
-                f.write("\n" + package)
+    log_msg(f"Initializing empty project: `{Path().absolute()}`")
 
-        pip_file = Path(PROJECT_PIP_FILE_NAME)
-        log_msg(f"Copying `{pip_file}`")
-        assert pip_file.is_file() and pip_file.exists()
-        with pip_file.open("a") as f:
-            for package in PACKAGES_PIP_CUSTOM:
-                f.write("\n" + package)
+    apt_file = Path(PROJECT_APT_FILE_NAME)
+    log_msg(f"Copying `{apt_file}`")
+    assert apt_file.is_file() and apt_file.exists()
+    with apt_file.open("a") as f:
+        for package in PACKAGES_APT_CUSTOM:
+            f.write("\n" + package)
 
-        data_dir = Path(MK_DATA_DIR)
-        log_msg(f"Generating data to `{data_dir}/`")
-        assert data_dir.is_dir() and data_dir.exists()
-        for _ in range(N_FILES):
-            generate_random_file(data_dir, FILE_SIZE_B)
-        assert len(list(data_dir.iterdir())) >= N_FILES
+    pip_file = Path(PROJECT_PIP_FILE_NAME)
+    log_msg(f"Copying `{pip_file}`")
+    assert pip_file.is_file() and pip_file.exists()
+    with pip_file.open("a") as f:
+        for package in PACKAGES_PIP_CUSTOM:
+            f.write("\n" + package)
 
-        code_dir = Path(MK_CODE_DIR)
-        log_msg(f"Generating code files to `{code_dir}/`")
-        assert code_dir.is_dir() and code_dir.exists()
-        code_file = code_dir / "main.py"
-        code_file.write_text("print('Hello world!')")
-        assert code_file.exists()
+    data_dir = Path(MK_DATA_DIR)
+    log_msg(f"Generating data to `{data_dir}/`")
+    assert data_dir.is_dir() and data_dir.exists()
+    for _ in range(N_FILES):
+        generate_random_file(data_dir, FILE_SIZE_B)
+    assert len(list(data_dir.iterdir())) >= N_FILES
 
-        notebooks_dir = Path(MK_NOTEBOOKS_DIR)
-        assert notebooks_dir.is_dir() and notebooks_dir.exists()
-        copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
-        assert list(notebooks_dir.iterdir())
+    code_dir = Path(MK_CODE_DIR)
+    log_msg(f"Generating code files to `{code_dir}/`")
+    assert code_dir.is_dir() and code_dir.exists()
+    code_file = code_dir / "main.py"
+    code_file.write_text("print('Hello world!')")
+    assert code_file.exists()
 
-        # Save project directory on storage for further cleanup:
-        LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
+    notebooks_dir = Path(MK_NOTEBOOKS_DIR)
+    assert notebooks_dir.is_dir() and notebooks_dir.exists()
+    copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
+    assert list(notebooks_dir.iterdir())
+
+    # Save project directory on storage for further cleanup:
+    LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
 
 
 @pytest.fixture(scope="session", autouse=True)
