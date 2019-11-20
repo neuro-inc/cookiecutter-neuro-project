@@ -98,5 +98,10 @@ workflows:
     triggers:
       - schedule:
           cron: "* * * * *"
+          filters:
+            branches:
+              only:
+                - master
+                - ay/nightly
     jobs:
       - test_staging
