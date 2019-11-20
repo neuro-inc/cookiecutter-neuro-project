@@ -90,7 +90,7 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
 def change_directory_to_temp() -> t.Iterator[None]:
     tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter", MK_PROJECT_SLUG)
     os.makedirs(tmp, exist_ok=True)
-    with inside_dir(str(tmp)):
+    with inside_dir(tmp):
         yield
 
 
