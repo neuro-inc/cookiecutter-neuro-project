@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 import typing as t
 from collections import namedtuple
@@ -8,6 +9,7 @@ import pytest
 
 from tests.e2e.configuration import (
     CI,
+    EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
     LOCAL_CLEANUP_SCRIPT_PATH,
     LOCAL_CLEANUP_STORAGE_FILE,
@@ -85,68 +87,72 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
-    tmp = tmpdir_factory.mktemp("test-cookiecutter")
+def change_directory_to_temp() -> t.Iterator[None]:
+    tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter", MK_PROJECT_SLUG)
+    os.makedirs(tmp, exist_ok=True)
     with inside_dir(str(tmp)):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
-    run(
-        f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
-        f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
-        error_patterns=["raise .*Exception"],
-        verbose=False,
-    )
+    if not EXISTING_PROJECT_SLUG:
+        run(
+            f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
+            f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
+            error_patterns=["raise .*Exception"],
+            verbose=False,
+        )
     with inside_dir(MK_PROJECT_SLUG):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(cookiecutter_setup: None) -> None:
-    log_msg(f"Initializing empty project: `{Path().absolute()}`")
+    if not EXISTING_PROJECT_SLUG:
+        log_msg(f"Initializing empty project: `{Path().absolute()}`")
 
-    apt_file = Path(PROJECT_APT_FILE_NAME)
-    log_msg(f"Copying `{apt_file}`")
-    assert apt_file.is_file() and apt_file.exists()
-    with apt_file.open("a") as f:
-        for package in PACKAGES_APT_CUSTOM:
-            f.write("\n" + package)
+        apt_file = Path(PROJECT_APT_FILE_NAME)
+        log_msg(f"Copying `{apt_file}`")
+        assert apt_file.is_file() and apt_file.exists()
+        with apt_file.open("a") as f:
+            for package in PACKAGES_APT_CUSTOM:
+                f.write("\n" + package)
 
-    pip_file = Path(PROJECT_PIP_FILE_NAME)
-    log_msg(f"Copying `{pip_file}`")
-    assert pip_file.is_file() and pip_file.exists()
-    with pip_file.open("a") as f:
-        for package in PACKAGES_PIP_CUSTOM:
-            f.write("\n" + package)
+        pip_file = Path(PROJECT_PIP_FILE_NAME)
+        log_msg(f"Copying `{pip_file}`")
+        assert pip_file.is_file() and pip_file.exists()
+        with pip_file.open("a") as f:
+            for package in PACKAGES_PIP_CUSTOM:
+                f.write("\n" + package)
 
-    data_dir = Path(MK_DATA_DIR)
-    log_msg(f"Generating data to `{data_dir}/`")
-    assert data_dir.is_dir() and data_dir.exists()
-    for _ in range(N_FILES):
-        generate_random_file(data_dir, FILE_SIZE_B)
-    assert len(list(data_dir.iterdir())) >= N_FILES
+        data_dir = Path(MK_DATA_DIR)
+        log_msg(f"Generating data to `{data_dir}/`")
+        assert data_dir.is_dir() and data_dir.exists()
+        for _ in range(N_FILES):
+            generate_random_file(data_dir, FILE_SIZE_B)
+        assert len(list(data_dir.iterdir())) >= N_FILES
 
-    code_dir = Path(MK_CODE_DIR)
-    log_msg(f"Generating code files to `{code_dir}/`")
-    assert code_dir.is_dir() and code_dir.exists()
-    code_file = code_dir / "main.py"
-    code_file.write_text("print('Hello world!')")
-    assert code_file.exists()
+        code_dir = Path(MK_CODE_DIR)
+        log_msg(f"Generating code files to `{code_dir}/`")
+        assert code_dir.is_dir() and code_dir.exists()
+        code_file = code_dir / "main.py"
+        code_file.write_text("print('Hello world!')")
+        assert code_file.exists()
 
-    notebooks_dir = Path(MK_NOTEBOOKS_DIR)
-    assert notebooks_dir.is_dir() and notebooks_dir.exists()
-    copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
-    assert list(notebooks_dir.iterdir())
+        notebooks_dir = Path(MK_NOTEBOOKS_DIR)
+        assert notebooks_dir.is_dir() and notebooks_dir.exists()
+        copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
+        assert list(notebooks_dir.iterdir())
 
-    # Save project directory on storage for further cleanup:
-    LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
+        # Save project directory on storage for further cleanup:
+        LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
 
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
-    run("pip install -U neuromation", verbose=False)
+    if not EXISTING_PROJECT_SLUG:
+        run("pip install -U neuromation", verbose=False)
     assert "Name: neuromation" in run("pip show neuromation", verbose=False)
 
 

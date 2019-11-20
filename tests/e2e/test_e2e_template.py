@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
+    EXISTING_PROJECT_SLUG,
     MK_CODE_DIR,
     MK_DATA_DIR,
     MK_FILEBROWSER_JOB,
@@ -68,6 +69,9 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=1)
 def test_make_setup() -> None:
+    if EXISTING_PROJECT_SLUG:
+        return
+
     try:
         _run_make_setup_test()
     except Exception:
