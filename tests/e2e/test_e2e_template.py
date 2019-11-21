@@ -108,10 +108,6 @@ def _run_make_setup_test() -> None:
     pip_deps_message = r"Successfully installed [^\n]*" + r"[^\n]*".join(pip_deps)
 
     expected_patterns = [
-        # copy project files
-        *project_files_messages,
-        # make upload
-        *make_upload_dirs,
         # run
         r"Status:[^\n]+running",
         # apt-get install
