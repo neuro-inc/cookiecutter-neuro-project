@@ -15,7 +15,6 @@ from tests.e2e.configuration import (
     MK_PROJECT_SLUG,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    MK_UPLOAD_DIR_ORDER,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -92,10 +91,6 @@ def _run_make_setup_test() -> None:
     for file in MK_PROJECT_FILES:
         project_files_messages.append(_pattern_copy_file_started(file))
         project_files_messages.append(_pattern_copy_file_finished(file))
-    make_upload_dirs = [
-        _pattern_upload_dir(MK_PROJECT_SLUG, dir_name)
-        for dir_name in MK_UPLOAD_DIR_ORDER
-    ]
     # TODO: test also pre-installed APT packages
     apt_deps_messages = [
         f"Selecting previously unselected package {entry}"
