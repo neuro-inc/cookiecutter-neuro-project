@@ -290,7 +290,7 @@ def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
         timeout_s=tests.e2e.configuration.TIMEOUT_NEURO_LS,
-        verbose=False,
+        verbose=True,
         error_patterns=tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
