@@ -147,10 +147,11 @@ def _run_once(
             try:
                 child.expect(expected)
                 if verbose:
-                    if isinstance(expected, pexpect.EOF):
-                        log_msg("OK")
-                    else:
-                        log_msg(f"Found expected pattern: {repr(expected)}")
+                    log_msg(
+                        "OK"
+                        if expected is pexpect.EOF
+                        else f"Found expected pattern: {repr(expected)}"
+                    )
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -301,14 +302,14 @@ def neuro_ls(path: str) -> t.Set[str]:
 
 
 def neuro_rm_dir(
-    project_relative_path: str,
+    path: str,
     timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
     ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
-    log_msg(f"Deleting remote directory `{project_relative_path}`")
+    log_msg(f"Deleting remote directory `{path}`")
     run(
-        f"neuro rm -r {project_relative_path}",
+        f"neuro rm -r {path}",
         timeout_s=timeout_s,
         verbose=verbose,
         error_patterns=[]
