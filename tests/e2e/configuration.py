@@ -146,3 +146,7 @@ def _pattern_copy_file_started(file_name: str) -> str:
 
 def _pattern_copy_file_finished(file_name: str) -> str:
     return rf"'{file_name}' \d+B"
+
+
+def _pattern_upload_dir(project_slug: str, dir_name: str) -> str:
+    return rf"'(file|storage)://[^']*/{project_slug}/{dir_name}' DONE"

@@ -68,6 +68,10 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(DATA_DIR) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
@@ -82,7 +86,7 @@ upload-code:  ### Upload code directory to the platform storage
 
 .PHONY: clean-code
 clean-code:  ### Delete code directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/*
 
 .PHONY: upload-data
 upload-data:  ### Upload data directory to the platform storage
@@ -90,7 +94,7 @@ upload-data:  ### Upload data directory to the platform storage
 
 .PHONY: clean-data
 clean-data:  ### Delete data directory from the platform storage
-	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)
+	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
 
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
@@ -102,7 +106,7 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 
 .PHONY: clean-notebooks
 clean-notebooks:  ### Delete notebooks directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks

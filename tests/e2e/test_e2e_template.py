@@ -1,5 +1,4 @@
 from pathlib import Path
-from time import sleep
 
 import pytest
 
@@ -37,6 +36,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_GPU,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
+    _pattern_upload_dir,
 )
 from tests.e2e.helpers.runners import (
     neuro_ls,
@@ -75,7 +75,7 @@ def test_make_setup() -> None:
         raise
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_JOB}", f"neuro kill {MK_JUPYTER_JOB}")
+@try_except_finally(f"neuro kill {MK_SETUP_JOB}")
 def _run_make_setup_test() -> None:
     project_files_messages = []
     for file in MK_PROJECT_FILES:
@@ -172,9 +172,8 @@ def test_make_upload_code() -> None:
         run(
             make_cmd,
             verbose=True,
-            attempts=3,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            expect_patterns=[rf"'file://.*/{MK_CODE_DIR}' DONE"],
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CODE_DIR)],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -198,12 +197,10 @@ def test_make_upload_data() -> None:
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
-            expect_patterns=[rf"'file://.*/{MK_DATA_DIR}' DONE"],
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_DATA_DIR)],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    # TODO: HACK: let storage sync
-    sleep(5)
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
@@ -224,7 +221,7 @@ def test_make_upload_download_notebooks() -> None:
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'file://.*/{MK_NOTEBOOKS_DIR}' DONE"],
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -239,7 +236,7 @@ def test_make_upload_download_notebooks() -> None:
             make_cmd,
             verbose=True,
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
-            expect_patterns=[rf"'storage://.*/{MK_NOTEBOOKS_DIR}' DONE"],
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
             # TODO: add upload-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
@@ -321,8 +318,7 @@ def test_make_clean_code() -> None:
             # TODO: add clean-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
 
 @pytest.mark.run(order=4)
@@ -341,8 +337,7 @@ def test_make_clean_data() -> None:
             # TODO: add clean-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
 
 
 @pytest.mark.run(order=4)
@@ -360,8 +355,7 @@ def test_make_clean_notebooks() -> None:
             # TODO: add clean-specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
         )
-    with pytest.raises(RuntimeError, match="404: Not Found"):
-        neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
 
 
 # TODO: other tests
