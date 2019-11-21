@@ -89,7 +89,10 @@ workflows:
     jobs:
       - test_dev
 
-      - test_staging
+      - test_staging:
+          filters:
+            branches:
+              only: master
 
   nightly:
     triggers:
