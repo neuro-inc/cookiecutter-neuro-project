@@ -69,6 +69,7 @@ PROJECT_PIP_FILE_NAME = "requirements.txt"
 # NOTE: order of these constants must be the same as in Makefile
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
+MK_UPLOAD_DIR_ORDER = [MK_CODE_DIR, MK_DATA_DIR, MK_NOTEBOOKS_DIR]
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
