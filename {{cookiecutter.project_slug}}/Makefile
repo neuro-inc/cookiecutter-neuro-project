@@ -180,7 +180,8 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		filebrowser/filebrowser
+		filebrowser/filebrowser \
+		--noauth
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser
