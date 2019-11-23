@@ -79,7 +79,7 @@ you need to change the following line to point to its location. For example:
 
 ### Training machine type
 
-`TRAINING_MACHINE_TYPE?=gpu-small`
+`PRESET?=gpu-small`
 
 There are several machine types supported on the platform. Run `neuro config show` to see the list.
 
