@@ -79,7 +79,8 @@ def test_make_help_works() -> None:
 
 @pytest.mark.run(order=STEP_SETUP)
 @pytest.mark.skipif(
-    EXISTING_PROJECT_SLUG, reason="Reusing existing project, no need to run setup"
+    condition=EXISTING_PROJECT_SLUG is not None and len(EXISTING_PROJECT_SLUG) > 0,
+    reason="Reusing existing project, no need to run setup",
 )
 def test_make_setup() -> None:
     try:
