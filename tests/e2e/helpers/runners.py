@@ -19,6 +19,18 @@ from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.utils import log_errors_and_finalize, timeout
 
 
+class ExitCodeException(Exception):
+    def __init__(self, exit_code: int):
+        self._exit_code = exit_code
+
+    def __str__(self) -> str:
+        return f"Non-zero exit code: {self.exit_code}"
+
+    @property
+    def exit_code(self) -> int:
+        return self._exit_code
+
+
 def run(
     cmd: str,
     *,
@@ -171,6 +183,9 @@ def _run_once(
             _dump_submitted_job_ids(_detect_job_ids(output))
         if verbose and need_dump:
             log_msg(f"DUMP: {repr(output)}")
+    child.close()
+    if child.exitstatus:
+        raise ExitCodeException(child.exitstatus)
     return output
 
 
