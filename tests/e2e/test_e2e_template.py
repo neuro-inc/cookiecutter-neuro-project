@@ -286,7 +286,9 @@ def test_make_run_tensorboard() -> None:
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser() -> None:
-    _test_make_run_something_useful("filebrowser", "/login", TIMEOUT_NEURO_RUN_CPU)
+    _test_make_run_something_useful(
+        "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
+    )
 
 
 def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
