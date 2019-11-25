@@ -33,9 +33,12 @@ def cleanup_local_dirs(*dirs: t.Union[str, Path]) -> None:
         else:
             d = d_or_name
         log_msg(f"Cleaning up local directory `{d.absolute()}`")
+        assert d.is_dir(), f"not a dir: {d}"
+        assert d.exists(), f"not exists before cleanup: {d}"
         for f in d.iterdir():
             if f.is_file():
                 f.unlink()
+        assert d.exists(), f"not exists after cleanup: {d}"
         assert not list(d.iterdir()), "directory should be empty here"
 
 
