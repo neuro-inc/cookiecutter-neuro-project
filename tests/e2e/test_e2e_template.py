@@ -68,10 +68,8 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=1)
+@pytest.mark.skipif(EXISTING_PROJECT_SLUG)
 def test_make_setup() -> None:
-    if EXISTING_PROJECT_SLUG:
-        return
-
     try:
         _run_make_setup_test()
     except Exception:
