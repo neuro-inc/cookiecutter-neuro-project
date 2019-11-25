@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 import typing as t
 from collections import namedtuple
@@ -8,6 +9,7 @@ import pytest
 
 from tests.e2e.configuration import (
     CI,
+    EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
     LOCAL_CLEANUP_SCRIPT_PATH,
     LOCAL_CLEANUP_STORAGE_FILE,
@@ -85,26 +87,31 @@ def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def change_directory_to_temp(tmpdir_factory: t.Any) -> t.Iterator[None]:
-    tmp = tmpdir_factory.mktemp("test-cookiecutter")
-    with inside_dir(str(tmp)):
+def change_directory_to_temp() -> t.Iterator[None]:
+    tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter")
+    os.makedirs(tmp, exist_ok=True)
+    with inside_dir(tmp):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
-    run(
-        f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
-        f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
-        error_patterns=["raise .*Exception"],
-        verbose=False,
-    )
+    if not EXISTING_PROJECT_SLUG:
+        run(
+            f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
+            f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
+            error_patterns=["raise .*Exception"],
+            verbose=False,
+        )
     with inside_dir(MK_PROJECT_SLUG):
         yield
 
 
 @pytest.fixture(scope="session", autouse=True)
 def generate_empty_project(cookiecutter_setup: None) -> None:
+    if EXISTING_PROJECT_SLUG:
+        return
+
     log_msg(f"Initializing empty project: `{Path().absolute()}`")
 
     apt_file = Path(PROJECT_APT_FILE_NAME)
@@ -146,7 +153,8 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
-    run("pip install -U neuromation", verbose=False)
+    if not EXISTING_PROJECT_SLUG:
+        run("pip install -U neuromation", verbose=False)
     assert "Name: neuromation" in run("pip show neuromation", verbose=False)
 
 
@@ -174,7 +182,7 @@ def cleanup(neuro_login: None) -> t.Iterator[None]:
         if not CI:
             # On CI, we run this script as a separate CI step "when: always"
             run(
-                f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()}",
+                f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()} jobs",
                 detect_new_jobs=False,
                 verbose=True,
             )

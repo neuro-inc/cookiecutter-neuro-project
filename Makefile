@@ -38,4 +38,5 @@ test_e2e_staging:
 
 .PHONY: cleanup_e2e
 cleanup_e2e:
-	bash -c tests/e2e/cleanup.sh
+	bash -c "tests/e2e/cleanup.sh jobs"
+	bash -c "tests/e2e/cleanup.sh storage"

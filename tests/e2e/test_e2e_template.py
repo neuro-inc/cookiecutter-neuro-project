@@ -4,6 +4,7 @@ import pytest
 
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
+    EXISTING_PROJECT_SLUG,
     MK_CODE_DIR,
     MK_DATA_DIR,
     MK_FILEBROWSER_JOB,
@@ -77,6 +78,10 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=STEP_SETUP)
+@pytest.mark.skipif(
+    condition=EXISTING_PROJECT_SLUG is not None and len(EXISTING_PROJECT_SLUG) > 0,
+    reason="Reusing existing project, no need to run setup",
+)
 def test_make_setup() -> None:
     try:
         _run_make_setup_test()
