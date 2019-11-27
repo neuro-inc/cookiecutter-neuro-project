@@ -40,6 +40,7 @@ def run(
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
     detect_new_jobs: bool = True,
+    allow_nonzero_exitcode: bool = False,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -55,6 +56,7 @@ def run(
                 verbose=verbose,
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
+                allow_nonzero_exitcode=False,
             )
         except Exception as exc:
             errors.append(exc)
@@ -79,6 +81,7 @@ def _run(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    allow_nonzero_exitcode: bool = False,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -88,7 +91,11 @@ def _run(
     """
     with timeout(timeout_s):
         out = _run_once(
-            cmd, expect_patterns, verbose=verbose, detect_new_jobs=detect_new_jobs
+            cmd,
+            expect_patterns,
+            verbose=verbose,
+            detect_new_jobs=detect_new_jobs,
+            allow_nonzero_exitcode=allow_nonzero_exitcode,
         )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
@@ -102,6 +109,7 @@ def _run_once(
     *,
     verbose: bool = True,
     detect_new_jobs: bool = True,
+    allow_nonzero_exitcode: bool = False,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -111,6 +119,9 @@ def _run_once(
     `RuntimeError` is raised. Use `verbose=True` to print useful information
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
+    By default the method throws ExitCodeException if the process is killed or
+    exits with non-zero exit code. Passing allow_nonzero_exitcode=True suppresses this
+    behavior.
     >>> # Expect the first and the last output:
     >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
     '1 2 3'
@@ -133,6 +144,14 @@ def _run_once(
     ...     assert False, "must be unreachable"
     ... except RuntimeError as e:
     ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
+    >>> # Exit code:
+    >>> try:
+    ...     _run_once('false', verbose=False)
+    ...     assert False, "must be unreachable"
+    ... except ExitCodeException as e:
+    ...     assert e.exit_code == 1
+    >>> # Suppress exit code check:
+    >>> _run_once('false', verbose=False, allow_nonzero_exitcode=True)
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
@@ -178,14 +197,18 @@ def _run_once(
             finally:
                 chunk = _get_chunk(child)
                 output += chunk
+        if allow_nonzero_exitcode:
+            child.close()
+            if child.status:
+                need_dump = True
+                if child.signalstatus is not None:
+                    log_msg(f"{cmd} was killed", logger=LOGGER.warning)
+                raise ExitCodeException(child.status)
     finally:
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
         if verbose and need_dump:
             log_msg(f"DUMP: {repr(output)}")
-    child.close()
-    if child.exitstatus:
-        raise ExitCodeException(child.exitstatus)
     return output
 
 
