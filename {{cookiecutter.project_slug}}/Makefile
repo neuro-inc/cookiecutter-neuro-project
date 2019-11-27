@@ -67,7 +67,7 @@ setup: ### Setup remote environment
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
-		bash
+		'sleep infinity'
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(DATA_DIR) | true
