@@ -1,0 +1,40 @@
+#!/usr/bin/expect -f
+
+set PROJECT_NAME [lindex $argv 0];
+set PROJECT_SLUG [lindex $argv 1];
+
+if {[string trim $PROJECT_NAME] == ""} {
+  puts "Missing required argument: PROJECT_NAME"
+  puts "Usage: expect supdate-neuro-template.exp"
+  puts ""
+  puts "This script updates the project derived from "
+  puts "neuromation cookiecutter template,"
+  puts "see https://github.com/neuromation/cookiecutter-neuro-project/"
+  exit 1
+}
+
+puts "Using project name: \"$PROJECT_NAME\""
+puts "Using project slug: \"$PROJECT_SLUG\" (deduced automatically if empty)"
+puts ""
+
+spawn cookiecutter -f gh:neuromation/cookiecutter-neuro-project
+puts ""
+
+expect {
+  "You've downloaded * before" {
+     send "yes\r"
+     exp_continue
+  }
+  "project_name" {
+     send "$PROJECT_NAME\r"
+  }
+}
+
+expect "project_slug"
+send "$PROJECT_SLUG\r"
+
+expect "code_directory"
+send "\r"
+
+expect eof
+
