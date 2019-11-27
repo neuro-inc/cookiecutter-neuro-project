@@ -134,6 +134,7 @@ def _run_make_setup_test() -> None:
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
+            allow_nonzero_exitcode=True,
         )
 
 
@@ -301,6 +302,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
             error_patterns=DEFAULT_ERROR_PATTERNS,
+            allow_nonzero_exitcode=True,
         )
 
     job_id = parse_job_id(out)
