@@ -32,12 +32,12 @@ echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
 echo "Before:"
-neuro ls
+neuro --verbose --trace ls
 echo "-------"
-for d in $dirs; do neuro rm -r $d; done
+for d in $dirs; do neuro --verbose --trace rm -r $d; done
 echo "-------"
 echo "After:"
-neuro ls
+neuro --verbose --trace ls
 echo "-------"
 echo "Removing file $STORAGE_FILE"
 rm $STORAGE_FILE
