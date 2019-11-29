@@ -144,7 +144,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
-    assert set(notebooks_dir.iterdir()) <= PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert set(p.name for p in notebooks_dir.iterdir()) <= PROJECT_NOTEBOOKS_DIR_CONTENT
 
     # Save project directory on storage for further cleanup:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
