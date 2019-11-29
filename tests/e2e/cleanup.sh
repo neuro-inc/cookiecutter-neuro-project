@@ -15,7 +15,7 @@ echo "-------"
 echo "Before:"
 neuro ps
 echo "-------"
-neuro kill $jobs
+neuro kill --verbose --trace $jobs
 echo "-------"
 echo "After:"
 neuro ps
