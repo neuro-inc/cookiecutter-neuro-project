@@ -197,7 +197,7 @@ def _run_once(
             finally:
                 chunk = _get_chunk(child)
                 output += chunk
-        if allow_nonzero_exitcode:
+        if not allow_nonzero_exitcode:
             child.close()
             if child.status:
                 need_dump = True
