@@ -8,10 +8,8 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.configuration import (
-    CI,
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
-    LOCAL_CLEANUP_SCRIPT_PATH,
     LOCAL_CLEANUP_STORAGE_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
@@ -172,17 +170,3 @@ def neuro_login(
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
-
-
-@pytest.fixture(scope="session", autouse=True)
-def cleanup(neuro_login: None) -> t.Iterator[None]:
-    try:
-        yield
-    finally:
-        if not CI:
-            # On CI, we run this script as a separate CI step "when: always"
-            run(
-                f"bash -c {LOCAL_CLEANUP_SCRIPT_PATH.absolute()} jobs",
-                detect_new_jobs=False,
-                verbose=True,
-            )
