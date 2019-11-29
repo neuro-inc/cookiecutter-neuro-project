@@ -145,6 +145,12 @@ def test_import_code_in_notebooks() -> None:
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
+    ls_notebooks = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert "Untitled.ipynb" in ls_notebooks, "Source notebook not found"
+
+    ls_code = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert "main.py" in ls_code, "Source code file not found"
+
     out = run(
         "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
         verbose=True,
@@ -159,7 +165,7 @@ def _run_import_code_in_notebooks_test() -> None:
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     cmd = (
-        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
+        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
         f"cat {out_file}.asciidoc"
     )
     run(
