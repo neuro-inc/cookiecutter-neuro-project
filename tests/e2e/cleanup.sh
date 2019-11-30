@@ -13,12 +13,12 @@ echo "About to kill $(wc -w <<< $jobs) jobs: $jobs"
 
 echo "-------"
 echo "Before:"
-neuro ps
+neuro -q ps
 echo "-------"
-neuro kill $jobs
+neuro -v --trace kill $jobs
 echo "-------"
 echo "After:"
-neuro ps
+neuro -q ps
 echo "-------"
 echo "Removing file $JOBS_FILE"
 rm $JOBS_FILE
@@ -31,13 +31,7 @@ dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE || true)
 echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
-echo "Before:"
-neuro ls
-echo "-------"
-for d in $dirs; do neuro rm -r $d; done
-echo "-------"
-echo "After:"
-neuro ls
+for d in $dirs; do neuro -v --trace rm -r $d; done
 echo "-------"
 echo "Removing file $STORAGE_FILE"
 rm $STORAGE_FILE
