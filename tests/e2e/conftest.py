@@ -147,10 +147,10 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
     notebooks = set(p.name for p in notebooks_dir.iterdir())
     assert notebooks <= PROJECT_NOTEBOOKS_DIR_CONTENT | PROJECT_HIDDEN_FILES
-    with Path(f"{notebooks_dir}/hello_world.ipynb").open("rw") as path:
-        text = path.read()
-        text = text.replace("{{cookiecutter.code_directory}}", MK_PROJECT_SLUG)
-        path.write(text)
+    notebook_path = Path(f"{notebooks_dir}/hello_world.ipynb")
+    text = notebook_path.read_text()
+    text = text.replace("{{cookiecutter.code_directory}}", MK_PROJECT_SLUG)
+    notebook_path.write_text(text)
 
     # Save project directory on storage for further cleanup:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
