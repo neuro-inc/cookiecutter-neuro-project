@@ -56,7 +56,7 @@ def run(
                 verbose=verbose,
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
-                allow_nonzero_exitcode=False,
+                allow_nonzero_exitcode=allow_nonzero_exitcode,
             )
         except Exception as exc:
             errors.append(exc)
