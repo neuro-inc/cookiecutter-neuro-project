@@ -24,11 +24,12 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
+    PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
     UNIQUE_PROJECT_NAME,
-    PROJECT_HIDDEN_FILES)
+)
 from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
