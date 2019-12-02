@@ -162,7 +162,7 @@ def _run_import_code_in_notebooks_test() -> None:
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     cmd = (
         f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
-        f"cat {out_file}.asciidoc",
+        f"cat {out_file}.asciidoc"
     )
     run(
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
