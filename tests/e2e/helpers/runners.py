@@ -40,7 +40,7 @@ def run(
     error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -56,7 +56,7 @@ def run(
                 verbose=verbose,
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
-                allow_nonzero_exitcode=allow_nonzero_exitcode,
+                assert_exit_code=assert_exit_code,
             )
         except Exception as exc:
             errors.append(exc)
@@ -81,7 +81,7 @@ def _run(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -95,7 +95,7 @@ def _run(
             expect_patterns,
             verbose=verbose,
             detect_new_jobs=detect_new_jobs,
-            allow_nonzero_exitcode=allow_nonzero_exitcode,
+            assert_exit_code=assert_exit_code,
         )
     errors = detect_errors(out, error_patterns, verbose=verbose)
     if errors:
@@ -109,7 +109,7 @@ def _run_once(
     *,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -151,7 +151,7 @@ def _run_once(
     ... except ExitCodeException as e:
     ...     assert e.exit_code == 1
     >>> # Suppress exit code check:
-    >>> _run_once('false', verbose=False, allow_nonzero_exitcode=True)
+    >>> _run_once('false', verbose=False, assert_exit_code=False)
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
@@ -197,8 +197,12 @@ def _run_once(
             finally:
                 chunk = _get_chunk(child)
                 output += chunk
-        if not allow_nonzero_exitcode:
-            child.close()
+        if assert_exit_code:
+            if child.isalive():
+                # Short sleep to allow make command to complete
+                log_msg(f"Sleeping for {cmd}", logger=LOGGER.info)
+                time.sleep(1)
+            child.close(force=True)
             if child.status:
                 need_dump = True
                 if child.signalstatus is not None:

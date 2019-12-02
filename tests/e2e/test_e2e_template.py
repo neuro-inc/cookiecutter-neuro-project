@@ -134,7 +134,7 @@ def _run_make_setup_test() -> None:
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
             error_patterns=DEFAULT_ERROR_PATTERNS,
-            allow_nonzero_exitcode=True,
+            assert_exit_code=True,
         )
 
 
@@ -151,6 +151,7 @@ def _run_import_code_in_notebooks_test() -> None:
         verbose=True,
         expect_patterns=[r"Status:[^\n]+running"],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
+        assert_exit_code=False,
     )
     job_id = parse_job_id(out)
 
@@ -161,7 +162,7 @@ def _run_import_code_in_notebooks_test() -> None:
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     cmd = (
         f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
-        f"cat {out_file}.asciidoc"
+        f"cat {out_file}.asciidoc",
     )
     run(
         f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
@@ -169,6 +170,7 @@ def _run_import_code_in_notebooks_test() -> None:
         expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
         error_patterns=["Error: ", "CRITICAL"],
         detect_new_jobs=False,
+        assert_exit_code=False,
     )
 
 
@@ -303,7 +305,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
             error_patterns=DEFAULT_ERROR_PATTERNS,
-            allow_nonzero_exitcode=True,
+            assert_exit_code=False,
         )
 
     job_id = parse_job_id(out)
@@ -315,6 +317,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,
+            assert_exit_code=False,
         )
 
     make_cmd = f"make kill-{target}"
