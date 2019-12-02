@@ -199,14 +199,16 @@ def _run_once(
                 output += chunk
         if assert_exit_code:
             if child.isalive():
-                # Short sleep to allow make command to complete
-                log_msg(f"Sleeping for {cmd}", logger=LOGGER.info)
-                time.sleep(1)
+                # flush process buffer
+                child.read()
+                # wait for child to exit
+                log_msg(f"Waiting for {cmd}", logger=LOGGER.info)
+                child.wait()
             child.close(force=True)
             if child.status:
                 need_dump = True
                 if child.signalstatus is not None:
-                    log_msg(f"{cmd} was killed", logger=LOGGER.warning)
+                    log_msg(f"{cmd} was killed via signal", logger=LOGGER.warning)
                 raise ExitCodeException(child.status)
     finally:
         if detect_new_jobs:
