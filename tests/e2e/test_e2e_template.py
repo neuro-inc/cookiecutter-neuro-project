@@ -139,6 +139,7 @@ def _run_make_setup_test() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
+@pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
 def test_import_code_in_notebooks() -> None:
     _run_import_code_in_notebooks_test()
 
