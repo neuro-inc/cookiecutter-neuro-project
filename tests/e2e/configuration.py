@@ -78,11 +78,7 @@ PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
-PROJECT_NOTEBOOKS_DIR_CONTENT = {
-    "Untitled.ipynb",
-    "hello_world.ipynb",
-    "00_notebook_tutorial.ipynb",
-}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "hello_world.ipynb"}
 
 
 # == tests constants ==
