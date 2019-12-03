@@ -108,8 +108,8 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 clean-notebooks:  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
-.PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
-upload: upload-code upload-data upload-notebooks
+.PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
+upload-all: upload-code upload-data upload-notebooks
 
 .PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
 clean: clean-code clean-data clean-notebooks
@@ -187,8 +187,8 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
-.PHONY: kill  ### Terminate all jobs of this project
-kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
+.PHONY: kill-all  ### Terminate all jobs of this project
+kill-all: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 ##### LOCAL #####
 
