@@ -138,51 +138,6 @@ def _run_make_setup_test() -> None:
         )
 
 
-@pytest.mark.run(order=STEP_RUN)
-@pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
-def test_import_code_in_notebooks() -> None:
-    _run_import_code_in_notebooks_test()
-
-
-@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def _run_import_code_in_notebooks_test() -> None:
-    ls_notebooks = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert "hello_world.ipynb" in ls_notebooks, "Source notebook not found"
-
-    ls_code = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
-    assert "main.py" in ls_code, "Source code file not found"
-
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/hello_world.ipynb"
-    out = run(
-        "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
-        verbose=True,
-        expect_patterns=[r"Status:[^\n]+running"],
-        error_patterns=[
-            fr"pattern '{notebook_path}' matched no files",
-            "CellExecutionError",
-            "ModuleNotFoundError",
-        ],
-        timeout_s=TIMEOUT_NEURO_RUN_CPU,
-    )
-    job_id = parse_job_id(out)
-
-    expected_string = "----\r\nHello World!\r\n----"
-
-    out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
-    jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
-    cmd = (
-        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
-        f"cat {out_file}.asciidoc"
-    )
-    run(
-        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
-        verbose=True,
-        expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
-        error_patterns=["Error: ", "CRITICAL"],
-        detect_new_jobs=False,
-    )
-
-
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
@@ -282,6 +237,50 @@ def test_make_download_noteboooks() -> None:
 
 
 # TODO: training, kill-training, connect-training
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_import_code_in_notebooks() -> None:
+    _run_import_code_in_notebooks_test()
+
+
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
+def _run_import_code_in_notebooks_test() -> None:
+    ls_notebooks = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert "hello_world.ipynb" in ls_notebooks, "Source notebook not found"
+
+    ls_code = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert "main.py" in ls_code, "Source code file not found"
+
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/hello_world.ipynb"
+    out = run(
+        "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
+        verbose=True,
+        expect_patterns=[r"Status:[^\n]+running"],
+        error_patterns=[
+            fr"pattern '{notebook_path}' matched no files",
+            "CellExecutionError",
+            "ModuleNotFoundError",
+        ],
+        timeout_s=TIMEOUT_NEURO_RUN_CPU,
+    )
+    job_id = parse_job_id(out)
+
+    expected_string = "----\r\nHello World!\r\n----"
+
+    out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
+    jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
+    cmd = (
+        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
+        f"cat {out_file}.asciidoc"
+    )
+    run(
+        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        verbose=True,
+        expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
+        error_patterns=["Error: ", "CRITICAL"],
+        detect_new_jobs=False,
+    )
 
 
 @pytest.mark.run(order=STEP_KILL)
