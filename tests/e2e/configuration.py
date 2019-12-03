@@ -75,7 +75,7 @@ PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 # TODO(artem): hidden files is a hack, see issue #93
-PROJECT_HIDDEN_FILES = {".gitkeep", "__pycache__"}
+PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
@@ -135,6 +135,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
+    r"Error: .+",
     r"Docker API error: .+",
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")

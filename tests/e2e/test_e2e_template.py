@@ -56,6 +56,7 @@ STEP_PRE_SETUP = 0
 STEP_SETUP = 3
 STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
+STEP_POST_UPLOAD = 11
 STEP_DOWNLOAD = 20
 STEP_RUN = 30
 STEP_KILL = 90
@@ -138,18 +139,29 @@ def _run_make_setup_test() -> None:
         )
 
 
-@pytest.mark.run(order=STEP_RUN)
-@pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
+@pytest.mark.run(order=STEP_POST_UPLOAD)
 def test_import_code_in_notebooks() -> None:
     _run_import_code_in_notebooks_test()
 
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
+    ls_notebooks = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert "Untitled.ipynb" in ls_notebooks, "Source notebook not found"
+
+    ls_code = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert "main.py" in ls_code, "Source code file not found"
+
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     out = run(
         "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
         verbose=True,
         expect_patterns=[r"Status:[^\n]+running"],
+        error_patterns=[
+            fr"pattern '{notebook_path}' matched no files",
+            "CellExecutionError",
+            "ModuleNotFoundError",
+        ],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
     )
     job_id = parse_job_id(out)
@@ -158,9 +170,8 @@ def _run_import_code_in_notebooks_test() -> None:
 
     out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
     cmd = (
-        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
+        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
         f"cat {out_file}.asciidoc"
     )
     run(
