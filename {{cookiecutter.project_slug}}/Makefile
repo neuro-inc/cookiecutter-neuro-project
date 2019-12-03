@@ -117,7 +117,7 @@ clean: clean-code clean-data clean-notebooks
 ##### JOBS #####
 
 .PHONY: training
-training:  ### Run a training job
+training: upload-code  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
