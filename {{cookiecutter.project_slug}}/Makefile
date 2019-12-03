@@ -108,11 +108,23 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 clean-notebooks:  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
-.PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
-upload: upload-code upload-data upload-notebooks
+.PHONY: upload-results
+upload-results:  ### Upload results directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
-.PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
-clean: clean-code clean-data clean-notebooks
+.PHONY: download-results
+download-results:  ### Download results directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+
+.PHONY: clean-results
+clean-results:  ### Delete results directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
+
+.PHONY: upload  ### Upload code, data, notebooks and results directories to the platform storage
+upload: upload-code upload-data upload-notebooks upload-results
+
+.PHONY: clean  ### Delete code, data, notebooks and results directories from the platform storage
+clean: clean-code clean-data clean-notebooks clean-results
 
 ##### JOBS #####
 
