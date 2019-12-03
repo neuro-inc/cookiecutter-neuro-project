@@ -56,8 +56,9 @@ STEP_PRE_SETUP = 0
 STEP_SETUP = 3
 STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
+STEP_POST_UPLOAD = 11
 STEP_DOWNLOAD = 20
-STEP_RUN = 30
+STEP_RUN = 50
 STEP_KILL = 90
 STEP_CLEANUP = 100
 
@@ -239,7 +240,7 @@ def test_make_download_noteboooks() -> None:
 # TODO: training, kill-training, connect-training
 
 
-@pytest.mark.run(order=STEP_RUN)
+@pytest.mark.run(order=STEP_POST_UPLOAD)
 def test_import_code_in_notebooks() -> None:
     _run_import_code_in_notebooks_test()
 
