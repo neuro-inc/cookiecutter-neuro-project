@@ -203,6 +203,6 @@ lint:  ### Run static code analysis locally
 
 ##### MISC #####
 
-.PHONY: ps
-ps:  ### List all running and pending jobs
+.PHONY: list-jobs
+list-jobs  ### List all running and pending jobs
 	$(NEURO) ps
