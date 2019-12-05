@@ -125,6 +125,7 @@ training:  ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env EXPOSE_SSH=yes \
+		--env JOB_TIMEOUT=0 \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
