@@ -78,6 +78,10 @@ setup: ### Setup remote environment
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
 
+.PHONY: kill-setup
+kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` itself)
+	$(NEURO) kill $(SETUP_JOB)
+
 ##### STORAGE #####
 
 .PHONY: upload-code
