@@ -267,19 +267,19 @@ def test_make_download_noteboooks() -> None:
 # TODO: training, kill-training, connect-training
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def test_make_run_jupyter() -> None:
     _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser() -> None:
     _test_make_run_something_useful(
