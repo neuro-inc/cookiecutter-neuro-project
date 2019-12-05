@@ -33,7 +33,7 @@ CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
-TRAINING_MACHINE_TYPE?=gpu-small
+PRESET?=gpu-small
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
@@ -79,6 +79,10 @@ setup: ### Setup remote environment
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
 
+.PHONY: kill-setup
+kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` itself)
+	$(NEURO) kill $(SETUP_JOB)
+
 ##### STORAGE #####
 
 .PHONY: upload-code
@@ -109,44 +113,46 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 clean-notebooks:  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
-.PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
-upload: upload-code upload-data upload-notebooks
+.PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
+upload-all: upload-code upload-data upload-notebooks
 
 .PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
 clean: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
-.PHONY: training
-training:  ### Run a training job
+.PHONY: train
+train:  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
-		--preset $(TRAINING_MACHINE_TYPE) \
+		--preset $(PRESET) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV)
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
-.PHONY: kill-training
-kill-training:  ### Terminate the training job
+.PHONY: kill-train
+kill-train:  ### Terminate the training job
 	$(NEURO) kill $(TRAINING_JOB)
 
-.PHONY: connect-training
-connect-training:  ### Connect to the remote shell running on the training job
+.PHONY: connect-train
+connect-train:  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
-		--preset $(TRAINING_MACHINE_TYPE) \
+		--preset $(PRESET) \
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
 		--env JOB_TIMEOUT=1d \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
@@ -192,8 +198,8 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
-.PHONY: kill  ### Terminate all jobs of this project
-kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
+.PHONY: kill-all  ### Terminate all jobs of this project
+kill-all: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 ##### LOCAL #####
 
