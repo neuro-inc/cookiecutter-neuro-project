@@ -75,6 +75,18 @@ def test_make_help_works() -> None:
     assert "setup" in out, f"not found in output: `{out}`"
 
 
+@pytest.mark.run(order=STEP_PRE_SETUP)
+@try_except_finally()
+def test_make_setup_required() -> None:
+    # TODO: one exit code check is fixed (see #191), drop this try-catch
+    try:
+        run("make jupyter", expect_patterns=["Error"])
+        assert False, "should not be here"
+    except RuntimeError:
+        pass
+    # assert "Please run 'make setup' first" in out, f"not found in output: `{out}`"
+
+
 @pytest.mark.run(order=STEP_SETUP)
 @pytest.mark.skipif(
     condition=EXISTING_PROJECT_SLUG is not None and len(EXISTING_PROJECT_SLUG) > 0,
