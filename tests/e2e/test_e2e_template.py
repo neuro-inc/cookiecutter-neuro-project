@@ -144,7 +144,7 @@ def test_import_code_in_notebooks() -> None:
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
     out = run(
-        "make jupyter HTTP_AUTH=--no-http-auth TRAINING_MACHINE_TYPE=cpu-small",
+        "make jupyter HTTP_AUTH=--no-http-auth PRESET=cpu-small",
         verbose=True,
         expect_patterns=[r"Status:[^\n]+running"],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,

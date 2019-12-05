@@ -33,7 +33,7 @@ CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
-TRAINING_MACHINE_TYPE?=gpu-small
+PRESET?=gpu-small
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
@@ -120,7 +120,7 @@ clean: clean-code clean-data clean-notebooks
 training:  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
-		--preset $(TRAINING_MACHINE_TYPE) \
+		--preset $(PRESET) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
@@ -140,7 +140,7 @@ connect-training:  ### Connect to the remote shell running on the training job
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
-		--preset $(TRAINING_MACHINE_TYPE) \
+		--preset $(PRESET) \
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
