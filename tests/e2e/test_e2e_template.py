@@ -258,7 +258,7 @@ def test_make_download_noteboooks() -> None:
     assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
-# TODO: training, kill-training, connect-training
+# TODO: train, kill-train, connect-train
 
 
 @pytest.mark.run(order=STEP_RUN)

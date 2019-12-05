@@ -116,8 +116,8 @@ clean: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
-.PHONY: training
-training:  ### Run a training job
+.PHONY: train
+train:  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
@@ -128,12 +128,12 @@ training:  ### Run a training job
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
-.PHONY: kill-training
-kill-training:  ### Terminate the training job
+.PHONY: kill-train
+kill-train:  ### Terminate the training job
 	$(NEURO) kill $(TRAINING_JOB)
 
-.PHONY: connect-training
-connect-training:  ### Connect to the remote shell running on the training job
+.PHONY: connect-train
+connect-train:  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
