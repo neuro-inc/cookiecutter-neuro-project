@@ -65,6 +65,7 @@ setup: ### Setup remote environment
 		--name $(SETUP_JOB) \
 		--preset cpu-small \
 		--detach \
+		--env JOB_TIMEOUT=1h \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
@@ -145,6 +146,7 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
+		--env JOB_TIMEOUT=1d \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
@@ -164,6 +166,7 @@ tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
+		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
@@ -180,6 +183,7 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
+		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		filebrowser/filebrowser \
 		--noauth
