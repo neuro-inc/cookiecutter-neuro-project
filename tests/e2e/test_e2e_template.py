@@ -33,7 +33,6 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
-    TIMEOUT_NEURO_RUN_GPU,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
@@ -137,6 +136,7 @@ def _run_make_setup_test() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
+@pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
 def test_import_code_in_notebooks() -> None:
     _run_import_code_in_notebooks_test()
 
@@ -261,19 +261,23 @@ def test_make_download_noteboooks() -> None:
 # TODO: training, kill-training, connect-training
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
+def test_make_run_jupyter(env_neuro_run_timeout: int) -> None:
+    _run_make_run_jupyter_test(env_neuro_run_timeout)
+
+
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def test_make_run_jupyter() -> None:
-    _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
+def _run_make_run_jupyter_test(neuro_run_timeout: int) -> None:
+    _test_make_run_something_useful("jupyter", "/tree", neuro_run_timeout)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser() -> None:
     _test_make_run_something_useful(
