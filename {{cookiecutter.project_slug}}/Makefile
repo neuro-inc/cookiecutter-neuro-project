@@ -111,8 +111,8 @@ clean-notebooks:  ### Delete notebooks directory from the platform storage
 .PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
 upload-all: upload-code upload-data upload-notebooks
 
-.PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
-clean: clean-code clean-data clean-notebooks
+.PHONY: clean-all  ### Delete code, data, and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
