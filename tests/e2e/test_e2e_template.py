@@ -34,7 +34,6 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
-    TIMEOUT_NEURO_RUN_GPU,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
@@ -275,8 +274,8 @@ def test_make_download_noteboooks() -> None:
 
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def test_make_run_jupyter() -> None:
-    _test_make_run_something_useful("jupyter", "/tree", TIMEOUT_NEURO_RUN_GPU)
+def test_make_run_jupyter(env_neuro_run_timeout: int) -> None:
+    _test_make_run_something_useful("jupyter", "/tree", env_neuro_run_timeout)
 
 
 @pytest.mark.run(order=STEP_KILL)

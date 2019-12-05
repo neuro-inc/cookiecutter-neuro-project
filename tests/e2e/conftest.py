@@ -26,6 +26,8 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
+    TIMEOUT_NEURO_RUN_CPU,
+    TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
 )
 from tests.e2e.helpers.logs import log_msg
@@ -66,22 +68,35 @@ def pytest_configure(config: t.Any) -> None:
 
 
 @pytest.fixture(scope="session")
-def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
+def environment(request: t.Any) -> str:
+    env = request.config.getoption("--environment") or "dev"
+    if env not in ["dev", "staging"]:
+        raise ValueError(f"Invalid environment: {environment}")
+    return env
+
+
+@pytest.fixture(scope="session")
+def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        environment = request.config.getoption("--environment") or "dev"
         if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
-        elif environment == "staging":
+        else:
             env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
-        else:
-            raise ValueError(f"Invalid environment: {environment}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
 
     return _f
+
+
+@pytest.fixture(scope="session")
+def env_neuro_run_timeout(environment: str) -> int:
+    if environment == "dev":
+        return TIMEOUT_NEURO_RUN_CPU
+    else:
+        return TIMEOUT_NEURO_RUN_GPU
 
 
 @pytest.fixture(scope="session", autouse=True)
