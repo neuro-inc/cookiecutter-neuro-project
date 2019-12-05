@@ -37,7 +37,7 @@ def run(
     attempts: int = 1,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     allow_nonzero_exitcode: bool = False,
@@ -77,7 +77,7 @@ def _run(
     cmd: str,
     *,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
@@ -97,7 +97,8 @@ def _run(
             detect_new_jobs=detect_new_jobs,
             allow_nonzero_exitcode=allow_nonzero_exitcode,
         )
-    errors = detect_errors(out, error_patterns, verbose=verbose)
+    all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
+    errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {errors}")
     return out
