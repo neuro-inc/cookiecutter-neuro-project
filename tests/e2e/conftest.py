@@ -94,7 +94,9 @@ def change_directory_to_temp() -> t.Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
-    if not EXISTING_PROJECT_SLUG:
+    if EXISTING_PROJECT_SLUG:
+        log_msg(f"Running tests for existing project: {EXISTING_PROJECT_SLUG}")
+    else:
         run(
             f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
             f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
@@ -102,6 +104,7 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
             verbose=False,
         )
     with inside_dir(MK_PROJECT_SLUG):
+        log_msg(f"Working inside test project: {Path().absolute()}")
         yield
 
 
