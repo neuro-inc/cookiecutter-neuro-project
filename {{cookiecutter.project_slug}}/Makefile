@@ -123,6 +123,9 @@ clean-results:  ### Delete results directory from the platform storage
 .PHONY: upload-all  ### Upload code, data, notebooks and results directories to the platform storage
 upload-all: upload-code upload-data upload-notebooks upload-results
 
+.PHONY: download-all  ### Download data, notebooks and results directories from the platform storage
+download-all: download-data download-notebooks download-results
+
 .PHONY: clean  ### Delete code, data, notebooks and results directories from the platform storage
 clean: clean-code clean-data clean-notebooks clean-results
 
