@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.configuration import (
-    DEFAULT_ERROR_PATTERNS,
     EXISTING_PROJECT_SLUG,
     MK_CODE_DIR,
     MK_DATA_DIR,
@@ -132,7 +131,6 @@ def _run_make_setup_test() -> None:
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
             allow_nonzero_exitcode=True,
         )
 
@@ -189,7 +187,6 @@ def test_make_upload_code() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CODE_DIR)],
             # TODO: add upload-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
@@ -213,7 +210,6 @@ def test_make_upload_data() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_DATA_DIR)],
             # TODO: add upload-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
@@ -237,7 +233,6 @@ def test_make_upload_notebooks() -> None:
             timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
             # TODO: add upload-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -259,7 +254,6 @@ def test_make_download_noteboooks() -> None:
             timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
             # TODO: add upload-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     actual_local = {
         path.name
@@ -272,7 +266,7 @@ def test_make_download_noteboooks() -> None:
 # TODO: training, kill-training, connect-training
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter(env_neuro_run_timeout: int) -> None:
     _run_make_run_jupyter_test(env_neuro_run_timeout)
 
@@ -282,13 +276,13 @@ def _run_make_run_jupyter_test(neuro_run_timeout: int) -> None:
     _test_make_run_something_useful("jupyter", "/tree", neuro_run_timeout)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
 def test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
-@pytest.mark.run(order=STEP_KILL)
+@pytest.mark.run(order=STEP_RUN)
 @try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser() -> None:
     _test_make_run_something_useful(
@@ -305,7 +299,6 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             verbose=True,
             timeout_s=timeout_run,
             expect_patterns=[r"Status:[^\n]+running"],
-            error_patterns=DEFAULT_ERROR_PATTERNS,
             allow_nonzero_exitcode=True,
         )
 
@@ -322,12 +315,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
-        run(
-            make_cmd,
-            verbose=True,
-            timeout_s=TIMEOUT_NEURO_KILL,
-            error_patterns=DEFAULT_ERROR_PATTERNS,
-        )
+        run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
     wait_job_change_status_to(job_id, "succeeded")
 
 
@@ -344,7 +332,6 @@ def test_make_clean_code() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             # TODO: add clean-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
@@ -363,7 +350,6 @@ def test_make_clean_data() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             # TODO: add clean-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
 
@@ -381,7 +367,6 @@ def test_make_clean_notebooks() -> None:
             verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             # TODO: add clean-specific error patterns
-            error_patterns=DEFAULT_ERROR_PATTERNS,
         )
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
 
