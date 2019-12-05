@@ -173,9 +173,7 @@ def _run_import_code_in_notebooks_test() -> None:
 @try_except_finally()
 def test_make_upload_code() -> None:
     neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}",
-        timeout_s=TIMEOUT_NEURO_RMDIR_CODE,
-        ignore_errors=True,
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
 
     # Upload:
@@ -196,9 +194,7 @@ def test_make_upload_code() -> None:
 @try_except_finally()
 def test_make_upload_data() -> None:
     neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}",
-        timeout_s=TIMEOUT_NEURO_RMDIR_DATA,
-        ignore_errors=True,
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
 
     # Upload:
@@ -224,7 +220,6 @@ def test_make_upload_notebooks() -> None:
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
-        ignore_errors=True,
     )
     with measure_time(make_cmd):
         run(
