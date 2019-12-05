@@ -343,18 +343,10 @@ def neuro_ls(path: str) -> t.Set[str]:
 def neuro_rm_dir(
     path: str,
     timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
-    ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(
-        f"neuro rm -r {path}",
-        timeout_s=timeout_s,
-        verbose=verbose,
-        error_patterns=[]
-        if ignore_errors
-        else list(tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS),
-    )
+    run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
     log_msg("Done.")
 
 
