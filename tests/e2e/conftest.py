@@ -99,6 +99,22 @@ def env_neuro_run_timeout(environment: str) -> int:
         return TIMEOUT_NEURO_RUN_GPU
 
 
+@pytest.fixture(scope="session")
+def env_command_check_gpu(environment: str) -> str:
+    # Note: this command is NOT allowed to use single quotes
+    # as the whole command for 'neuro run' will be passed in single quotes
+    pre_cmds = ["import os, torch, tensorflow"]
+
+    gpu_assertions = ["tensorflow.test.is_gpu_available()", "torch.cuda.is_available()"]
+    if environment == "dev":
+        cmd = "; ".join(pre_cmds + [f"assert not {gpu}" for gpu in gpu_assertions])
+    else:
+        cmd = "; ".join(pre_cmds + [f"assert {gpu}" for gpu in gpu_assertions])
+
+    cmd = cmd.replace('"', r"\"")
+    return f'python -W ignore -c "{cmd}"'
+
+
 @pytest.fixture(scope="session", autouse=True)
 def change_directory_to_temp() -> t.Iterator[None]:
     tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter")
@@ -152,7 +168,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
-    code_file.write_text("print('Hello world!')")
+    code_file.write_text('print("Hello world!")\n')
     assert code_file.exists()
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)

@@ -4,6 +4,7 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_DATA_DIR,
     MK_FILEBROWSER_JOB,
@@ -15,6 +16,7 @@ from tests.e2e.configuration import (
     MK_PROJECT_SLUG,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
+    MK_TRAINING_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -33,6 +35,9 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
+    _get_pattern_pip_installing,
+    _get_pattern_status_running,
+    _get_pattern_status_succeeded,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
@@ -58,6 +63,7 @@ STEP_DOWNLOAD = 20
 STEP_RUN = 30
 STEP_KILL = 90
 STEP_CLEANUP = 100
+STEP_LOCAL = 200
 
 
 @try_except_finally()
@@ -107,7 +113,7 @@ def _run_make_setup_test() -> None:
 
     expected_patterns = [
         # run
-        r"Status:[^\n]+running",
+        _get_pattern_status_running(),
         # apt-get install
         *apt_deps_messages,
         # pip install
@@ -135,6 +141,19 @@ def _run_make_setup_test() -> None:
         )
 
 
+@pytest.mark.run(order=STEP_POST_SETUP)
+@try_except_finally(f"neuro kill {MK_SETUP_JOB}")
+def test_make_kill_setup() -> None:
+    run(
+        f"neuro run -s cpu-small -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} sleep 1h",
+        expect_patterns=[_get_pattern_status_running()],
+        detect_new_jobs=True,
+    )
+    cmd = "make kill-setup"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
+
+
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
 def test_import_code_in_notebooks() -> None:
@@ -146,7 +165,7 @@ def _run_import_code_in_notebooks_test() -> None:
     out = run(
         "make jupyter HTTP_AUTH=--no-http-auth PRESET=cpu-small",
         verbose=True,
-        expect_patterns=[r"Status:[^\n]+running"],
+        expect_patterns=[_get_pattern_status_running()],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
     )
     job_id = parse_job_id(out)
@@ -233,6 +252,14 @@ def test_make_upload_notebooks() -> None:
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
+@pytest.mark.run(order=STEP_UPLOAD)
+@try_except_finally()
+def test_make_upload_all() -> None:
+    # just check exit code
+    cmd = "make upload-all"
+    run(cmd, verbose=True, detect_new_jobs=False)
+
+
 @pytest.mark.run(order=STEP_DOWNLOAD)
 @try_except_finally()
 def test_make_download_noteboooks() -> None:
@@ -258,7 +285,45 @@ def test_make_download_noteboooks() -> None:
     assert actual_local == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
-# TODO: train, kill-train, connect-train
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
+    _run_make_train_default_command_test(env_neuro_run_timeout)
+
+
+@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+def _run_make_train_default_command_test(neuro_run_timeout: int) -> None:
+    cmd = "make train"
+    with measure_time(cmd):
+        run(
+            cmd,
+            timeout_s=neuro_run_timeout,
+            expect_patterns=[
+                _get_pattern_status_succeeded(),
+                "Replace this placeholder with a training script execution",
+            ],
+            verbose=True,
+            detect_new_jobs=True,
+        )
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_custom_command(
+    env_neuro_run_timeout: int, env_command_check_gpu: str
+) -> None:
+    _run_make_train_custom_command_test(env_neuro_run_timeout, env_command_check_gpu)
+
+
+@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+def _run_make_train_custom_command_test(
+    neuro_run_timeout: int, command_check_gpu: str
+) -> None:
+    # TODO: export training command env var (no quotes problems + more general case)
+    # TODO: tensorflow outputs a lot of debug info even with `python -W ignore`.
+    #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
+    #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
+    cmd = f"make train TRAINING_COMMAND='{command_check_gpu}'"
+    with measure_time(cmd):
+        run(cmd, timeout_s=neuro_run_timeout, verbose=True, detect_new_jobs=True)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -293,12 +358,17 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             make_cmd,
             verbose=True,
             timeout_s=timeout_run,
-            expect_patterns=[r"Status:[^\n]+running"],
+            expect_patterns=[_get_pattern_status_running()],
             allow_nonzero_exitcode=True,
         )
-
     job_id = parse_job_id(out)
     url = parse_job_url(out)
+
+    cmd = "make ps"
+    with measure_time(cmd):
+        out = run(cmd, verbose=True, detect_new_jobs=False)
+    assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
+
     with timeout(2 * 60):
         repeat_until_success(
             f"curl --fail {url}{path}",
@@ -312,6 +382,32 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
     wait_job_change_status_to(job_id, "succeeded")
+
+
+@pytest.mark.run(order=STEP_KILL)
+@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+def test_make_connect_train_kill_train() -> None:
+    cmd = f"make train TRAINING_COMMAND='sleep 3h'"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            detect_new_jobs=True,
+            expect_patterns=[_get_pattern_status_running()],
+            allow_nonzero_exitcode=True,
+        )
+    cmd = "make kill-train"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_KILL)
+@try_except_finally()
+def test_make_kill_all() -> None:
+    # just check exit code
+    cmd = f"make kill-all"
+    with measure_time(cmd):
+        run(cmd, verbose=True, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
@@ -366,4 +462,32 @@ def test_make_clean_notebooks() -> None:
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
 
 
-# TODO: other tests
+@pytest.mark.run(order=STEP_CLEANUP)
+@try_except_finally()
+def test_make_clean_all() -> None:
+    # just check exit code
+    cmd = "make clean-all"
+    run(cmd, verbose=True, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_LOCAL)
+@try_except_finally()
+def test_make_setup_local() -> None:
+    # just check exit code
+    cmd = "make setup-local"
+    run(
+        cmd,
+        expect_patterns=[
+            _get_pattern_pip_installing(pip) for pip in PACKAGES_PIP_CUSTOM
+        ],
+        verbose=True,
+        detect_new_jobs=False,
+    )
+
+
+@pytest.mark.run(order=STEP_LOCAL)
+@try_except_finally()
+def test_make_lint() -> None:
+    # just check exit code
+    cmd = "make lint"
+    run(cmd, verbose=True, detect_new_jobs=False)

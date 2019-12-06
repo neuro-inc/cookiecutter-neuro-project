@@ -128,10 +128,10 @@ train:  ### Run a training job
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV)
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		$(CUSTOM_ENV_NAME) \
-		$(TRAINING_COMMAND)
+		'$(TRAINING_COMMAND)'
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job

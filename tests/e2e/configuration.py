@@ -75,7 +75,7 @@ PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 # TODO(artem): hidden files is a hack, see issue #93
-PROJECT_HIDDEN_FILES = {".gitkeep", "__pycache__"}
+PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
@@ -151,3 +151,15 @@ def _pattern_copy_file_finished(file_name: str) -> str:
 
 def _pattern_upload_dir(project_slug: str, dir_name: str) -> str:
     return rf"'(file|storage)://[^']*/{project_slug}/{dir_name}' DONE"
+
+
+def _get_pattern_status_running() -> str:
+    return r"Status:[^\n]+running"
+
+
+def _get_pattern_status_succeeded() -> str:
+    return r"Status:[^\n]+succeeded"
+
+
+def _get_pattern_pip_installing(pip: str) -> str:
+    return fr"(Collecting|Requirement already satisfied)[^\n]*{pip}"
