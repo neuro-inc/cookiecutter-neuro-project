@@ -59,7 +59,7 @@ help:
 ##### SETUP #####
 
 .PHONY: setup
-setup:  ### Setup remote environment
+setup: ### Setup remote environment
 	$(NEURO) kill $(SETUP_JOB) >/dev/null 2>&1
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
@@ -147,7 +147,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
-jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+jupyter: _check_setup upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
 		--preset $(PRESET) \
