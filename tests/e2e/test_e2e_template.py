@@ -153,8 +153,9 @@ def _run_make_setup_test() -> None:
 @pytest.mark.run(order=STEP_POST_SETUP)
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}")
 def test_make_kill_setup() -> None:
+    cmd = "sleep 1h"
     run(
-        f"neuro run -s cpu-small --detach -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} sleep 1h",
+        f"neuro run -s cpu-small --detach -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} '{cmd}'",
         expect_patterns=[_get_pattern_status_running()],
         detect_new_jobs=True,
         assert_exit_code=False,
@@ -404,6 +405,7 @@ def test_make_connect_train_kill_train() -> None:
             expect_patterns=[_get_pattern_status_running()],
             assert_exit_code=False,
         )
+
     cmd = "make kill-train"
     with measure_time(cmd):
         run(cmd, detect_new_jobs=False)
