@@ -213,4 +213,4 @@ lint:  ### Run static code analysis locally
 
 .PHONY: list-jobs
 list-jobs:  ### List all running and pending jobs submitted in current project
-	$(NEURO) ps | grep $(PROJECT_POSTFIX) || true
+	$(NEURO) ps | grep "-$(PROJECT_POSTFIX)" || true
