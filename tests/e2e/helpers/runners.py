@@ -8,7 +8,7 @@ import tests.e2e.configuration
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
-    JOB_ID_DECLARATION_PATTERN,
+    JOB_ID_DECLARATION_REGEX,
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
     PEXPECT_BUFFER_SIZE_BYTES,
@@ -263,7 +263,7 @@ def _detect_job_ids(stdout: str) -> t.Set[str]:
     >>> _detect_job_ids(output)
     {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
     """
-    return set(JOB_ID_DECLARATION_PATTERN.findall(stdout))
+    return set(JOB_ID_DECLARATION_REGEX.findall(stdout))
 
 
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
@@ -321,7 +321,7 @@ def try_except_finally(*finalizer_commands: str) -> t.Callable[..., t.Any]:
 
 
 def parse_job_id(out: str) -> str:
-    search = re.search(tests.e2e.configuration.JOB_ID_DECLARATION_PATTERN, out)
+    search = re.search(tests.e2e.configuration.JOB_ID_DECLARATION_REGEX, out)
     assert search, f"not found job-ID in output: `{out}`"
     return search.group(1)
 

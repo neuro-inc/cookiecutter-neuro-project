@@ -36,6 +36,9 @@ TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
 TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 20
 TIMEOUT_NEURO_KILL = 20
+TIMEOUT_NEURO_EXEC = 5
+TIMEOUT_NEURO_LOGS = 10
+TIMEOUT_NEURO_PORT_FORWARD = 5
 
 # == Makefile constants ==
 
@@ -56,6 +59,7 @@ MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 
 MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
 MK_TRAINING_JOB = f"training-{MK_PROJECT_SLUG}"
+MK_DEVELOP_JOB = f"develop-{MK_PROJECT_SLUG}"
 MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
@@ -115,9 +119,12 @@ JOB_STATUS_RUNNING = "running"
 JOB_STATUS_SUCCEEDED = "succeeded"
 JOB_STATUS_FAILED = "failed"
 JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
-JOB_ID_DECLARATION_PATTERN = re.compile(
+JOB_ID_PATTERN = (
+    r"job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
+JOB_ID_DECLARATION_REGEX = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    rf"Job ID.*: ({JOB_ID_PATTERN})",
     re.IGNORECASE,
 )
 

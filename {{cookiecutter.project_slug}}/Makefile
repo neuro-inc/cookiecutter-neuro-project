@@ -16,6 +16,7 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 PROJECT_POSTFIX?={{cookiecutter.project_slug}}
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
 TRAINING_JOB?=training-$(PROJECT_POSTFIX)
 JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
 TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
@@ -41,6 +42,9 @@ HTTP_AUTH?=--http-auth
 # Command to run training inside the environment. Example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
+
+# Port for remote debugging via PyCharm Pro
+REMOTE_DEBUG_PORT?=2211
 
 ##### COMMANDS #####
 
@@ -120,8 +124,56 @@ clean-all: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
-.PHONY: train
-train:  ### Run a training job
+.PHONY: develop
+develop:  ### Run a development job
+	$(NEURO) run \
+		--name $(DEVELOP_JOB) \
+		--preset cpu-small \
+		--detach \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env EXPOSE_SSH=yes \
+		--env JOB_LIFETIME=1d \
+		$(CUSTOM_ENV_NAME) \
+		"sleep infinity"
+
+.PHONY: connect-develop
+connect-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) exec --no-tty --no-key-check $(DEVELOP_JOB) bash
+
+.PHONY: logs-develop
+logs-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) logs $(DEVELOP_JOB)
+
+    .PHONY: remote-debug-develop
+remote-debug-develop:  ### Forward SSH port to localhost for using PyCharm Pro remote debugging
+	@test ${REMOTE_DEBUG_PORT} || { echo 'Please set up env var REMOTE_DEBUG_PORT'; false; }
+	@echo
+	@echo 'Enabling remote debugging with PyCharm Pro:'
+	@echo 'First, please ensure that local directories $(DATA_DIR)/, $(NOTEBOOKS_DIR)/, $(RESULTS_DIR)/'
+	@echo 'and cache directories as marked as excluded so that they are not synchronized by PyCharm'
+	@echo 'Then, set up your PyCharm project:'
+	@echo '"Settings" -> "Project interpreter" -> (press on the gear, press on "Add...") -> "SSH Interpreter"'
+	@echo 'Then, setup "New server configuration":'
+	@echo '  Host: localhost'
+	@echo '  Port: $(REMOTE_DEBUG_PORT)'
+	@echo '  Username: root'
+	@echo 'Press "Next", wait until PyCharm is connected to the job, then set up:'
+	@echo '  Interpreter: /usr/local/bin/python'
+	@echo '  Sync folders: change mapping to "/$(PROJECT_POSTFIX)" so that the code is synchronized'
+	@echo '  Assert the checkbox is on: "Automatically upload project files to the server"'
+	@echo 'Press "OK"'
+	@echo 'Setup done!'
+	@echo
+	$(NEURO) port-forward $(DEVELOP_JOB) $(REMOTE_DEBUG_PORT):22
+
+.PHONY: kill-develop
+kill-develop:  ### Terminate the development job
+	$(NEURO) kill $(DEVELOP_JOB)
+
+.PHONY: training
+training:  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
