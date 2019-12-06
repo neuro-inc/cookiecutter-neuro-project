@@ -115,8 +115,8 @@ clean-notebooks:  ### Delete notebooks directory from the platform storage
 .PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
 upload-all: upload-code upload-data upload-notebooks
 
-.PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
-clean: clean-code clean-data clean-notebooks
+.PHONY: clean-all  ### Delete code, data, and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
@@ -128,7 +128,7 @@ train:  ### Run a training job
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV)
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
@@ -194,7 +194,7 @@ kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all  ### Terminate all jobs of this project
-kill-all: kill-training kill-jupyter kill-tensorboard kill-filebrowser
+kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser
 
 ##### LOCAL #####
 
