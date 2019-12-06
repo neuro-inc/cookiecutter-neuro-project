@@ -82,7 +82,13 @@ def test_project_structure() -> None:
         for f in Path().iterdir()
         if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
     }
-    assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
+    assert files == {
+        "Makefile",
+        "README.md",
+        ".gitignore",
+        ".setup_done",
+        *MK_PROJECT_FILES,
+    }
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
