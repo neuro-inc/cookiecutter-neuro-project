@@ -15,7 +15,7 @@ echo "-------"
 echo "Before:"
 neuro -q ps
 echo "-------"
-neuro -v --trace kill $jobs
+neuro kill $jobs
 echo "-------"
 echo "After:"
 neuro -q ps
@@ -31,7 +31,7 @@ dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE || true)
 echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
-for d in $dirs; do neuro -v --trace rm -r $d; done
+for d in $dirs; do neurorm -r $d; done
 echo "-------"
 echo "Removing file $STORAGE_FILE"
 rm $STORAGE_FILE
