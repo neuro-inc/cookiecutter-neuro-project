@@ -147,7 +147,6 @@ def _run_make_setup_test() -> None:
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            assert_exit_code=True,
         )
 
 
@@ -155,9 +154,10 @@ def _run_make_setup_test() -> None:
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}")
 def test_make_kill_setup() -> None:
     run(
-        f"neuro run -s cpu-small -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} sleep 1h",
+        f"neuro run -s cpu-small --detach -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} sleep 1h",
         expect_patterns=[_get_pattern_status_running()],
         detect_new_jobs=True,
+        assert_exit_code=False,
     )
     cmd = "make kill-setup"
     with measure_time(cmd):
@@ -402,7 +402,7 @@ def test_make_connect_train_kill_train() -> None:
             verbose=True,
             detect_new_jobs=True,
             expect_patterns=[_get_pattern_status_running()],
-            assert_exit_code=True,
+            assert_exit_code=False,
         )
     cmd = "make kill-train"
     with measure_time(cmd):
