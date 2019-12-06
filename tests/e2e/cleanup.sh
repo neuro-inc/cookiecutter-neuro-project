@@ -31,7 +31,7 @@ dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE || true)
 echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
-for d in $dirs; do neurorm -r $d; done
+for d in $dirs; do neuro rm -r $d; done
 echo "-------"
 echo "Removing file $STORAGE_FILE"
 rm $STORAGE_FILE
