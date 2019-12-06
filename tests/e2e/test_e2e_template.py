@@ -147,7 +147,7 @@ def _run_make_setup_test() -> None:
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            allow_nonzero_exitcode=True,
+            assert_exit_code=True,
         )
 
 
@@ -402,7 +402,7 @@ def test_make_connect_train_kill_train() -> None:
             verbose=True,
             detect_new_jobs=True,
             expect_patterns=[_get_pattern_status_running()],
-            allow_nonzero_exitcode=True,
+            assert_exit_code=True,
         )
     cmd = "make kill-train"
     with measure_time(cmd):

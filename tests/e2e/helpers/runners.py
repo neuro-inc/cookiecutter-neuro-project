@@ -121,7 +121,7 @@ def _run_once(
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     By default the method throws ExitCodeException if the process is killed or
-    exits with non-zero exit code. Passing allow_nonzero_exitcode=True suppresses this
+    exits with non-zero exit code. Passing assert_exit_code=False suppresses this
     behavior.
     >>> # Expect the first and the last output:
     >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
