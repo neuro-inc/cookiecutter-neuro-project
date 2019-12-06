@@ -306,9 +306,9 @@ def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_custom_command(
-    monkeypatch: Any, env_neuro_run_timeout: int, env_command_check_gpu: str
+    monkeypatch: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
 ) -> None:
-    cmd = env_command_check_gpu
+    cmd = env_py_command_check_gpu
     cmd = cmd.replace('"', r"\"")
     cmd = f"'python -W ignore -c \"{cmd}\"'"
     monkeypatch.setenv("TRAINING_COMMAND", cmd)
