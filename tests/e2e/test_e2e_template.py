@@ -34,7 +34,10 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_CODE,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+    TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_KILL,
+    TIMEOUT_NEURO_LOGS,
+    TIMEOUT_NEURO_PORT_FORWARD,
     TIMEOUT_NEURO_RMDIR_CODE,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -406,7 +409,7 @@ def test_make_develop(env_neuro_run_timeout: int) -> None:
 
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _run_make_develop_test(neuro_run_timeout: int) -> None:
-    cmd = "make develop"
+    cmd = "make develop PRESET=cpu-small"
     with measure_time(cmd):
         run(
             cmd,
@@ -415,41 +418,40 @@ def _run_make_develop_test(neuro_run_timeout: int) -> None:
             timeout_s=neuro_run_timeout,
         )
 
+    cmd = "make connect-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+            assert_exit_code=False,
+        )
     # TODO: improve this test by sending command `echo 123`
     #  and then reading it via `make logs-develop` (needs improvements of runners)
 
-    # TODO: test `make connect-develop` (blocked by PR #191)
-    # cmd = "make connect-develop"
-    # with measure_time(cmd):
-    #     run(
-    #         cmd,
-    #         verbose=True,
-    #         expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
-    #         timeout_s=TIMEOUT_NEURO_EXEC,
-    #         assert_exit_code=False,
-    #     )
+    cmd = "make logs-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Starting SSH server"],
+            timeout_s=TIMEOUT_NEURO_LOGS,
+            assert_exit_code=False,
+        )
 
-    # TODO: test `make logs-develop` (blocked by PR #191)
-    # cmd = "make logs-develop"
-    # with measure_time(cmd):
-    #     run(
-    #         cmd,
-    #         verbose=True,
-    #         expect_patterns=["Starting SSH server"],
-    #         timeout_s=TIMEOUT_NEURO_LOGS,
-    #         assert_exit_code=False,
-    #     )
-
-    # TODO: test `make logs-develop` (blocked by PR #191)
-    # cmd = "make remote-debug-develop"
-    # with measure_time(cmd):
-    #     run(
-    #         cmd,
-    #         verbose=True,
-    #         expect_patterns=[r"Press ^C to stop forwarding"],
-    #         timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
-    #         assert_exit_code=False,
-    #     )
+    cmd = "make remote-debug-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[
+                "Enabling remote debugging with PyCharm Pro",
+                r"Press \^C to stop forwarding",
+            ],
+            timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
+            assert_exit_code=False,
+        )
 
     cmd = "make kill-develop"
     with measure_time(cmd):

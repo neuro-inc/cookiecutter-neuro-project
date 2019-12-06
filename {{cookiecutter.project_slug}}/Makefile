@@ -127,10 +127,10 @@ clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and not
 ##### JOBS #####
 
 .PHONY: develop
-develop:  ### Run a development job
+develop: upload-code upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
-		--preset cpu-small \
+		--preset $(PRESET) \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
@@ -142,7 +142,7 @@ develop:  ### Run a development job
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job
-	$(NEURO) exec --no-tty --no-key-check $(DEVELOP_JOB) bash
+	$(NEURO) exec --no-key-check $(DEVELOP_JOB) bash
 
 .PHONY: logs-develop
 logs-develop:  ### Connect to the remote shell running on the development job
