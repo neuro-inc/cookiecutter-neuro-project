@@ -115,9 +115,12 @@ JOB_STATUS_RUNNING = "running"
 JOB_STATUS_SUCCEEDED = "succeeded"
 JOB_STATUS_FAILED = "failed"
 JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
+JOB_ID_PATTERN = (
+    r"job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
 JOB_ID_DECLARATION_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    rf"Job ID.*: ({JOB_ID_PATTERN})",
     re.IGNORECASE,
 )
 
