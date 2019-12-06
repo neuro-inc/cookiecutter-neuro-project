@@ -10,6 +10,7 @@ from tests.e2e.configuration import (
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
     MK_NOTEBOOKS_DIR,
+    MK_PROJECT_DIRS,
     MK_PROJECT_FILES,
     MK_PROJECT_PATH_ENV,
     MK_PROJECT_PATH_STORAGE,
@@ -68,9 +69,17 @@ STEP_LOCAL = 200
 
 @try_except_finally()
 def test_project_structure() -> None:
-    dirs = {f.name for f in Path().iterdir() if f.is_dir()}
-    assert dirs == {MK_DATA_DIR, MK_CODE_DIR, MK_NOTEBOOKS_DIR}
-    files = {f.name for f in Path().iterdir() if f.is_file()}
+    dirs = {
+        f.name
+        for f in Path().iterdir()
+        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
+    }
+    assert dirs == MK_PROJECT_DIRS
+    files = {
+        f.name
+        for f in Path().iterdir()
+        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
+    }
     assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 

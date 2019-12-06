@@ -156,7 +156,7 @@ def _run_once(
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
-        log_msg(f"[.] Running command: `{cmd}`")
+        log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(
         cmd,
