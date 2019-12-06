@@ -158,8 +158,8 @@ port-forward-develop:  ### Forward SSH port to localhost for using PyCharm Pro r
 kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB)
 
-.PHONY: training
-training:  ### Run a training job
+.PHONY: train
+train:  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
