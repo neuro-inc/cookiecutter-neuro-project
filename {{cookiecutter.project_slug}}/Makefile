@@ -148,26 +148,10 @@ connect-develop:  ### Connect to the remote shell running on the development job
 logs-develop:  ### Connect to the remote shell running on the development job
 	$(NEURO) logs $(DEVELOP_JOB)
 
-    .PHONY: remote-debug-develop
-remote-debug-develop:  ### Forward SSH port to localhost for using PyCharm Pro remote debugging
+.PHONY: port-forward-develop
+port-forward-develop:  ### Forward SSH port to localhost for using PyCharm Pro remote debugging
 	@test ${REMOTE_DEBUG_PORT} || { echo 'Please set up env var REMOTE_DEBUG_PORT'; false; }
-	@echo
-	@echo 'Enabling remote debugging with PyCharm Pro:'
-	@echo 'First, please ensure that local directories $(DATA_DIR)/, $(NOTEBOOKS_DIR)/, $(RESULTS_DIR)/'
-	@echo 'and cache directories as marked as excluded so that they are not synchronized by PyCharm'
-	@echo 'Then, set up your PyCharm project:'
-	@echo '"Settings" -> "Project interpreter" -> (press on the gear, press on "Add...") -> "SSH Interpreter"'
-	@echo 'Then, setup "New server configuration":'
-	@echo '  Host: localhost'
-	@echo '  Port: $(REMOTE_DEBUG_PORT)'
-	@echo '  Username: root'
-	@echo 'Press "Next", wait until PyCharm is connected to the job, then set up:'
-	@echo '  Interpreter: /usr/local/bin/python'
-	@echo '  Sync folders: change mapping to "/$(PROJECT_POSTFIX)" so that the code is synchronized'
-	@echo '  Assert the checkbox is on: "Automatically upload project files to the server"'
-	@echo 'Press "OK"'
-	@echo 'Setup done!'
-	@echo
+	@# TODO: add a reference to instructions on how to set up PyCharm Pro / VS Code
 	$(NEURO) port-forward $(DEVELOP_JOB) $(REMOTE_DEBUG_PORT):22
 
 .PHONY: kill-develop

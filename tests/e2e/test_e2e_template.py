@@ -403,12 +403,12 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_develop(env_neuro_run_timeout: int) -> None:
-    _run_make_develop_test(env_neuro_run_timeout)
+def test_make_develop_all(env_neuro_run_timeout: int) -> None:
+    _run_make_develop_all_test(env_neuro_run_timeout)
 
 
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
-def _run_make_develop_test(neuro_run_timeout: int) -> None:
+def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
     cmd = "make develop PRESET=cpu-small"
     with measure_time(cmd):
         run(
@@ -440,15 +440,12 @@ def _run_make_develop_test(neuro_run_timeout: int) -> None:
             assert_exit_code=False,
         )
 
-    cmd = "make remote-debug-develop"
+    cmd = "make port-forward-develop"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
-            expect_patterns=[
-                "Enabling remote debugging with PyCharm Pro",
-                r"Press \^C to stop forwarding",
-            ],
+            expect_patterns=[r"Press \^C to stop forwarding"],
             timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
             assert_exit_code=False,
         )
