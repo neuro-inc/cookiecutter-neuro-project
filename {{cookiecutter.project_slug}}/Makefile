@@ -80,39 +80,44 @@ setup: ### Setup remote environment
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
+	@touch .setup_done
 
 .PHONY: kill-setup
 kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` itself)
 	$(NEURO) kill $(SETUP_JOB)
 
+.PHONY: _check_setup
+_check_setup:
+	@test -f .setup_done || { echo "Please run 'make setup' first"; false; }
+
 ##### STORAGE #####
 
 .PHONY: upload-code
-upload-code:  ### Upload code directory to the platform storage
+upload-code: _check_setup  ### Upload code directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: clean-code
-clean-code:  ### Delete code directory from the platform storage
+clean-code: _check_setup  ### Delete code directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/*
 
 .PHONY: upload-data
-upload-data:  ### Upload data directory to the platform storage
+upload-data: _check_setup  ### Upload data directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
 
 .PHONY: clean-data
-clean-data:  ### Delete data directory from the platform storage
+clean-data: _check_setup  ### Delete data directory from the platform storage
 	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
 
 .PHONY: upload-notebooks
-upload-notebooks:  ### Upload notebooks directory to the platform storage
+upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
-download-notebooks:  ### Download notebooks directory from the platform storage
+download-notebooks: _check_setup  ### Download notebooks directory from the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
-clean-notebooks:  ### Delete notebooks directory from the platform storage
+clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
 .PHONY: upload-all
@@ -124,7 +129,7 @@ clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and not
 ##### JOBS #####
 
 .PHONY: train
-train:  ### Run a training job
+train: _check_setup  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
@@ -138,15 +143,15 @@ train:  ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-train
-kill-train:  ### Terminate the training job
+kill-train: _check_setup  ### Terminate the training job
 	$(NEURO) kill $(TRAINING_JOB)
 
 .PHONY: connect-train
-connect-train:  ### Connect to the remote shell running on the training job
+connect-train: _check_setup  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
-jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+jupyter: _check_setup upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
 		--preset $(PRESET) \
@@ -163,11 +168,11 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter:  ### Terminate the job with Jupyter Notebook
+kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
 	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
-tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
+tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
 	$(NEURO) run \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
@@ -180,11 +185,11 @@ tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard:  ### Terminate the job with TensorBoard
+kill-tensorboard: _check_setup  ### Terminate the job with TensorBoard
 	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
-filebrowser:  ### Run a job with File Browser and open UI in the default browser
+filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
 	$(NEURO) run \
 		--name $(FILEBROWSER_JOB) \
 		--preset cpu-small \
@@ -197,7 +202,7 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 		--noauth
 
 .PHONY: kill-filebrowser
-kill-filebrowser:  ### Terminate the job with File Browser
+kill-filebrowser: _check_setup  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
@@ -206,16 +211,16 @@ kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Termina
 ##### LOCAL #####
 
 .PHONY: setup-local
-setup-local:  ### Install pip requirements locally
+setup-local: _check_setup  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: lint
-lint:  ### Run static code analysis locally
+lint: _check_setup  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 ##### MISC #####
 
 .PHONY: ps
-ps:  ### List all running and pending jobs
+ps: _check_setup  ### List all running and pending jobs
 	$(NEURO) ps

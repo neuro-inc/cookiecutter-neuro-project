@@ -82,7 +82,13 @@ def test_project_structure() -> None:
         for f in Path().iterdir()
         if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
     }
-    assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
+    assert files == {
+        "Makefile",
+        "README.md",
+        ".gitignore",
+        ".setup_done",
+        *MK_PROJECT_FILES,
+    }
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -90,6 +96,17 @@ def test_project_structure() -> None:
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+@try_except_finally()
+def test_make_setup_required() -> None:
+    # TODO: one exit code check is fixed (see #191), drop this try-catch
+    run(
+        "make jupyter",
+        expect_patterns=["Please run 'make setup' first", "Error"],
+        assert_exit_code=False,
+    )
 
 
 @pytest.mark.run(order=STEP_SETUP)
