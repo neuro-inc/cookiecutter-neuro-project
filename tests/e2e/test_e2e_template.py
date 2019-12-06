@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, List
 
 import pytest
 
@@ -296,43 +297,38 @@ def test_make_download_noteboooks() -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
-    _run_make_train_default_command_test(env_neuro_run_timeout)
+    expect_patterns = [
+        _get_pattern_status_succeeded(),
+        "Replace this placeholder with a training script execution",
+    ]
+    _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_custom_command(
+    monkeypatch: Any, env_neuro_run_timeout: int, env_command_check_gpu: str
+) -> None:
+    cmd = env_command_check_gpu
+    cmd = cmd.replace('"', r"\"")
+    cmd = f"'python -W ignore -c \"{cmd}\"'"
+    monkeypatch.setenv("TRAINING_COMMAND", cmd)
+    # TODO: tensorflow outputs a lot of debug info even with `python -W ignore`.
+    #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
+    #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
+    _run_make_train_test(env_neuro_run_timeout, expect_patterns=[])
 
 
 @try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
-def _run_make_train_default_command_test(neuro_run_timeout: int) -> None:
+def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd):
         run(
             cmd,
             timeout_s=neuro_run_timeout,
-            expect_patterns=[
-                _get_pattern_status_succeeded(),
-                "Replace this placeholder with a training script execution",
-            ],
+            expect_patterns=expect_patterns,
             verbose=True,
             detect_new_jobs=True,
         )
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_train_custom_command(
-    env_neuro_run_timeout: int, env_command_check_gpu: str
-) -> None:
-    _run_make_train_custom_command_test(env_neuro_run_timeout, env_command_check_gpu)
-
-
-@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
-def _run_make_train_custom_command_test(
-    neuro_run_timeout: int, command_check_gpu: str
-) -> None:
-    # TODO: export training command env var (no quotes problems + more general case)
-    # TODO: tensorflow outputs a lot of debug info even with `python -W ignore`.
-    #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
-    #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
-    cmd = f"make train TRAINING_COMMAND='{command_check_gpu}'"
-    with measure_time(cmd):
-        run(cmd, timeout_s=neuro_run_timeout, verbose=True, detect_new_jobs=True)
 
 
 @pytest.mark.run(order=STEP_RUN)

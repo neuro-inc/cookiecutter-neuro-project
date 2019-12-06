@@ -99,3 +99,5 @@ If you want to train some models from code instead of Jupyter Notebooks, you nee
 
 `TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"`
 
+Please note that commands with arguments should be wrapped with either quotes `'` or double quotes `"` 
+in order to be processed correctly.  

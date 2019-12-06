@@ -100,7 +100,7 @@ def env_neuro_run_timeout(environment: str) -> int:
 
 
 @pytest.fixture(scope="session")
-def env_command_check_gpu(environment: str) -> str:
+def env_py_command_check_gpu(environment: str) -> str:
     # Note: this command is NOT allowed to use single quotes
     # as the whole command for 'neuro run' will be passed in single quotes
     pre_cmds = ["import os, torch, tensorflow"]
@@ -110,9 +110,7 @@ def env_command_check_gpu(environment: str) -> str:
         cmd = "; ".join(pre_cmds + [f"assert not {gpu}" for gpu in gpu_assertions])
     else:
         cmd = "; ".join(pre_cmds + [f"assert {gpu}" for gpu in gpu_assertions])
-
-    cmd = cmd.replace('"', r"\"")
-    return f'python -W ignore -c "{cmd}"'
+    return cmd
 
 
 @pytest.fixture(scope="session", autouse=True)

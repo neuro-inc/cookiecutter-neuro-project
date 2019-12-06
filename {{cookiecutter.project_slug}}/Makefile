@@ -131,7 +131,7 @@ train:  ### Run a training job
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		$(CUSTOM_ENV_NAME) \
-		'$(TRAINING_COMMAND)'
+		$(TRAINING_COMMAND)
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job
