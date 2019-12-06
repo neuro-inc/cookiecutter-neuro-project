@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_DATA_DIR,
@@ -458,13 +459,23 @@ def _run_make_develop_test(neuro_run_timeout: int) -> None:
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
 def test_make_connect_train_kill_train() -> None:
-    cmd = f"make train TRAINING_COMMAND='sleep 3h'"
+    cmd = "make train PRESET=cpu-small TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
             detect_new_jobs=True,
             expect_patterns=[_get_pattern_status_running()],
+            assert_exit_code=False,
+        )
+
+    cmd = "make connect-train"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            detect_new_jobs=False,
+            expect_patterns=[fr"root@{JOB_ID_PATTERN}:/#"],
             assert_exit_code=False,
         )
 

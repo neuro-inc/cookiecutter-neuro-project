@@ -53,6 +53,8 @@ jobs:
           name: cleanup e2e
           command: |
             . venv/bin/activate
+            # sometimes installation of neuro from previous steps is lost:
+            pip install --upgrade neuromation
             make cleanup_e2e
           when: always
 
