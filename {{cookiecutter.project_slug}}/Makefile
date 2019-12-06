@@ -34,10 +34,12 @@ DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
 PRESET?=gpu-small
+
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
+
 # Command to run training inside the environment. Example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
@@ -112,11 +114,11 @@ download-notebooks:  ### Download notebooks directory from the platform storage
 clean-notebooks:  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
-.PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
-upload-all: upload-code upload-data upload-notebooks
+.PHONY: upload-all
+upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
 
-.PHONY: clean-all  ### Delete code, data, and notebooks directories from the platform storage
-clean-all: clean-code clean-data clean-notebooks
+.PHONY: clean-all
+clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and notebooks directories from the platform storage
 
 ##### JOBS #####
 
@@ -193,8 +195,8 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
-.PHONY: kill-all  ### Terminate all jobs of this project
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser
+.PHONY: kill-all
+kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
