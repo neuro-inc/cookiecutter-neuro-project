@@ -201,7 +201,7 @@ def _run_once(
         if assert_exit_code:
             if child.isalive():
                 # flush process buffer
-                child.read()
+                output += child.read()
                 # wait for child to exit
                 log_msg(f"Waiting for {cmd}", logger=LOGGER.info)
                 child.wait()
