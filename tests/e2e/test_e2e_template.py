@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_DATA_DIR,
@@ -159,17 +160,18 @@ def _run_make_setup_test() -> None:
             timeout_s=TIMEOUT_MAKE_SETUP,
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
-            allow_nonzero_exitcode=True,
         )
 
 
 @pytest.mark.run(order=STEP_POST_SETUP)
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}")
 def test_make_kill_setup() -> None:
+    cmd = "sleep 1h"
     run(
-        f"neuro run -s cpu-small -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} sleep 1h",
+        f"neuro run -s cpu-small --detach -n {MK_SETUP_JOB} {MK_BASE_ENV_NAME} '{cmd}'",
         expect_patterns=[_get_pattern_status_running()],
         detect_new_jobs=True,
+        assert_exit_code=False,
     )
     cmd = "make kill-setup"
     with measure_time(cmd):
@@ -189,6 +191,7 @@ def _run_import_code_in_notebooks_test() -> None:
         verbose=True,
         expect_patterns=[_get_pattern_status_running()],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
+        assert_exit_code=False,
     )
     job_id = parse_job_id(out)
 
@@ -207,6 +210,7 @@ def _run_import_code_in_notebooks_test() -> None:
         expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
         error_patterns=["Error: ", "CRITICAL"],
         detect_new_jobs=False,
+        assert_exit_code=False,
     )
 
 
@@ -376,7 +380,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             verbose=True,
             timeout_s=timeout_run,
             expect_patterns=[_get_pattern_status_running()],
-            allow_nonzero_exitcode=True,
+            assert_exit_code=False,
         )
     job_id = parse_job_id(out)
     url = parse_job_url(out)
@@ -393,6 +397,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
             expect_patterns=["<html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,
+            assert_exit_code=False,
         )
 
     make_cmd = f"make kill-{target}"
@@ -404,15 +409,26 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
 def test_make_connect_train_kill_train() -> None:
-    cmd = f"make train TRAINING_COMMAND='sleep 3h'"
+    cmd = "make train PRESET=cpu-small TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
             detect_new_jobs=True,
             expect_patterns=[_get_pattern_status_running()],
-            allow_nonzero_exitcode=True,
+            assert_exit_code=False,
         )
+
+    cmd = "make connect-train"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            detect_new_jobs=False,
+            expect_patterns=[fr"root@{JOB_ID_PATTERN}:/#"],
+            assert_exit_code=False,
+        )
+
     cmd = "make kill-train"
     with measure_time(cmd):
         run(cmd, detect_new_jobs=False)

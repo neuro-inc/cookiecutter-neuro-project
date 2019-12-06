@@ -34,10 +34,12 @@ DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
 PRESET?=gpu-small
+
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
+
 # Command to run training inside the environment. Example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
@@ -54,7 +56,7 @@ NEURO?=neuro
 help:
 	@# generate help message by parsing current Makefile
 	@# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-	@grep -hE '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:[^#]*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 ##### SETUP #####
 
@@ -73,8 +75,8 @@ setup: ### Setup remote environment
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(DATA_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
-	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
 	@touch .setup_done
@@ -117,11 +119,11 @@ download-notebooks: _check_setup  ### Download notebooks directory from the plat
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
-.PHONY: upload-all  ### Upload code, data, and notebooks directories to the platform storage
-upload-all: upload-code upload-data upload-notebooks
+.PHONY: upload-all
+upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
 
-.PHONY: clean-all  ### Delete code, data, and notebooks directories from the platform storage
-clean-all: clean-code clean-data clean-notebooks
+.PHONY: clean-all
+clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and notebooks directories from the platform storage
 
 ##### JOBS #####
 
@@ -144,7 +146,7 @@ kill-train: _check_setup  ### Terminate the training job
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job
-	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
+	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
 jupyter: _check_setup upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
@@ -198,8 +200,8 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 kill-filebrowser: _check_setup  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
-.PHONY: kill-all  ### Terminate all jobs of this project
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser
+.PHONY: kill-all
+kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 

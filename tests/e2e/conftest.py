@@ -182,7 +182,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
         run("pip install -U neuromation", verbose=False)
-    assert "Name: neuromation" in run("pip show neuromation", verbose=False)
+    log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
 @pytest.fixture(scope="session", autouse=True)
