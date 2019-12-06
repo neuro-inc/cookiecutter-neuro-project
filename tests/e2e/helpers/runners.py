@@ -37,10 +37,10 @@ def run(
     attempts: int = 1,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -56,7 +56,7 @@ def run(
                 verbose=verbose,
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
-                allow_nonzero_exitcode=False,
+                assert_exit_code=assert_exit_code,
             )
         except Exception as exc:
             errors.append(exc)
@@ -77,11 +77,11 @@ def _run(
     cmd: str,
     *,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -95,9 +95,10 @@ def _run(
             expect_patterns,
             verbose=verbose,
             detect_new_jobs=detect_new_jobs,
-            allow_nonzero_exitcode=allow_nonzero_exitcode,
+            assert_exit_code=assert_exit_code,
         )
-    errors = detect_errors(out, error_patterns, verbose=verbose)
+    all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
+    errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {errors}")
     return out
@@ -109,7 +110,7 @@ def _run_once(
     *,
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    allow_nonzero_exitcode: bool = False,
+    assert_exit_code: bool = True,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -120,7 +121,7 @@ def _run_once(
     to log (also to dump all child process' output to the handler defined
     in `PEXPECT_DEBUG_OUTPUT_LOGFILE`).
     By default the method throws ExitCodeException if the process is killed or
-    exits with non-zero exit code. Passing allow_nonzero_exitcode=True suppresses this
+    exits with non-zero exit code. Passing assert_exit_code=False suppresses this
     behavior.
     >>> # Expect the first and the last output:
     >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
@@ -151,11 +152,11 @@ def _run_once(
     ... except ExitCodeException as e:
     ...     assert e.exit_code == 1
     >>> # Suppress exit code check:
-    >>> _run_once('false', verbose=False, allow_nonzero_exitcode=True)
+    >>> _run_once('false', verbose=False, assert_exit_code=False)
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
-        log_msg(f"[.] Running command: `{cmd}`")
+        log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(
         cmd,
@@ -197,12 +198,18 @@ def _run_once(
             finally:
                 chunk = _get_chunk(child)
                 output += chunk
-        if allow_nonzero_exitcode:
-            child.close()
+        if assert_exit_code:
+            if child.isalive():
+                # flush process buffer
+                output += child.read()
+                # wait for child to exit
+                log_msg(f"Waiting for {cmd}", logger=LOGGER.info)
+                child.wait()
+            child.close(force=True)
             if child.status:
                 need_dump = True
                 if child.signalstatus is not None:
-                    log_msg(f"{cmd} was killed", logger=LOGGER.warning)
+                    log_msg(f"{cmd} was killed via signal", logger=LOGGER.warning)
                 raise ExitCodeException(child.status)
     finally:
         if detect_new_jobs:
@@ -342,18 +349,10 @@ def neuro_ls(path: str) -> t.Set[str]:
 def neuro_rm_dir(
     path: str,
     timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
-    ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(
-        f"neuro rm -r {path}",
-        timeout_s=timeout_s,
-        verbose=verbose,
-        error_patterns=[]
-        if ignore_errors
-        else list(tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS),
-    )
+    run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
     log_msg("Done.")
 
 
