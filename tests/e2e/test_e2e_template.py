@@ -397,7 +397,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
 def test_make_connect_train_kill_train() -> None:
-    cmd = "make train TRAINING_COMMAND='sleep 3h'"
+    cmd = "make train PRESET=cpu-small TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):
         run(
             cmd,
