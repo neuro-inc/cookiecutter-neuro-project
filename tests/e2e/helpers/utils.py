@@ -81,14 +81,13 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 @contextmanager
 def measure_time(command_name: str = "") -> t.Iterator[None]:
-    log_msg("=" * 100)
     start_time = time.time()
     log_msg(f"Measuring time for command: `{command_name}`")
     yield
     elapsed_time = time.time() - start_time
-    log_msg("=" * 50)
-    log_msg(f"  TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec")
-    log_msg("=" * 50)
+    msg = f"TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec"
+    log_msg(msg)
+    log_msg("-" * len(msg))
 
 
 @contextmanager

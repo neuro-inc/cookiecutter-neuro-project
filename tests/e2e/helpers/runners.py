@@ -37,7 +37,7 @@ def run(
     attempts: int = 1,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
@@ -77,7 +77,7 @@ def _run(
     cmd: str,
     *,
     expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = DEFAULT_ERROR_PATTERNS,
+    error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
@@ -97,7 +97,8 @@ def _run(
             detect_new_jobs=detect_new_jobs,
             assert_exit_code=assert_exit_code,
         )
-    errors = detect_errors(out, error_patterns, verbose=verbose)
+    all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
+    errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
         raise RuntimeError(f"Detected errors in output: {errors}")
     return out
@@ -155,7 +156,7 @@ def _run_once(
     """
 
     if verbose and not any(verb in cmd for verb in VERBS_SECRET):
-        log_msg(f"[.] Running command: `{cmd}`")
+        log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(
         cmd,
@@ -348,18 +349,10 @@ def neuro_ls(path: str) -> t.Set[str]:
 def neuro_rm_dir(
     path: str,
     timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
-    ignore_errors: bool = False,
     verbose: bool = False,
 ) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(
-        f"neuro rm -r {path}",
-        timeout_s=timeout_s,
-        verbose=verbose,
-        error_patterns=[]
-        if ignore_errors
-        else list(tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS),
-    )
+    run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
     log_msg("Done.")
 
 

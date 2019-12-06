@@ -79,7 +79,7 @@ you need to change the following line to point to its location. For example:
 
 ### Training machine type
 
-`TRAINING_MACHINE_TYPE?=gpu-small`
+`PRESET?=gpu-small`
 
 There are several machine types supported on the platform. Run `neuro config show` to see the list.
 
@@ -99,3 +99,5 @@ If you want to train some models from code instead of Jupyter Notebooks, you nee
 
 `TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"`
 
+Please note that commands with arguments should be wrapped with either quotes `'` or double quotes `"` 
+in order to be processed correctly.  
