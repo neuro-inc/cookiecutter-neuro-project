@@ -155,6 +155,11 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
+    config_file = Path("test-config")
+    log_msg(f"Generating `{config_file}`")
+    with config_file.open("w") as f:
+        f.write("[foo]\nkey=val\n")
+
     data_dir = Path(MK_DATA_DIR)
     log_msg(f"Generating data to `{data_dir}/`")
     assert data_dir.is_dir() and data_dir.exists()

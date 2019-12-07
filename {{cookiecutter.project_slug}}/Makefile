@@ -1,6 +1,7 @@
 ##### PATHS #####
 
 DATA_DIR?=data
+CONFIG_DIR?=config
 CODE_DIR?={{cookiecutter.code_directory}}
 NOTEBOOKS_DIR?=notebooks
 RESULTS_DIR?=results
@@ -73,7 +74,8 @@ setup: ### Setup remote environment
 		'sleep infinity'
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(DATA_DIR) | true
+	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
@@ -108,6 +110,14 @@ upload-data: _check_setup  ### Upload data directory to the platform storage
 clean-data: _check_setup  ### Delete data directory from the platform storage
 	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
 
+.PHONY: upload-config
+upload-config: _check_setup  ### Upload config directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+
+.PHONY: clean-config
+clean-config: _check_setup  ### Delete config directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/*
+
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
@@ -124,7 +134,7 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
 
 .PHONY: clean-all
-clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
 
 ##### JOBS #####
 
@@ -151,7 +161,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
-jupyter: _check_setup upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
 		--preset $(PRESET) \

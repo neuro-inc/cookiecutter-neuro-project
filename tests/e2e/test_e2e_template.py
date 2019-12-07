@@ -8,6 +8,7 @@ from tests.e2e.configuration import (
     JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DATA_DIR,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
@@ -24,6 +25,7 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_CODE_DIR_CONTENT,
+    PROJECT_CONFIG_DIR_CONTENT,
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     TIMEOUT_MAKE_CLEAN_DATA,
@@ -31,10 +33,12 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
     TIMEOUT_MAKE_SETUP,
     TIMEOUT_MAKE_UPLOAD_CODE,
+    TIMEOUT_MAKE_UPLOAD_CONFIG,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_KILL,
     TIMEOUT_NEURO_RMDIR_CODE,
+    TIMEOUT_NEURO_RMDIR_CONFIG,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
@@ -260,6 +264,28 @@ def test_make_upload_data() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
+
+
+@pytest.mark.run(order=STEP_UPLOAD)
+@try_except_finally()
+def test_make_upload_config() -> None:
+    neuro_rm_dir(
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
+        timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
+    )
+
+    # Upload:
+    make_cmd = "make upload-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CONFIG_DIR)],
+            # TODO: add upload-specific error patterns
+        )
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
