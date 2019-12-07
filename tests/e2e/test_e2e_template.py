@@ -40,7 +40,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
-    _get_pattern_status_succeeded,
+    _get_pattern_status_succeeded_or_running,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
@@ -319,7 +319,7 @@ def test_make_download_noteboooks() -> None:
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
-        _get_pattern_status_succeeded(),
+        _get_pattern_status_succeeded_or_running(),
         "Replace this placeholder with a training script execution",
     ]
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
