@@ -50,6 +50,7 @@ from tests.e2e.configuration import (
     _pattern_upload_dir,
 )
 from tests.e2e.helpers.runners import (
+    ls,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -81,12 +82,7 @@ def test_project_structure() -> None:
         if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
     }
     assert dirs == MK_PROJECT_DIRS
-    files = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
-    }
-    assert files == {
+    assert ls(".") == {
         "Makefile",
         "README.md",
         ".gitignore",
@@ -226,6 +222,7 @@ def _run_import_code_in_notebooks_test() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
+    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -247,6 +244,7 @@ def test_make_upload_code() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_data() -> None:
+    assert len(ls(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -269,6 +267,7 @@ def test_make_upload_data() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_config() -> None:
+    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -291,12 +290,13 @@ def test_make_upload_config() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_notebooks() -> None:
-    # Upload:
-    make_cmd = "make upload-notebooks"
+    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     )
+
+    make_cmd = "make upload-notebooks"
     with measure_time(make_cmd):
         run(
             make_cmd,
