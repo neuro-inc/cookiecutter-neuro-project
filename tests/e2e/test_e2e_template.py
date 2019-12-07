@@ -493,6 +493,23 @@ def test_make_clean_code() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 @try_except_finally()
+def test_make_clean_config() -> None:
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
+
+    make_cmd = "make clean-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            # TODO: add clean-specific error patterns
+        )
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+
+
+@pytest.mark.run(order=STEP_CLEANUP)
+@try_except_finally()
 def test_make_clean_data() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
