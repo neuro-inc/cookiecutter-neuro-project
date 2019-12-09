@@ -67,6 +67,7 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
 
+MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_NOTEBOOKS_DIR}
 # NOTE: order of these constants must be the same as in Makefile
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
@@ -75,7 +76,7 @@ PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 # TODO(artem): hidden files is a hack, see issue #93
-PROJECT_HIDDEN_FILES = {".gitkeep", "__pycache__"}
+PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
@@ -114,9 +115,12 @@ JOB_STATUS_RUNNING = "running"
 JOB_STATUS_SUCCEEDED = "succeeded"
 JOB_STATUS_FAILED = "failed"
 JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
+JOB_ID_PATTERN = (
+    r"job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
 JOB_ID_DECLARATION_PATTERN = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    rf"Job ID.*: ({JOB_ID_PATTERN})",
     re.IGNORECASE,
 )
 
@@ -151,3 +155,15 @@ def _pattern_copy_file_finished(file_name: str) -> str:
 
 def _pattern_upload_dir(project_slug: str, dir_name: str) -> str:
     return rf"'(file|storage)://[^']*/{project_slug}/{dir_name}' DONE"
+
+
+def _get_pattern_status_running() -> str:
+    return r"Status:[^\n]+running"
+
+
+def _get_pattern_status_succeeded_or_running() -> str:
+    return r"Status:[^\n]+(succeeded|running)"
+
+
+def _get_pattern_pip_installing(pip: str) -> str:
+    return fr"(Collecting|Requirement already satisfied)[^\n]*{pip}"

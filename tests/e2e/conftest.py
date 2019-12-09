@@ -26,6 +26,8 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     TIMEOUT_NEURO_LOGIN,
+    TIMEOUT_NEURO_RUN_CPU,
+    TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
 )
 from tests.e2e.helpers.logs import log_msg
@@ -66,22 +68,49 @@ def pytest_configure(config: t.Any) -> None:
 
 
 @pytest.fixture(scope="session")
-def client_setup_factory(request: t.Any) -> t.Callable[[], ClientConfig]:
+def environment(request: t.Any) -> str:
+    env = request.config.getoption("--environment") or "dev"
+    if env not in ["dev", "staging"]:
+        raise ValueError(f"Invalid environment: {environment}")
+    return env
+
+
+@pytest.fixture(scope="session")
+def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        environment = request.config.getoption("--environment") or "dev"
         if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
-        elif environment == "staging":
+        else:
             env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
-        else:
-            raise ValueError(f"Invalid environment: {environment}")
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
 
     return _f
+
+
+@pytest.fixture(scope="session")
+def env_neuro_run_timeout(environment: str) -> int:
+    if environment == "dev":
+        return TIMEOUT_NEURO_RUN_CPU
+    else:
+        return TIMEOUT_NEURO_RUN_GPU
+
+
+@pytest.fixture(scope="session")
+def env_py_command_check_gpu(environment: str) -> str:
+    # Note: this command is NOT allowed to use single quotes
+    # as the whole command for 'neuro run' will be passed in single quotes
+    pre_cmds = ["import os, torch, tensorflow"]
+
+    gpu_assertions = ["tensorflow.test.is_gpu_available()", "torch.cuda.is_available()"]
+    if environment == "dev":
+        cmd = "; ".join(pre_cmds + [f"assert not {gpu}" for gpu in gpu_assertions])
+    else:
+        cmd = "; ".join(pre_cmds + [f"assert {gpu}" for gpu in gpu_assertions])
+    return cmd
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -137,7 +166,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
-    code_file.write_text("print('Hello world!')")
+    code_file.write_text('print("Hello world!")\n')
     assert code_file.exists()
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
@@ -153,7 +182,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
         run("pip install -U neuromation", verbose=False)
-    assert "Name: neuromation" in run("pip show neuromation", verbose=False)
+    log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
 @pytest.fixture(scope="session", autouse=True)
