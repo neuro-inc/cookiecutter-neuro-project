@@ -5,16 +5,18 @@ from pathlib import Path
 
 import pexpect
 
-import tests.e2e.configuration
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
+    DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
-    JOB_ID_DECLARATION_PATTERN,
+    JOB_ID_DECLARATION_REGEX,
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
     PEXPECT_BUFFER_SIZE_BYTES,
     PEXPECT_DEBUG_OUTPUT_LOGFILE,
     PROJECT_HIDDEN_FILES,
+    TIMEOUT_NEURO_LS,
+    TIMEOUT_NEURO_STATUS,
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
@@ -269,7 +271,7 @@ def _detect_job_ids(stdout: str) -> t.Set[str]:
     >>> _detect_job_ids(output)
     {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
     """
-    return set(JOB_ID_DECLARATION_PATTERN.findall(stdout))
+    return set(JOB_ID_DECLARATION_REGEX.findall(stdout))
 
 
 def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
@@ -327,7 +329,7 @@ def try_except_finally(*finalizer_commands: str) -> t.Callable[..., t.Any]:
 
 
 def parse_job_id(out: str) -> str:
-    search = re.search(tests.e2e.configuration.JOB_ID_DECLARATION_PATTERN, out)
+    search = re.search(JOB_ID_DECLARATION_REGEX, out)
     assert search, f"not found job-ID in output: `{out}`"
     return search.group(1)
 
@@ -341,21 +343,19 @@ def parse_job_url(out: str) -> str:
 def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
-        timeout_s=tests.e2e.configuration.TIMEOUT_NEURO_LS,
+        timeout_s=TIMEOUT_NEURO_LS,
         verbose=True,
-        error_patterns=tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS,
+        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
-    for hidden in tests.e2e.configuration.PROJECT_HIDDEN_FILES:
+    for hidden in PROJECT_HIDDEN_FILES:
         if hidden in result:
             result.remove(hidden)
     return result
 
 
 def neuro_rm_dir(
-    path: str,
-    timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
-    verbose: bool = False,
+    path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG, verbose: bool = False
 ) -> None:
     log_msg(f"Deleting remote directory `{path}`")
     run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
@@ -365,7 +365,7 @@ def neuro_rm_dir(
 def wait_job_change_status_to(
     job_id: str,
     target_status: str,
-    timeout_s: int = tests.e2e.configuration.DEFAULT_TIMEOUT_LONG,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status {target_status}...")
@@ -374,7 +374,7 @@ def wait_job_change_status_to(
         if status == target_status:
             log_msg("Done.")
             return
-        if status in tests.e2e.configuration.JOB_STATUSES_TERMINATED:
+        if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
         time.sleep(delay_s)
 
@@ -382,9 +382,9 @@ def wait_job_change_status_to(
 def get_job_status(job_id: str) -> str:
     out = run(
         f"neuro status {job_id}",
-        timeout_s=tests.e2e.configuration.TIMEOUT_NEURO_STATUS,
+        timeout_s=TIMEOUT_NEURO_STATUS,
         verbose=False,
-        error_patterns=tests.e2e.configuration.DEFAULT_NEURO_ERROR_PATTERNS,
+        error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     search = re.search(r"Status: (\w+)", out)
     assert search, f"not found job status in output: `{out}`"

@@ -10,6 +10,7 @@ from tests.e2e.configuration import (
     MK_CODE_DIR,
     MK_CONFIG_DIR,
     MK_DATA_DIR,
+    MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
     MK_NOTEBOOKS_DIR,
@@ -36,7 +37,10 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_CONFIG,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+    TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_KILL,
+    TIMEOUT_NEURO_LOGS,
+    TIMEOUT_NEURO_PORT_FORWARD,
     TIMEOUT_NEURO_RMDIR_CODE,
     TIMEOUT_NEURO_RMDIR_CONFIG,
     TIMEOUT_NEURO_RMDIR_DATA,
@@ -217,6 +221,10 @@ def _run_import_code_in_notebooks_test() -> None:
         detect_new_jobs=False,
         assert_exit_code=False,
     )
+
+    cmd = "make kill-jupyter"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
@@ -435,6 +443,59 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
     wait_job_change_status_to(job_id, "succeeded")
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_develop_all(env_neuro_run_timeout: int) -> None:
+    _run_make_develop_all_test(env_neuro_run_timeout)
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
+    cmd = "make develop PRESET=cpu-small"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
+            timeout_s=neuro_run_timeout,
+        )
+
+    cmd = "make connect-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+            assert_exit_code=False,
+        )
+    # TODO: improve this test by sending command `echo 123`
+    #  and then reading it via `make logs-develop` (needs improvements of runners)
+
+    cmd = "make logs-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Starting SSH server"],
+            timeout_s=TIMEOUT_NEURO_LOGS,
+            assert_exit_code=False,
+        )
+
+    cmd = "make port-forward-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Press \^C to stop forwarding"],
+            timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
+            assert_exit_code=False,
+        )
+
+    cmd = "make kill-develop"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_KILL)
