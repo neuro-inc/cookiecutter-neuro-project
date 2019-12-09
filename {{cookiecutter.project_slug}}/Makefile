@@ -139,7 +139,7 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 ##### JOBS #####
 
 .PHONY: train
-train: _check_setup  ### Run a training job
+train: _check_setup upload-config upload-code  ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
