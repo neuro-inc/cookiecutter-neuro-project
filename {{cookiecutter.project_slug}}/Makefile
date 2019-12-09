@@ -48,11 +48,26 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 
 LOCAL_PORT?=2211
 
+# Google Cloud integration settings:
+GCP_PROJECT_ID?=neuro-${PROJECT_POSTFIX}
+GCP_SERVICE_ACCOUNT?=neuro-${PROJECT_POSTFIX}
+GCP_SERVICE_ACCOUNT_FULL?=${GCP_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+GCP_BUCKET?=neuro-${PROJECT_POSTFIX}
+GCP_CONFIGURATION_ENV_FILE_LOCAL=${CONFIG_DIR}/gcloud-env.txt
+
+
 ##### COMMANDS #####
 
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
+
+ifneq ("$(wildcard $(GCP_CONFIGURATION_ENV_FILE_LOCAL))","")
+    NEURO_RUN_ENV_FILE_OPTION=--env-file ${GCP_CONFIGURATION_ENV_FILE_LOCAL}
+else
+    NEURO_RUN_ENV_FILE_OPTION=
+endif
+
 
 ##### HELP #####
 
@@ -141,12 +156,6 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 
 ##### GOOGLE STORAGE #####
 
-GCP_PROJECT_ID?=neuro-${PROJECT_POSTFIX}
-GCP_SERVICE_ACCOUNT?=neuro-${PROJECT_POSTFIX}
-GCP_SERVICE_ACCOUNT_FULL?=${GCP_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-GCP_BUCKET?=neuro-${PROJECT_POSTFIX}
-GCP_CONFIGURATION_ENV_FILE_LOCAL=${CONFIG_DIR}/gcloud-env.txt
-
 .PHONY: _check_gcloud_setup
 _check_gcloud_setup:
 	@test -f .gcloud_setup_done || { echo "Please run 'make gcloud-setup' first"; false; }
@@ -197,9 +206,12 @@ develop: upload-code upload-notebooks  ### Run a development job
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
+		${NEURO_RUN_ENV_FILE_OPTION} \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
 
@@ -232,6 +244,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
+		${NEURO_RUN_ENV_FILE_OPTION} \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
