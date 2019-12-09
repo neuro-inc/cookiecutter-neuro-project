@@ -45,8 +45,7 @@ HTTP_AUTH?=--http-auth
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
-# Port for remote debugging via PyCharm Pro
-REMOTE_DEBUG_PORT?=2211
+LOCAL_PORT?=2211
 
 ##### COMMANDS #####
 
@@ -155,10 +154,10 @@ logs-develop:  ### Connect to the remote shell running on the development job
 	$(NEURO) logs $(DEVELOP_JOB)
 
 .PHONY: port-forward-develop
-port-forward-develop:  ### Forward SSH port to localhost for using PyCharm Pro remote debugging
-	@test ${REMOTE_DEBUG_PORT} || { echo 'Please set up env var REMOTE_DEBUG_PORT'; false; }
+port-forward-develop:  ### Forward SSH port to localhost for remote debugging
+	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
 	@# TODO: add a reference to instructions on how to set up PyCharm Pro / VS Code
-	$(NEURO) port-forward $(DEVELOP_JOB) $(REMOTE_DEBUG_PORT):22
+	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
 
 .PHONY: kill-develop
 kill-develop:  ### Terminate the development job
