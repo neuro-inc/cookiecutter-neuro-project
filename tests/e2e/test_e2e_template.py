@@ -510,8 +510,10 @@ def test_make_clean_all() -> None:
 
 @pytest.mark.run(order=STEP_LOCAL)
 @try_except_finally()
-def test_make_setup_local() -> None:
+def test_make_setup_local(monkeypatch: Any) -> None:
     # just check exit code
+    pip_cmd = "pip install --progress-bar=off --user"
+    monkeypatch.setenv("PIP", pip_cmd)
     cmd = "make setup-local"
     run(
         cmd,

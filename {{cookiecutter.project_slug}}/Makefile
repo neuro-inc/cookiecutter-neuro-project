@@ -211,16 +211,16 @@ kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Termina
 ##### LOCAL #####
 
 .PHONY: setup-local
-setup-local: _check_setup  ### Install pip requirements locally
+setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: lint
-lint: _check_setup  ### Run static code analysis locally
+lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 ##### MISC #####
 
 .PHONY: ps
-ps: _check_setup  ### List all running and pending jobs
+ps:  ### List all running and pending jobs
 	$(NEURO) ps
