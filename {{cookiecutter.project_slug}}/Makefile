@@ -52,6 +52,7 @@ LOCAL_PORT?=2211
 GCP_PROJECT_ID?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT_FULL?=${GCP_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+GCP_SECRET_PATH=${CONFIG_DIR}/${GCP_SERVICE_ACCOUNT}-key.json
 GCP_BUCKET?=neuro-${PROJECT_POSTFIX}
 GCP_CONFIGURATION_ENV_FILE_LOCAL=${CONFIG_DIR}/gcloud-env.txt
 
@@ -62,7 +63,13 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
 
-ifneq ("$(wildcard $(GCP_CONFIGURATION_ENV_FILE_LOCAL))","")
+ifneq ($(wildcard ${GCP_SECRET_PATH}),)
+	GCP_CONFIGURED=true
+else
+	GCP_CONFIGURED=
+endif
+
+ifdef GCP_CONFIGURED
     NEURO_RUN_ENV_FILE_OPTION=--env-file ${GCP_CONFIGURATION_ENV_FILE_LOCAL}
 else
     NEURO_RUN_ENV_FILE_OPTION=
@@ -108,7 +115,7 @@ kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` i
 
 .PHONY: _check_setup
 _check_setup:
-	@test -f .setup_done || { echo "Please run 'make setup' first"; false; }
+	@test -f .setup_done || { echo "Please run 'make setup' first (or run 'touch .setup_done' to disable this check)"; false; }
 
 ##### STORAGE #####
 
@@ -158,10 +165,10 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 
 .PHONY: _check_gcloud_setup
 _check_gcloud_setup:
-	@test -f .gcloud_setup_done || { echo "Please run 'make gcloud-setup' first"; false; }
+	@test ${GCP_CONFIGURED} || { echo "Please run 'make gcloud-setup' first"; false; }
 
-.PHONY: gcloud-setup
-gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
+.PHONY: setup-gcloud
+setup-gcloud:   ### Set up Google Cloud environment to work with Neuro Platform
 	# Checking that Google Cloud SDK is installed...
 	@gcloud --version >/dev/null && gsutil --version >/dev/null \
 		&& echo "OK" || { echo "Please install Google Cloud SDK (see https://cloud.google.com/sdk/install)"; false; }
@@ -175,20 +182,28 @@ gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
 	@gcloud iam service-accounts describe ${GCP_SERVICE_ACCOUNT_FULL} >/dev/null \
 		&& echo "OK" || { echo -e "Google service account GCP_SERVICE_ACCOUNT_FULL=${GCP_SERVICE_ACCOUNT_FULL} does not exist.\nPlease run 'gcloud iam service-accounts create ${GCP_SERVICE_ACCOUNT} --description \"Neuro Platform Job Service Account for Google Project ${GCP_PROJECT_ID}\" --display-name \"Neuro Platform Job for ${GCP_PROJECT_ID}\"'"; false; }
 	# Downloading authentication file for Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} to local directory "./${CONFIG_DIR}"...
-	@gcloud iam service-accounts keys create ./${CONFIG_DIR}/${GCP_SERVICE_ACCOUNT}-key.json --iam-account ${GCP_SERVICE_ACCOUNT_FULL}
+	@[ ! -f ${GCP_SECRET_PATH} ] && { gcloud iam service-accounts keys create ./${GCP_SECRET_PATH} --iam-account ${GCP_SERVICE_ACCOUNT_FULL} || echo "Please note: maximum 9 keys are allowed (see 'make gcloud-list-keys' for cleanup instructions)"; } || echo "File ./${GCP_SECRET_PATH} already exists, skipping"
 	# Checking that Bucket GCP_BUCKET="${GCP_BUCKET}" exists...
 	@gsutil ls gs://${GCP_BUCKET}/ >/dev/null \
 		&& echo "OK" || { echo -e "Bucket GCP_BUCKET=${GCP_BUCKET} does not exist.\nPlease run 'gsutil mb gs://${GCP_BUCKET}'"; false; }
-	# Checking that Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} is an 'objectAdmin' of Bucket GCP_BUCKET="${GCP_BUCKET}"...
-	gsutil iam get gs://${GCP_BUCKET} | jq --exit-status '.bindings | map(select(.role == "roles/storage.objectAdmin")) | .[].members[] | contains("${GCP_SERVICE_ACCOUNT_FULL}")' >/dev/null \
+	# Checking that Service Account GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}" is an 'objectAdmin' of Bucket GCP_BUCKET="${GCP_BUCKET}"...
+	@gsutil iam get gs://${GCP_BUCKET} | jq --exit-status '.bindings | map(select(.role == "roles/storage.objectAdmin")) | .[].members[] | contains("${GCP_SERVICE_ACCOUNT_FULL}")' >/dev/null \
 		&& echo "OK" || { echo -e "Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} cannot manage Bucket GCP_BUCKET=${GCP_BUCKET}.\nPlease run 'gsutil iam ch serviceAccount:${GCP_SERVICE_ACCOUNT_FULL}:roles/storage.objectAdmin gs://${GCP_BUCKET}'"; false; }
 	# Saving Google Cloud configuration into env-file ${GCP_CONFIGURATION_ENV_FILE_LOCAL}...
 	@if [ -f ${GCP_CONFIGURATION_ENV_FILE_LOCAL} ]; then echo "WARNING: File '${GCP_CONFIGURATION_ENV_FILE_LOCAL}' alrady exists, re-writing it..."; fi \
-		&& make gcloud-env > ${GCP_CONFIGURATION_ENV_FILE_LOCAL} \
+		&& make --silent gcloud-env > ${GCP_CONFIGURATION_ENV_FILE_LOCAL} \
 		&& echo "OK"
-	@touch .gcloud_setup_done
 
-.PHONY: gcloud-env
+.PHONY: gcloud-list-keys
+gcloud-list-keys:   ### List keys used by Google Service Account ""${GCP_SERVICE_ACCOUNT_FULL}""
+	gcloud iam service-accounts keys list --iam-account ${GCP_SERVICE_ACCOUNT_FULL}
+	@echo "Run 'gcloud iam service-accounts keys delete --iam-account ${GCP_SERVICE_ACCOUNT_FULL} {KEY_ID}' to delete unnecessary keys."
+
+.PHONY: clean-gcloud
+clean-gcloud:   ### Removes secret file used to authenticate Google Cloud SDK
+	rm ${GCP_SECRET_PATH}
+
+.PHONY:  gcloud-env
 gcloud-env:  ### Print environment variables that store Google Cloud configuration (run "export `make gcloud-env`" to apply)
 	@echo GCP_PROJECT_ID="${GCP_PROJECT_ID}"
 	@echo GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}"
@@ -199,7 +214,7 @@ gcloud-env:  ### Print environment variables that store Google Cloud configurati
 ##### JOBS #####
 
 .PHONY: develop
-develop: upload-code upload-notebooks  ### Run a development job
+develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
@@ -214,6 +229,10 @@ develop: upload-code upload-notebooks  ### Run a development job
 		${NEURO_RUN_ENV_FILE_OPTION} \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
+ifdef GCP_CONFIGURED
+		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) "gcloud auth activate-service-account --key-file ${PROJECT_PATH_ENV}/${GCP_SECRET_PATH}"
+		@echo "Google Cloud SDK configured for job ${DEVELOP_JOB}"
+endif
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job
@@ -313,7 +332,7 @@ kill-filebrowser: _check_setup  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
