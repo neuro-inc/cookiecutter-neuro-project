@@ -44,6 +44,7 @@ def run(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
+    skip_error_patterns_check: bool = False,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -60,6 +61,7 @@ def run(
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
                 assert_exit_code=assert_exit_code,
+                skip_error_patterns_check=skip_error_patterns_check,
             )
         except Exception as exc:
             errors.append(exc)
@@ -85,6 +87,7 @@ def _run(
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
+    skip_error_patterns_check: bool = False,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -100,10 +103,11 @@ def _run(
             detect_new_jobs=detect_new_jobs,
             assert_exit_code=assert_exit_code,
         )
-    all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
-    errors = detect_errors(out, all_error_patterns, verbose=verbose)
-    if errors:
-        raise RuntimeError(f"Detected errors in output: {errors}")
+    if skip_error_patterns_check:
+        all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
+        errors = detect_errors(out, all_error_patterns, verbose=verbose)
+        if errors:
+            raise RuntimeError(f"Detected errors in output: {errors}")
     return out
 
 

@@ -165,8 +165,8 @@ def _get_pattern_status_running() -> str:
     return r"Status:[^\n]+running"
 
 
-def _get_pattern_status_succeeded() -> str:
-    return r"Status:[^\n]+succeeded"
+def _get_pattern_status_succeeded_or_running() -> str:
+    return r"Status:[^\n]+(succeeded|running)"
 
 
 def _get_pattern_pip_installing(pip: str) -> str:

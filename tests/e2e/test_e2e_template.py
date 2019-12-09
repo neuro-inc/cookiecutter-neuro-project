@@ -44,7 +44,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
-    _get_pattern_status_succeeded,
+    _get_pattern_status_succeeded_or_running,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
@@ -86,7 +86,13 @@ def test_project_structure() -> None:
         for f in Path().iterdir()
         if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
     }
-    assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
+    assert files == {
+        "Makefile",
+        "README.md",
+        ".gitignore",
+        ".setup_done",
+        *MK_PROJECT_FILES,
+    }
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -94,6 +100,17 @@ def test_project_structure() -> None:
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+@try_except_finally()
+def test_make_setup_required() -> None:
+    # TODO: one exit code check is fixed (see #191), drop this try-catch
+    run(
+        "make jupyter",
+        expect_patterns=["Please run 'make setup' first", "Error"],
+        assert_exit_code=False,
+    )
 
 
 @pytest.mark.run(order=STEP_SETUP)
@@ -310,7 +327,7 @@ def test_make_download_noteboooks() -> None:
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
-        _get_pattern_status_succeeded(),
+        _get_pattern_status_succeeded_or_running(),
         "Replace this placeholder with a training script execution",
     ]
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
