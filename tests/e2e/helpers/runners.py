@@ -1,6 +1,7 @@
 import re
 import time
 import typing as t
+from pathlib import Path
 
 import pexpect
 
@@ -389,3 +390,13 @@ def get_job_status(job_id: str) -> str:
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
     return status
+
+
+def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
+    path = Path(local_path)
+    assert path.is_dir(), f"path {path} does not exist"
+    return {
+        f.name
+        for f in path.iterdir()
+        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
+    }

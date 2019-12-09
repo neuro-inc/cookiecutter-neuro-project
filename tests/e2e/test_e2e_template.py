@@ -8,6 +8,7 @@ from tests.e2e.configuration import (
     JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DATA_DIR,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
@@ -25,6 +26,7 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_CODE_DIR_CONTENT,
+    PROJECT_CONFIG_DIR_CONTENT,
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     TIMEOUT_MAKE_CLEAN_DATA,
@@ -32,6 +34,7 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
     TIMEOUT_MAKE_SETUP,
     TIMEOUT_MAKE_UPLOAD_CODE,
+    TIMEOUT_MAKE_UPLOAD_CONFIG,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_EXEC,
@@ -39,6 +42,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGS,
     TIMEOUT_NEURO_PORT_FORWARD,
     TIMEOUT_NEURO_RMDIR_CODE,
+    TIMEOUT_NEURO_RMDIR_CONFIG,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
@@ -50,6 +54,7 @@ from tests.e2e.configuration import (
     _pattern_upload_dir,
 )
 from tests.e2e.helpers.runners import (
+    ls,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -81,12 +86,7 @@ def test_project_structure() -> None:
         if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
     }
     assert dirs == MK_PROJECT_DIRS
-    files = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
-    }
-    assert files == {
+    assert ls(".") == {
         "Makefile",
         "README.md",
         ".gitignore",
@@ -230,6 +230,7 @@ def _run_import_code_in_notebooks_test() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
+    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -251,6 +252,7 @@ def test_make_upload_code() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_data() -> None:
+    assert len(ls(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -272,13 +274,37 @@ def test_make_upload_data() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
-def test_make_upload_notebooks() -> None:
+def test_make_upload_config() -> None:
+    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    neuro_rm_dir(
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
+        timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
+    )
+
     # Upload:
-    make_cmd = "make upload-notebooks"
+    make_cmd = "make upload-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CONFIG_DIR)],
+            # TODO: add upload-specific error patterns
+        )
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
+
+
+@pytest.mark.run(order=STEP_UPLOAD)
+@try_except_finally()
+def test_make_upload_notebooks() -> None:
+    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     )
+
+    make_cmd = "make upload-notebooks"
     with measure_time(make_cmd):
         run(
             make_cmd,
@@ -524,6 +550,23 @@ def test_make_clean_code() -> None:
             # TODO: add clean-specific error patterns
         )
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+
+
+@pytest.mark.run(order=STEP_CLEANUP)
+@try_except_finally()
+def test_make_clean_config() -> None:
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
+
+    make_cmd = "make clean-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            # TODO: add clean-specific error patterns
+        )
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
 
 
 @pytest.mark.run(order=STEP_CLEANUP)

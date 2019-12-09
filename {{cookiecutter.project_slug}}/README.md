@@ -15,6 +15,7 @@ This project is designed to run on [Neuro Platform](https://neu.ro), so you can 
 |:------------------------------------ |:----------------- |:---------------------------------------------------------------------------- |:-------------------------- | 
 | `data/`                              | Data              | `storage:{{ cookiecutter.project_slug }}/data/`                              | `/{{ cookiecutter.project_slug }}/data/` | 
 | `{{ cookiecutter.code_directory }}/` | Python modules    | `storage:{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` |
+| `config/`                            | Configuration files | `storage:{{ cookiecutter.project_slug }}/config/`                          | `/{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` |
 | `notebooks/`                         | Jupyter notebooks | `storage:{{ cookiecutter.project_slug }}/notebooks/`                         | `/{{ cookiecutter.project_slug }}/notebooks/` |
 | No directory                         | Logs and results  | `storage:{{ cookiecutter.project_slug }}/results/`                           | `/{{ cookiecutter.project_slug }}/results/` |
 

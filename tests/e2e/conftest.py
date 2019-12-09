@@ -16,6 +16,7 @@ from tests.e2e.configuration import (
     LOCAL_TESTS_SAMPLES_PATH,
     LOGGER_NAME,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DATA_DIR,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT_PATH_STORAGE,
@@ -154,6 +155,11 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     with pip_file.open("a") as f:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
+
+    config_file = Path(MK_CONFIG_DIR) / "test-config"
+    log_msg(f"Generating `{config_file}`")
+    with config_file.open("w") as f:
+        f.write("[foo]\nkey=val\n")
 
     data_dir = Path(MK_DATA_DIR)
     log_msg(f"Generating data to `{data_dir}/`")
