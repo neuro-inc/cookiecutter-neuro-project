@@ -156,7 +156,6 @@ logs-develop:  ### Connect to the remote shell running on the development job
 .PHONY: port-forward-develop
 port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
-	@# TODO: add a reference to instructions on how to set up PyCharm Pro / VS Code
 	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
 
 .PHONY: kill-develop
