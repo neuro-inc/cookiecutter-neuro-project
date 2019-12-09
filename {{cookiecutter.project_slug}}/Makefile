@@ -17,6 +17,7 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 PROJECT_POSTFIX?={{cookiecutter.project_slug}}
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
 TRAINING_JOB?=training-$(PROJECT_POSTFIX)
 JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
 TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
@@ -44,6 +45,8 @@ HTTP_AUTH?=--http-auth
 # Command to run training inside the environment. Example:
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
+
+LOCAL_PORT?=2211
 
 ##### COMMANDS #####
 
@@ -137,6 +140,37 @@ upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and
 clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
 
 ##### JOBS #####
+
+.PHONY: develop
+develop: upload-code upload-notebooks  ### Run a development job
+	$(NEURO) run \
+		--name $(DEVELOP_JOB) \
+		--preset $(PRESET) \
+		--detach \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env EXPOSE_SSH=yes \
+		--env JOB_LIFETIME=1d \
+		$(CUSTOM_ENV_NAME) \
+		"sleep infinity"
+
+.PHONY: connect-develop
+connect-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) exec --no-key-check $(DEVELOP_JOB) bash
+
+.PHONY: logs-develop
+logs-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) logs $(DEVELOP_JOB)
+
+.PHONY: port-forward-develop
+port-forward-develop:  ### Forward SSH port to localhost for remote debugging
+	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
+	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
+
+.PHONY: kill-develop
+kill-develop:  ### Terminate the development job
+	$(NEURO) kill $(DEVELOP_JOB)
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job
