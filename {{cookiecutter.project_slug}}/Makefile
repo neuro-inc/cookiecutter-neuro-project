@@ -142,6 +142,7 @@ GCP_PROJECT_ID?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT_FULL?=${GCP_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
 GCP_BUCKET?=neuro-${PROJECT_POSTFIX}
+GCP_CONFIGURATION_ENV_FILE_LOCAL=${CONFIG_DIR}/gcloud-env.txt
 
 .PHONY: _check_gcloud_setup
 _check_gcloud_setup:
@@ -151,7 +152,7 @@ _check_gcloud_setup:
 gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
 	# Checking that Google Cloud SDK is installed...
 	@gcloud --version >/dev/null && gsutil --version >/dev/null \
-		|| { echo "Please install Google Cloud SDK (see https://cloud.google.com/sdk/install"); false; }
+		&& echo "OK" || { echo "Please install Google Cloud SDK (see https://cloud.google.com/sdk/install)"; false; }
 	# Checking that Google Project GCP_PROJECT_ID="${GCP_PROJECT_ID}" exists...
 	@gcloud projects describe ${GCP_PROJECT_ID} >/dev/null \
 		&& echo "OK" || { echo -e "Google project GCP_PROJECT_ID=${GCP_PROJECT_ID} does not exist.\nPlease run 'gcloud projects create ${GCP_PROJECT_ID}'"; false; }
@@ -161,18 +162,22 @@ gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
 	# Checking that Google Service Account GCP_SERVICE_ACCOUNT_FULL="${GCP_SERVICE_ACCOUNT_FULL}" exists...
 	@gcloud iam service-accounts describe ${GCP_SERVICE_ACCOUNT_FULL} >/dev/null \
 		&& echo "OK" || { echo -e "Google service account GCP_SERVICE_ACCOUNT_FULL=${GCP_SERVICE_ACCOUNT_FULL} does not exist.\nPlease run 'gcloud iam service-accounts create ${GCP_SERVICE_ACCOUNT} --description \"Neuro Platform Job Service Account for Google Project ${GCP_PROJECT_ID}\" --display-name \"Neuro Platform Job for ${GCP_PROJECT_ID}\"'"; false; }
-	# Downloading authentication file for Service Account GCP_SERVICE_ACCOUNT={GCP_SERVICE_ACCOUNT} to local directory "./${CONFIG_DIR}"...
+	# Downloading authentication file for Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} to local directory "./${CONFIG_DIR}"...
 	@gcloud iam service-accounts keys create ./${CONFIG_DIR}/${GCP_SERVICE_ACCOUNT}-key.json --iam-account ${GCP_SERVICE_ACCOUNT_FULL}
 	# Checking that Bucket GCP_BUCKET="${GCP_BUCKET}" exists...
 	@gsutil ls gs://${GCP_BUCKET}/ >/dev/null \
 		&& echo "OK" || { echo -e "Bucket GCP_BUCKET=${GCP_BUCKET} does not exist.\nPlease run 'gsutil mb gs://${GCP_BUCKET}'"; false; }
 	# Checking that Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} is an 'objectAdmin' of Bucket GCP_BUCKET="${GCP_BUCKET}"...
-	@gsutil iam get gs://${GCP_BUCKET} | jq --exit-status '.bindings | map(select(.role == "roles/storage.objectAdmin")) | .[0].members | .[0] | contains("${GCP_SERVICE_ACCOUNT_FULL}")' >/dev/null \
+	gsutil iam get gs://${GCP_BUCKET} | jq --exit-status '.bindings | map(select(.role == "roles/storage.objectAdmin")) | .[].members[] | contains("${GCP_SERVICE_ACCOUNT_FULL}")' >/dev/null \
 		&& echo "OK" || { echo -e "Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} cannot manage Bucket GCP_BUCKET=${GCP_BUCKET}.\nPlease run 'gsutil iam ch serviceAccount:${GCP_SERVICE_ACCOUNT_FULL}:roles/storage.objectAdmin gs://${GCP_BUCKET}'"; false; }
+	# Saving Google Cloud configuration into env-file ${GCP_CONFIGURATION_ENV_FILE_LOCAL}...
+	@if [ -f ${GCP_CONFIGURATION_ENV_FILE_LOCAL} ]; then echo "WARNING: File '${GCP_CONFIGURATION_ENV_FILE_LOCAL}' alrady exists, re-writing it..."; fi \
+		&& make gcloud-env > ${GCP_CONFIGURATION_ENV_FILE_LOCAL} \
+		&& echo "OK"
 	@touch .gcloud_setup_done
 
 .PHONY: gcloud-env
-gcloud-env: _check_gcloud_setup  ### Print environment variables that store Google Cloud configuration (run "export `make gcloud-env`" to apply)
+gcloud-env:  ### Print environment variables that store Google Cloud configuration (run "export `make gcloud-env`" to apply)
 	@echo GCP_PROJECT_ID="${GCP_PROJECT_ID}"
 	@echo GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}"
 	@echo GCP_SERVICE_ACCOUNT_FULL="${GCP_SERVICE_ACCOUNT_FULL}"
