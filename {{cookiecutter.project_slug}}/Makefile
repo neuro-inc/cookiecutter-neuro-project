@@ -136,6 +136,40 @@ upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and
 .PHONY: clean-all
 clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
 
+##### GOOGLE STORAGE #####
+
+GCP_PROJECT_ID?=neuro-$(PROJECT_POSTFIX)
+GCP_SERVICE_ACCOUNT?=neuro-$(PROJECT_POSTFIX)
+GCP_SERVICE_ACCOUNT_FULL?=$(GCP_SERVICE_ACCOUNT)@$(GCP_PROJECT_ID).iam.gserviceaccount.com
+GCP_BUCKET?=neuro-$(PROJECT_POSTFIX)-
+
+.PHONY: _check_gcloud_setup
+_check_gcloud_setup:
+	@test -f .gcloud_setup_done || { echo "Please run 'make gcloud-setup' first"; false; }
+
+.PHONY: gcloud-setup
+gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
+	@echo Checking that Google Cloud SDK is installed...
+	@gcloud --version >/dev/null \
+		|| { echo "Please install Google Cloud SDK (see https://cloud.google.com/sdk/docs/quickstarts"); false; }
+	@echo Checking that Google Project GCP_PROJECT_ID="$(GCP_PROJECT_ID)" exists...
+	@gcloud projects describe $(GCP_PROJECT_ID) >/dev/null \
+		&& echo "OK" || { echo -e "Google project GCP_PROJECT_ID=$(GCP_PROJECT_ID) does not exist.\nPlease run 'gcloud projects create $(GCP_PROJECT_ID)'"; false; }
+	@echo Checking that gcloud is set up to use Google Project GCP_PROJECT_ID"$(GCP_PROJECT_ID)" by default...
+	@[ `gcloud config list --format 'value(core.project)'` == $(GCP_PROJECT_ID) ] \
+		&& echo "OK" || { @echo -e "Google project GCP_PROJECT_ID=$(GCP_PROJECT_ID) is not default.\nPlease run 'gcloud config set project $(GCP_PROJECT_ID)'"; false; }
+	@echo Check that Google Service Account GCP_SERVICE_ACCOUNT_FULL="$(GCP_SERVICE_ACCOUNT_FULL)" exists...
+	@gcloud iam service-accounts describe $(GCP_SERVICE_ACCOUNT_FULL) >/dev/null \
+		&& echo "OK" || { @echo -e "Google service account GCP_SERVICE_ACCOUNT_FULL=$(GCP_SERVICE_ACCOUNT_FULL) does not exist.\nPlease run 'gcloud iam service-accounts create $(GCP_SERVICE_ACCOUNT) --description \"Neuro Platform Job Service Account for Google Project $(GCP_PROJECT_ID)\" --display-name \"Neuro Platform Job for $(GCP_PROJECT_ID)\"'"; false; }
+	@touch .gcloud_setup_done
+
+.PHONY: gcloud-env
+gcloud-env: _check_gcloud_setup  ### Print environment variables that store Google Cloud configuration (run "export `make gcloud-env`" to apply)
+	@echo GCP_PROJECT_ID="$(GCP_PROJECT_ID)"
+	@echo GCP_SERVICE_ACCOUNT="$(GCP_SERVICE_ACCOUNT)"
+	@echo GCP_SERVICE_ACCOUNT_FULL="$(GCP_SERVICE_ACCOUNT_FULL)"
+
+
 ##### JOBS #####
 
 .PHONY: train
