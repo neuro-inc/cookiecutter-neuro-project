@@ -16,6 +16,7 @@ from tests.e2e.configuration import (
     LOCAL_TESTS_SAMPLES_PATH,
     LOGGER_NAME,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DATA_DIR,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT_PATH_STORAGE,
@@ -99,6 +100,20 @@ def env_neuro_run_timeout(environment: str) -> int:
         return TIMEOUT_NEURO_RUN_GPU
 
 
+@pytest.fixture(scope="session")
+def env_py_command_check_gpu(environment: str) -> str:
+    # Note: this command is NOT allowed to use single quotes
+    # as the whole command for 'neuro run' will be passed in single quotes
+    pre_cmds = ["import os, torch, tensorflow"]
+
+    gpu_assertions = ["tensorflow.test.is_gpu_available()", "torch.cuda.is_available()"]
+    if environment == "dev":
+        cmd = "; ".join(pre_cmds + [f"assert not {gpu}" for gpu in gpu_assertions])
+    else:
+        cmd = "; ".join(pre_cmds + [f"assert {gpu}" for gpu in gpu_assertions])
+    return cmd
+
+
 @pytest.fixture(scope="session", autouse=True)
 def change_directory_to_temp() -> t.Iterator[None]:
     tmp = os.path.join(tempfile.gettempdir(), "test-cookiecutter")
@@ -141,6 +156,11 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
+    config_file = Path(MK_CONFIG_DIR) / "test-config"
+    log_msg(f"Generating `{config_file}`")
+    with config_file.open("w") as f:
+        f.write("[foo]\nkey=val\n")
+
     data_dir = Path(MK_DATA_DIR)
     log_msg(f"Generating data to `{data_dir}/`")
     assert data_dir.is_dir() and data_dir.exists()
@@ -152,7 +172,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
     code_file = code_dir / "main.py"
-    code_file.write_text("print('Hello world!')")
+    code_file.write_text('print("Hello world!")\n')
     assert code_file.exists()
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
@@ -168,7 +188,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
         run("pip install -U neuromation", verbose=False)
-    assert "Name: neuromation" in run("pip show neuromation", verbose=False)
+    log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
 @pytest.fixture(scope="session", autouse=True)
