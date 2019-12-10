@@ -8,7 +8,9 @@ from tests.e2e.configuration import (
     JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DATA_DIR,
+    MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
     MK_NOTEBOOKS_DIR,
@@ -24,6 +26,7 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_CODE_DIR_CONTENT,
+    PROJECT_CONFIG_DIR_CONTENT,
     PROJECT_HIDDEN_FILES,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     TIMEOUT_MAKE_CLEAN_DATA,
@@ -31,21 +34,27 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
     TIMEOUT_MAKE_SETUP,
     TIMEOUT_MAKE_UPLOAD_CODE,
+    TIMEOUT_MAKE_UPLOAD_CONFIG,
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
+    TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_KILL,
+    TIMEOUT_NEURO_LOGS,
+    TIMEOUT_NEURO_PORT_FORWARD,
     TIMEOUT_NEURO_RMDIR_CODE,
+    TIMEOUT_NEURO_RMDIR_CONFIG,
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
-    _get_pattern_status_succeeded,
+    _get_pattern_status_succeeded_or_running,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
 )
 from tests.e2e.helpers.runners import (
+    ls,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -77,12 +86,13 @@ def test_project_structure() -> None:
         if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
     }
     assert dirs == MK_PROJECT_DIRS
-    files = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
+    assert ls(".") == {
+        "Makefile",
+        "README.md",
+        ".gitignore",
+        ".setup_done",
+        *MK_PROJECT_FILES,
     }
-    assert files == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -90,6 +100,17 @@ def test_project_structure() -> None:
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+@try_except_finally()
+def test_make_setup_required() -> None:
+    # TODO: one exit code check is fixed (see #191), drop this try-catch
+    run(
+        "make jupyter",
+        expect_patterns=["Please run 'make setup' first", "Error"],
+        assert_exit_code=False,
+    )
 
 
 @pytest.mark.run(order=STEP_SETUP)
@@ -201,10 +222,15 @@ def _run_import_code_in_notebooks_test() -> None:
         assert_exit_code=False,
     )
 
+    cmd = "make kill-jupyter"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
+
 
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
+    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -226,6 +252,7 @@ def test_make_upload_code() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_data() -> None:
+    assert len(ls(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -247,13 +274,37 @@ def test_make_upload_data() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
-def test_make_upload_notebooks() -> None:
+def test_make_upload_config() -> None:
+    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    neuro_rm_dir(
+        f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
+        timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
+    )
+
     # Upload:
-    make_cmd = "make upload-notebooks"
+    make_cmd = "make upload-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CONFIG_DIR)],
+            # TODO: add upload-specific error patterns
+        )
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
+
+
+@pytest.mark.run(order=STEP_UPLOAD)
+@try_except_finally()
+def test_make_upload_notebooks() -> None:
+    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     )
+
+    make_cmd = "make upload-notebooks"
     with measure_time(make_cmd):
         run(
             make_cmd,
@@ -302,7 +353,7 @@ def test_make_download_noteboooks() -> None:
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
-        _get_pattern_status_succeeded(),
+        _get_pattern_status_succeeded_or_running(),
         "Replace this placeholder with a training script execution",
     ]
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
@@ -394,6 +445,59 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
     wait_job_change_status_to(job_id, "succeeded")
 
 
+@pytest.mark.run(order=STEP_RUN)
+def test_make_develop_all(env_neuro_run_timeout: int) -> None:
+    _run_make_develop_all_test(env_neuro_run_timeout)
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
+    cmd = "make develop PRESET=cpu-small"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
+            timeout_s=neuro_run_timeout,
+        )
+
+    cmd = "make connect-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+            assert_exit_code=False,
+        )
+    # TODO: improve this test by sending command `echo 123`
+    #  and then reading it via `make logs-develop` (needs improvements of runners)
+
+    cmd = "make logs-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Starting SSH server"],
+            timeout_s=TIMEOUT_NEURO_LOGS,
+            assert_exit_code=False,
+        )
+
+    cmd = "make port-forward-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Press \^C to stop forwarding"],
+            timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
+            assert_exit_code=False,
+        )
+
+    cmd = "make kill-develop"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
+
+
 @pytest.mark.run(order=STEP_KILL)
 @try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def test_make_connect_train_kill_train() -> None:
@@ -446,6 +550,23 @@ def test_make_clean_code() -> None:
             # TODO: add clean-specific error patterns
         )
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+
+
+@pytest.mark.run(order=STEP_CLEANUP)
+@try_except_finally()
+def test_make_clean_config() -> None:
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual == PROJECT_CONFIG_DIR_CONTENT
+
+    make_cmd = "make clean-config"
+    with measure_time(make_cmd):
+        run(
+            make_cmd,
+            verbose=True,
+            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
+            # TODO: add clean-specific error patterns
+        )
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
 
 
 @pytest.mark.run(order=STEP_CLEANUP)

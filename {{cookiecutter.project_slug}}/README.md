@@ -15,6 +15,7 @@ This project is designed to run on [Neuro Platform](https://neu.ro), so you can 
 |:------------------------------------ |:----------------- |:---------------------------------------------------------------------------- |:-------------------------- | 
 | `data/`                              | Data              | `storage:{{ cookiecutter.project_slug }}/data/`                              | `/{{ cookiecutter.project_slug }}/data/` | 
 | `{{ cookiecutter.code_directory }}/` | Python modules    | `storage:{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` |
+| `config/`                            | Configuration files | `storage:{{ cookiecutter.project_slug }}/config/`                          | `/{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` |
 | `notebooks/`                         | Jupyter notebooks | `storage:{{ cookiecutter.project_slug }}/notebooks/`                         | `/{{ cookiecutter.project_slug }}/notebooks/` |
 | No directory                         | Logs and results  | `storage:{{ cookiecutter.project_slug }}/results/`                           | `/{{ cookiecutter.project_slug }}/results/` |
 
@@ -76,6 +77,15 @@ have to change this variable. However, if your data is shared between several pr
 you need to change the following line to point to its location. For example:
 
 `DATA_DIR_STORAGE?=storage:datasets/cifar10`
+
+### Model development job
+
+If you want to debug your code on GPU, you can run a sleeping job via `make develop`, then connect to its bash over SSH
+via `make connect-develop` (type `exit` or `^D` to close SSH connection), see its logs via `make logs-develop`, or 
+forward port 22 from the job to localhost via `make port-forward-develop` to use it for remote debugging.
+
+Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
+
 
 ### Training machine type
 

@@ -39,7 +39,8 @@ def cleanup_local_dirs(*dirs: t.Union[str, Path]) -> None:
             if f.is_file():
                 f.unlink()
         assert d.exists(), f"not exists after cleanup: {d}"
-        assert not list(d.iterdir()), "directory should be empty here"
+        ls = list(d.iterdir())
+        assert not ls, f"directory should be empty here: {ls}"
 
 
 def copy_local_files(from_dir: Path, to_dir: Path) -> None:
