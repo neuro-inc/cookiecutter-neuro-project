@@ -52,9 +52,8 @@ LOCAL_PORT?=2211
 GCP_PROJECT_ID?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT?=neuro-${PROJECT_POSTFIX}
 GCP_SERVICE_ACCOUNT_FULL?=${GCP_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-GCP_SECRET_PATH=${CONFIG_DIR}/${GCP_SERVICE_ACCOUNT}-key.json
+GCP_SECRET_PATH?=${CONFIG_DIR}/${GCP_SERVICE_ACCOUNT}-key.json
 GCP_BUCKET?=gs://neuro-${PROJECT_POSTFIX}
-
 GCP_CONFIGURATION_ENV_FILE_LOCAL=${CONFIG_DIR}/gcloud-env.txt
 
 ##### COMMANDS #####
@@ -198,7 +197,11 @@ gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
 		&& echo "OK"
 	# Downloading authentication file for Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} to local directory "./${CONFIG_DIR}"...
 	@[ ! -f ${GCP_SECRET_PATH} ] && { gcloud iam service-accounts keys create ./${GCP_SECRET_PATH} --iam-account ${GCP_SERVICE_ACCOUNT_FULL} || echo "Please note: maximum 9 keys are allowed (see 'make gcloud-list-keys' for cleanup instructions)"; } || echo "WARNING: File ./${GCP_SECRET_PATH} already exists, skipping"
-	@echo -e 'Google Cloud environment successfully configured!\nPlease run "export $$(make gcloud-env)" to set up environment variables locally (will be already set up in the development job)'
+	# Setting restricted permissions on the secret file "${GCP_SECRET_PATH}"...
+	@chmod 600 ./${GCP_SECRET_PATH} \
+		&& echo "OK"
+	@echo "Google Cloud environment successfully configured!"
+	@echo 'Please run "export $$(make gcloud-env)" to set up environment variables locally (will be already set up in the development job)'
 	@cat ${GCP_CONFIGURATION_ENV_FILE_LOCAL}
 
 .PHONY: gcloud-list-keys
@@ -206,8 +209,8 @@ gcloud-list-keys:   ### List keys used by Google Service Account ""${GCP_SERVICE
 	gcloud iam service-accounts keys list --iam-account ${GCP_SERVICE_ACCOUNT_FULL}
 	@echo "Run 'gcloud iam service-accounts keys delete --iam-account ${GCP_SERVICE_ACCOUNT_FULL} {KEY_ID}' to delete unnecessary keys."
 
-.PHONY: clean-gcloud
-clean-gcloud:   ### Removes secret file used to authenticate Google Cloud SDK
+.PHONY: gcloud-clean-auth
+gcloud-clean-auth:   ### Removes secret file used to authenticate Google Cloud SDK
 	rm ${GCP_SECRET_PATH}
 
 .PHONY:  gcloud-env
@@ -247,9 +250,10 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		${NEURO_RUN_ENV_FILE_OPTION} \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
+		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
 ifdef GCP_CONFIGURED
 		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) "gcloud auth activate-service-account --key-file ${PROJECT_PATH_ENV}/${GCP_SECRET_PATH}"
-		@echo "Google Cloud SDK configured for job ${DEVELOP_JOB}"
+		@echo "[+] Google Cloud SDK configured for job ${DEVELOP_JOB}"
 endif
 
 .PHONY: connect-develop
