@@ -208,7 +208,7 @@ def _run_import_code_in_notebooks_test() -> None:
 
     out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/hello_world.ipynb"
     cmd = (
         f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
         f"cat {out_file}.asciidoc"

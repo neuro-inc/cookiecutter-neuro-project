@@ -171,7 +171,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     code_dir = Path(MK_CODE_DIR)
     log_msg(f"Generating code files to `{code_dir}/`")
     assert code_dir.is_dir() and code_dir.exists()
-    code_file = code_dir / "main.py"
+    code_file = code_dir / "hello_world.py"
     code_file.write_text('print("Hello world!")\n')
     assert code_file.exists()
 
