@@ -252,7 +252,7 @@ kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
