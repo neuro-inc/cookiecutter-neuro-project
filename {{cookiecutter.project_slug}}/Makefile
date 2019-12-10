@@ -114,7 +114,7 @@ kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` i
 
 .PHONY: _check_setup
 _check_setup:
-	@test -f .setup_done || { echo "Please run 'make setup' first (or run 'touch .setup_done' to disable this check)"; false; }
+	@test -f .setup_done || { echo "Please run 'make setup' first"; false; }
 
 ##### STORAGE #####
 
@@ -235,7 +235,7 @@ gcloud-download-data: _check_gcloud_setup _gcloud_require_bucket  ### TBD
 ##### JOBS #####
 
 .PHONY: develop
-develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
+develop: upload-code upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
@@ -354,7 +354,7 @@ kill-filebrowser: _check_setup  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
+kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
