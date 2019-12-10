@@ -142,7 +142,7 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 ##### JOBS #####
 
 .PHONY: develop
-develop: upload-code upload-notebooks  ### Run a development job
+develop: _check_setup upload-code upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
@@ -188,11 +188,11 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-train
-kill-train: _check_setup  ### Terminate the training job
+kill-train:  ### Terminate the training job
 	$(NEURO) kill $(TRAINING_JOB)
 
 .PHONY: connect-train
-connect-train: _check_setup  ### Connect to the remote shell running on the training job
+connect-train:  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
@@ -214,7 +214,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
 	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
@@ -231,7 +231,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard: _check_setup  ### Terminate the job with TensorBoard
+kill-tensorboard:  ### Terminate the job with TensorBoard
 	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
@@ -248,7 +248,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--noauth
 
 .PHONY: kill-filebrowser
-kill-filebrowser: _check_setup  ### Terminate the job with File Browser
+kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
@@ -257,16 +257,16 @@ kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Termina
 ##### LOCAL #####
 
 .PHONY: setup-local
-setup-local: _check_setup  ### Install pip requirements locally
+setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: lint
-lint: _check_setup  ### Run static code analysis locally
+lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 ##### MISC #####
 
 .PHONY: ps
-ps: _check_setup  ### List all running and pending jobs
+ps:  ### List all running and pending jobs
 	$(NEURO) ps
