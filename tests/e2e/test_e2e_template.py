@@ -295,7 +295,6 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_config(decrypt_gcp_key: None) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
