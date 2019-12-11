@@ -39,7 +39,6 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_EXEC,
-    TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
     TIMEOUT_NEURO_KILL,
     TIMEOUT_NEURO_LOGS,
     TIMEOUT_NEURO_PORT_FORWARD,
@@ -544,13 +543,14 @@ def _test_make_develop_connect_gsutil() -> None:
         )
         job_id = parse_job_id(out)
 
-    cmd = f"neuro exec -T {job_id} 'gsutil cat gs://cookiecutter-e2e/hello.txt'"
+    bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
+    cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
             expect_patterns=["Hello world!"],
-            timeout_s=TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
+            timeout_s=TIMEOUT_NEURO_EXEC,
         )
 
     py_cmd_list = [
@@ -562,14 +562,14 @@ def _test_make_develop_connect_gsutil() -> None:
     ]
     py_cmd = "; ".join(py_cmd_list)
     py_cmd = py_cmd.replace('"', r"\"")
-    cmd = f"neuro exec -T {job_id} 'python -c \"{py_cmd}\"'"
+    cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
             expect_patterns=["Hello world!"],
             error_patterns=["AssertionError"],
-            timeout_s=TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
+            timeout_s=TIMEOUT_NEURO_EXEC,
         )
 
 
