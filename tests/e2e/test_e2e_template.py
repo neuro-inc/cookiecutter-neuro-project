@@ -39,6 +39,7 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_UPLOAD_DATA,
     TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
     TIMEOUT_NEURO_EXEC,
+    TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
     TIMEOUT_NEURO_KILL,
     TIMEOUT_NEURO_LOGS,
     TIMEOUT_NEURO_PORT_FORWARD,
@@ -295,7 +296,7 @@ def test_make_upload_data() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
-def test_make_upload_config() -> None:
+def test_make_upload_config(decrypt_gcp_key: None) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
@@ -550,7 +551,7 @@ def _test_make_develop_connect_gsutil() -> None:
             cmd,
             verbose=True,
             expect_patterns=["Hello world!"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
+            timeout_s=TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
         )
 
     py_cmd_list = [
@@ -569,7 +570,7 @@ def _test_make_develop_connect_gsutil() -> None:
             verbose=True,
             expect_patterns=["Hello world!"],
             error_patterns=["AssertionError"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
+            timeout_s=TIMEOUT_NEURO_EXEC_GCP_BUCKET_READ_FILE,
         )
 
 
