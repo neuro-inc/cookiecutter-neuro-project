@@ -53,15 +53,58 @@ Follow the instructions below to set up the environment and start Jupyter develo
 
 ## Data
 
-### Uploading via Web UI
+### Uploading to the Storage via Web UI
 
-On local machine run `make filebrowser` and open job's URL on your mobile device or desktop.
+On local machine, run `make filebrowser` and open job's URL on your mobile device or desktop.
 Through a simple file explorer interface, you can upload test images and perform file operations.
 
-### Uploading via CLI
+### Uploading to the Storage via CLI
 
-On local machine run `make upload-data`. This command pushes local files stored in `./data`
+On local machine, run `make upload-data`. This command pushes local files stored in `./data`
 into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development environment's `/project/data`.
+
+### Uploading to the Job from Google Cloud
+
+Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
+Neuro Project Template provides a fast way to authenticate Google Cloud SDK to work with Google Service Account 
+(see instructions on setting up your Google Project and Google Service Account and creating the secret key for
+this Service Account in [documentation](https://neu.ro/docs/google_cloud_storage)).
+
+Once you have created the key file via command `gcloud iam service-accounts keys create key.json ...`,
+put this file to the local config directory `./config/` and set appropriate permissions on it:
+
+```
+chmod 600 ./config/key.json
+```
+
+Then, inform Neuro about this file:
+```
+export GCP_SECRET_FILE=key.json
+```
+Alternatively, set this value directly in `Makefile`.
+
+Check that Neuro has found and this file:
+```
+$ make gcloud-check-auth
+[+] Found Google Cloud service account authentication file: 'config/key.json'
+```
+
+Great! Now, if you run a development job, Neuro will authenticate Google Cloud SDK via your secret file:
+```
+$ make develop
+...
+Activated service account credentials for: [project-id@service-account-name.iam.gserviceaccount.com]
+[+] Google Cloud SDK configured for job develop-name-of-the-project
+```
+
+Then, you can connect to the development job and use `gsutil` or `gcloud` there!
+```
+$ make connect-develop
+...
+root@job-56e9b297-5034-4492-ba1a-2284b8dcd613:/# gsutil cat gs://my-neuro-bucket-42/hello.txt
+Hello World
+```
+
 
 ## Customization
 
