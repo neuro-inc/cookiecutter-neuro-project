@@ -4,7 +4,7 @@
 #
 version: 2
 cache_key: &cache_key
-  v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
+  v2-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
 jobs:
   test_dev:
     docker:
