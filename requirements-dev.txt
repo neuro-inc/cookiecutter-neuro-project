@@ -4,6 +4,7 @@ isort==4.3.21
 black==19.3b0
 cookiecutter==1.6.0
 fernet==1.0.1
+cryptography  # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
 
 pexpect==4.7.0
 pytest==5.1.2
