@@ -2,7 +2,6 @@ import os
 import tempfile
 import time
 import typing as t
-from base64 import b64decode
 from collections import namedtuple
 from pathlib import Path
 
@@ -12,6 +11,8 @@ from cryptography.fernet import Fernet
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
+    GCP_KEY_JSON,
+    GCP_KEY_JSON_ENC,
     LOCAL_CLEANUP_STORAGE_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
@@ -33,7 +34,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
 )
-from tests.e2e.helpers.logs import log_msg
+from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
@@ -211,7 +212,7 @@ def neuro_login(
     yield
 
 
-def decrypt_file(file_enc: Path, output: Path) -> None:
+def _decrypt_file(file_enc: Path, output: Path) -> None:
     log_msg(f"Decrypting `{file_enc}` to `{output}`")
     assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"
     with file_enc.open(mode="rb") as f_enc:
@@ -220,3 +221,26 @@ def decrypt_file(file_enc: Path, output: Path) -> None:
             dec = fernet.decrypt(f_enc.read())
             assert "cookiecutter-e2e" in dec.decode(), "could not decrypt file"
             f_dec.write(dec)
+
+
+@pytest.fixture(autouse=True)
+def set_env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_JSON)
+
+
+@pytest.fixture()
+def decrypt_gcp_key() -> t.Iterator[None]:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+    try:
+        if not key.exists():
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / GCP_KEY_JSON_ENC
+            _decrypt_file(key_enc, key)
+        yield
+    finally:
+        if key.exists():
+            try:
+                key.unlink()
+            except Exception as e:
+                log_msg(
+                    f"Could not delete file {key.absolute()}: {e}", logger=LOGGER.warn
+                )

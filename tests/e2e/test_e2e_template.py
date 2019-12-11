@@ -5,8 +5,8 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    GCP_KEY_JSON,
     JOB_ID_PATTERN,
-    LOCAL_TESTS_SAMPLES_PATH,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
@@ -54,9 +54,9 @@ from tests.e2e.configuration import (
     _pattern_copy_file_started,
     _pattern_upload_dir,
 )
-from tests.e2e.conftest import decrypt_file
 from tests.e2e.helpers.runners import (
-    ls,
+    ls_dirs,
+    ls_files,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -80,21 +80,10 @@ STEP_CLEANUP = 100
 STEP_LOCAL = 200
 
 
-@try_except_finally()
+@pytest.mark.run(order=STEP_PRE_SETUP)
 def test_project_structure() -> None:
-    dirs = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
-    }
-    assert dirs == MK_PROJECT_DIRS
-    assert ls(".") == {
-        "Makefile",
-        "README.md",
-        ".gitignore",
-        ".setup_done",
-        *MK_PROJECT_FILES,
-    }
+    assert ls_dirs(".") == MK_PROJECT_DIRS
+    assert ls_files(".") == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -115,22 +104,25 @@ def test_make_setup_required() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-def test_make_gcloud_check_auth(monkeypatch: Any) -> None:
-    make_cmd = "make gcloud-check-auth"
-    key_name = "gcp-key.json"
-    monkeypatch.setenv("GCP_SECRET_FILE", key_name)
+def test_make_gcloud_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+    if key.exists():
+        key.unlink()  # key must not exist in this test
 
-    key = Path(MK_CONFIG_DIR) / key_name
-    assert not key.exists(), f"{key.absolute()} must not exist"
+    make_cmd = "make gcloud-check-auth"
     run(
         make_cmd,
         expect_patterns=["ERROR: Not found Google Cloud service account key file"],
         assert_exit_code=False,
     )
 
-    key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / "gcp-key.json.enc"
-    decrypt_file(key_enc, key)
-    assert key.exists(), f"{key.absolute()} must now exist"
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make gcloud-check-auth"
     run(
         make_cmd,
         expect_patterns=[
@@ -198,6 +190,8 @@ def _run_make_setup_test() -> None:
             # TODO: add specific error patterns
         )
 
+    assert ".setup_done" in ls_files(".")
+
 
 @pytest.mark.run(order=STEP_POST_SETUP)
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}")
@@ -257,7 +251,7 @@ def _run_import_code_in_notebooks_test() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
-    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
+    assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -279,7 +273,7 @@ def test_make_upload_code() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_data() -> None:
-    assert len(ls(MK_DATA_DIR)) == N_FILES
+    assert len(ls_files(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -302,7 +296,7 @@ def test_make_upload_data() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_config() -> None:
-    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -325,7 +319,7 @@ def test_make_upload_config() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_notebooks() -> None:
-    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -479,12 +473,16 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
 
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
-    cmd = "make develop PRESET=cpu-small"
+    cmd = "make develop"
     with measure_time(cmd):
         run(
             cmd,
             verbose=True,
-            expect_patterns=[r"Status:[^\n]+running"],
+            expect_patterns=[
+                r"Status:[^\n]+running",
+                r"Job [^\n]+ successfully started!",
+                "PLEASE DON'T FORGET TO KILL it via 'make kill-develop'",
+            ],
             timeout_s=neuro_run_timeout,
         )
 
@@ -523,6 +521,56 @@ def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
     cmd = "make kill-develop"
     with measure_time(cmd):
         run(cmd, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_develop_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_develop_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_develop_connect_gsutil() -> None:
+    cmd = "make develop  PRESET=cpu-small"
+    with measure_time(cmd):
+        out = run(
+            cmd,
+            verbose=True,
+            expect_patterns=[
+                r"Status:[^\n]+running",
+                r"Job [^\n]+ successfully started!",
+                "Google Cloud SDK configured",
+            ],
+            timeout_s=TIMEOUT_NEURO_RUN_CPU,
+        )
+        job_id = parse_job_id(out)
+
+    cmd = f"neuro exec -T {job_id} 'gsutil cat gs://cookiecutter-e2e/hello.txt'"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Hello world!"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+        )
+
+    py_cmd_list = [
+        "from google.cloud import storage",
+        'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
+        'text = bucket.get_blob("hello.txt").download_as_string()',
+        "print(text)",
+        'assert "Hello world" in text.decode()',
+    ]
+    py_cmd = "; ".join(py_cmd_list)
+    py_cmd = py_cmd.replace('"', r"\"")
+    cmd = f"neuro exec -T {job_id} 'python -c \"{py_cmd}\"'"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Hello world!"],
+            error_patterns=["AssertionError"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+        )
 
 
 @pytest.mark.run(order=STEP_KILL)

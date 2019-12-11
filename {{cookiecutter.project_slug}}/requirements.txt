@@ -1,1 +1,2 @@
 tqdm==4.32.1
+google-cloud-storage==1.23.0
