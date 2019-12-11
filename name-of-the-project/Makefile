@@ -2,19 +2,19 @@
 
 DATA_DIR?=data
 CONFIG_DIR?=config
-CODE_DIR?={{cookiecutter.code_directory}}
+CODE_DIR?=modules
 NOTEBOOKS_DIR?=notebooks
 RESULTS_DIR?=results
 
 PROJECT_FILES=requirements.txt apt.txt setup.cfg
 
-PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
+PROJECT_PATH_STORAGE?=storage:name-of-the-project
 
-PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
+PROJECT_PATH_ENV?=/name-of-the-project
 
 ##### JOB NAMES #####
 
-PROJECT_POSTFIX?={{cookiecutter.project_slug}}
+PROJECT_POSTFIX?=name-of-the-project
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
 DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
@@ -49,8 +49,7 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 LOCAL_PORT?=2211
 
 # Google Cloud integration settings:
-GCP_SECRET_FILE?=neuro-${PROJECT_POSTFIX}-key.json
-GCP_SECRET_PATH=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_PATH?=${CONFIG_DIR}/neuro-${PROJECT_POSTFIX}-key.json
 
 ##### COMMANDS #####
 
@@ -59,9 +58,9 @@ PIP?=pip install --progress-bar=off
 NEURO?=neuro
 
 ifneq ($(wildcard ${GCP_SECRET_PATH}),)
-	GCP_AUTH_EXISTS=true
+	GCP_CONFIGURED=true
 else
-	GCP_AUTH_EXISTS=
+	GCP_CONFIGURED=
 endif
 
 ##### HELP #####
@@ -152,10 +151,11 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 ##### Google Cloud Integration #####
 
 .PHONY: gcloud-check-auth
-gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
-	@test ${GCP_AUTH_EXISTS} \
-		&& echo "[+] Found Google Cloud service account authentication file: '${GCP_SECRET_PATH}'" \
-		|| { echo "[-] Not found Google Cloud service account authentication file: '${GCP_SECRET_PATH}'"; false; }
+gcloud-check-auth:  ### Check if Google Cloud SDK authentication file exists
+	@test ${GCP_CONFIGURED} \
+		&& echo "Found Google Cloud authentication file: '${GCP_SECRET_PATH}'" \
+		|| { echo "Not found Google Cloud authentication file: '${GCP_SECRET_PATH}'"; false; }
+
 
 ##### JOBS #####
 
@@ -174,7 +174,7 @@ develop: upload-code upload-notebooks  ### Run a development job
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
 		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
-ifdef GCP_AUTH_EXISTS
+ifdef GCP_CONFIGURED
 		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) "gcloud auth activate-service-account --key-file ${PROJECT_PATH_ENV}/${GCP_SECRET_PATH}"
 		@echo "[+] Google Cloud SDK configured for job ${DEVELOP_JOB}"
 endif
