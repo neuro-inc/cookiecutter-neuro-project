@@ -105,6 +105,8 @@ root@job-56e9b297-5034-4492-ba1a-2284b8dcd613:/# gsutil cat gs://my-neuro-bucket
 Hello World
 ```
 
+Also, development job has environment variable `GOOGLE_APPLICATION_CREDENTIALS` set up, which means that you an access your data on Google Cloud Storage via Python API (see usage example on [Google Cloud Storage documentation](https://cloud.google.com/storage/docs/reference/libraries)).
+
 
 ## Customization
 
