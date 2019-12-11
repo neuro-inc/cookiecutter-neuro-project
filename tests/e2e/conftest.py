@@ -2,10 +2,12 @@ import os
 import tempfile
 import time
 import typing as t
+from base64 import b64decode
 from collections import namedtuple
 from pathlib import Path
 
 import pytest
+from cryptography.fernet import Fernet
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
@@ -156,7 +158,9 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
-    config_file = Path(MK_CONFIG_DIR) / "test-config"
+    config_dir = Path(MK_CONFIG_DIR)
+    assert config_dir.is_dir() and config_dir.exists()
+    config_file = config_dir / "test-config"
     log_msg(f"Generating `{config_file}`")
     with config_file.open("w") as f:
         f.write("[foo]\nkey=val\n")
@@ -177,7 +181,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
-    copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
+    copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "notebooks", notebooks_dir)
     assert list(notebooks_dir.iterdir())
 
     # Save project directory on storage for further cleanup:
@@ -205,3 +209,14 @@ def neuro_login(
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
+
+
+def decrypt_file(file_enc: Path, output: Path) -> None:
+    log_msg(f"Decrypting `{file_enc}` to `{output}`")
+    assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"
+    with file_enc.open(mode="rb") as f_enc:
+        with output.open(mode="wb") as f_dec:
+            fernet = Fernet(os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"])
+            dec = fernet.decrypt(f_enc.read())
+            assert "cookiecutter-e2e" in dec.decode(), "could not decrypt file"
+            f_dec.write(dec)

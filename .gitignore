@@ -12,3 +12,5 @@ pip-wheel-metadata
 /tests/e2e/output/
 /tests/e2e/logs/
 .idea
+
+*-key.json

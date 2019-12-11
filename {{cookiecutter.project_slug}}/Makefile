@@ -49,8 +49,11 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 LOCAL_PORT?=2211
 
 # Google Cloud integration settings:
-GCP_SECRET_FILE?=neuro-${PROJECT_POSTFIX}-key.json
-GCP_SECRET_PATH=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_FILE?=neuro-job-key.json
+
+GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+GCP_AUTH_COMMAND=gcloud auth activate-service-account --key-file "${GCP_SECRET_PATH_ENV}"
 
 ##### COMMANDS #####
 
@@ -58,10 +61,16 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
 
-ifneq ($(wildcard ${GCP_SECRET_PATH}),)
+ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
 	GCP_AUTH_EXISTS=true
 else
 	GCP_AUTH_EXISTS=
+endif
+
+ifdef GCP_AUTH_EXISTS
+    OPTION_GCP_CREDENTIALS=--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV}
+else
+    OPTION_GCP_CREDENTIALS=
 endif
 
 ##### HELP #####
@@ -153,14 +162,15 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 
 .PHONY: gcloud-check-auth
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
+	@echo Using variable: GCP_SECRET_FILE=${GCP_SECRET_FILE}
 	@test ${GCP_AUTH_EXISTS} \
-		&& echo "[+] Found Google Cloud service account authentication file: '${GCP_SECRET_PATH}'" \
-		|| { echo "[-] Not found Google Cloud service account authentication file: '${GCP_SECRET_PATH}'"; false; }
+		&& echo "Google Cloud will be authenticated via service account key file: '${GCP_SECRET_PATH_LOCAL}'" \
+		|| { echo -e "ERROR: Not found Google Cloud service account key file: '${GCP_SECRET_PATH_LOCAL}'.\nPlease put the key file named '$${GCP_SECRET_FILE}' to '${CONFIG_DIR}/'"; false; }
 
 ##### JOBS #####
 
 .PHONY: develop
-develop: upload-code upload-notebooks  ### Run a development job
+develop: upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
@@ -169,14 +179,15 @@ develop: upload-code upload-notebooks  ### Run a development job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${OPTION_GCP_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
 		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
 ifdef GCP_AUTH_EXISTS
-		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) "gcloud auth activate-service-account --key-file ${PROJECT_PATH_ENV}/${GCP_SECRET_PATH}"
-		@echo "[+] Google Cloud SDK configured for job ${DEVELOP_JOB}"
+		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) '${GCP_AUTH_COMMAND}'
+		@echo "[+] Google Cloud SDK configured"
 endif
 
 .PHONY: connect-develop
@@ -205,6 +216,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+        ${OPTION_GCP_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \

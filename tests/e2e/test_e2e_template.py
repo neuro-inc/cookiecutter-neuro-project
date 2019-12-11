@@ -6,6 +6,7 @@ import pytest
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     JOB_ID_PATTERN,
+    LOCAL_TESTS_SAMPLES_PATH,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
@@ -53,6 +54,7 @@ from tests.e2e.configuration import (
     _pattern_copy_file_started,
     _pattern_upload_dir,
 )
+from tests.e2e.conftest import decrypt_file
 from tests.e2e.helpers.runners import (
     ls,
     neuro_ls,
@@ -105,10 +107,35 @@ def test_make_help_works() -> None:
 @pytest.mark.run(order=STEP_PRE_SETUP)
 @try_except_finally()
 def test_make_setup_required() -> None:
-    # TODO: one exit code check is fixed (see #191), drop this try-catch
     run(
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_gcloud_check_auth(monkeypatch: Any) -> None:
+    make_cmd = "make gcloud-check-auth"
+    key_name = "gcp-key.json"
+    monkeypatch.setenv("GCP_SECRET_FILE", key_name)
+
+    key = Path(MK_CONFIG_DIR) / key_name
+    assert not key.exists(), f"{key.absolute()} must not exist"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Google Cloud service account key file"],
+        assert_exit_code=False,
+    )
+
+    key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / "gcp-key.json.enc"
+    decrypt_file(key_enc, key)
+    assert key.exists(), f"{key.absolute()} must now exist"
+    run(
+        make_cmd,
+        expect_patterns=[
+            "Google Cloud will be authenticated via service account key file"
+        ],
         assert_exit_code=False,
     )
 
