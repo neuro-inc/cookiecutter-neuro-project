@@ -537,7 +537,7 @@ def _test_make_develop_connect_gsutil() -> None:
             expect_patterns=[
                 r"Status:[^\n]+running",
                 r"Job [^\n]+ successfully started!",
-                "Google Cloud SDK configured",
+                "Activated service account credentials",
             ],
             timeout_s=TIMEOUT_NEURO_RUN_CPU,
         )

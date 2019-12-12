@@ -185,10 +185,6 @@ develop: upload-code upload-config upload-notebooks  ### Run a development job
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
 		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
-ifdef GCP_AUTH_EXISTS
-		$(NEURO) exec --no-key-check --no-tty ${DEVELOP_JOB} '${GCP_AUTH_COMMAND}'
-		@echo "[+] Google Cloud SDK configured"
-endif
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job
@@ -249,10 +245,6 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
-ifdef GCP_AUTH_EXISTS
-		$(NEURO) exec --no-key-check --no-tty ${JUPYTER_JOB} '${GCP_AUTH_COMMAND}'
-		@echo "[+] Google Cloud SDK configured"
-endif
 
 .PHONY: kill-jupyter
 kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
