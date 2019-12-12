@@ -24,6 +24,8 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
+            # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
+            pip install --upgrade cryptography
             make init
 
       - save_cache: &step_save_cache

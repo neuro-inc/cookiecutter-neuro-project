@@ -164,8 +164,8 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
 	@echo Using variable: GCP_SECRET_FILE=${GCP_SECRET_FILE}
 	@test ${GCP_AUTH_EXISTS} \
-		&& echo "Google Cloud will be authenticated via service account key file: '${GCP_SECRET_PATH_LOCAL}'" \
-		|| { echo -e "ERROR: Not found Google Cloud service account key file: '${GCP_SECRET_PATH_LOCAL}'.\nPlease put the key file named '$${GCP_SECRET_FILE}' to '${CONFIG_DIR}/'"; false; }
+		&& echo "Google Cloud will be authenticated via service account key file: './${GCP_SECRET_PATH_LOCAL}'" \
+		|| { echo -e "ERROR: Not found Google Cloud service account key file: './${GCP_SECRET_PATH_LOCAL}'.\nPlease put the key file named '${GCP_SECRET_FILE}' to '${CONFIG_DIR}/'"; false; }
 
 ##### JOBS #####
 
@@ -186,7 +186,7 @@ develop: upload-code upload-config upload-notebooks  ### Run a development job
 		"sleep infinity"
 		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
 ifdef GCP_AUTH_EXISTS
-		$(NEURO) exec --no-key-check --no-tty $(DEVELOP_JOB) '${GCP_AUTH_COMMAND}'
+		$(NEURO) exec --no-key-check --no-tty ${DEVELOP_JOB} '${GCP_AUTH_COMMAND}'
 		@echo "[+] Google Cloud SDK configured"
 endif
 
@@ -216,7 +216,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-        ${OPTION_GCP_CREDENTIALS} \
+		${OPTION_GCP_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -239,6 +239,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
+		--detach \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -248,6 +249,10 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
+ifdef GCP_AUTH_EXISTS
+		$(NEURO) exec --no-key-check --no-tty ${JUPYTER_JOB} '${GCP_AUTH_COMMAND}'
+		@echo "[+] Google Cloud SDK configured"
+endif
 
 .PHONY: kill-jupyter
 kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
