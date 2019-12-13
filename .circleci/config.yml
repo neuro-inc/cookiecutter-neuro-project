@@ -95,18 +95,6 @@ workflows:
             branches:
               only: master
 
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-        - test_dev
-        - test_staging
-
   hourly:
     triggers:
       - schedule:
