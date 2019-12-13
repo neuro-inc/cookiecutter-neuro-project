@@ -54,7 +54,8 @@ from tests.e2e.configuration import (
     _pattern_upload_dir,
 )
 from tests.e2e.helpers.runners import (
-    ls,
+    ls_dirs,
+    ls_files,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -78,21 +79,10 @@ STEP_CLEANUP = 100
 STEP_LOCAL = 200
 
 
-@try_except_finally()
+@pytest.mark.run(order=STEP_PRE_SETUP)
 def test_project_structure() -> None:
-    dirs = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
-    }
-    assert dirs == MK_PROJECT_DIRS
-    assert ls(".") == {
-        "Makefile",
-        "README.md",
-        ".gitignore",
-        ".setup_done",
-        *MK_PROJECT_FILES,
-    }
+    assert ls_dirs(".") == MK_PROJECT_DIRS
+    assert ls_files(".") == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -105,7 +95,6 @@ def test_make_help_works() -> None:
 @pytest.mark.run(order=STEP_PRE_SETUP)
 @try_except_finally()
 def test_make_setup_required() -> None:
-    # TODO: one exit code check is fixed (see #191), drop this try-catch
     run(
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
@@ -172,6 +161,8 @@ def _run_make_setup_test() -> None:
             # TODO: add specific error patterns
         )
 
+    assert ".setup_done" in ls_files(".")
+
 
 @pytest.mark.run(order=STEP_POST_SETUP)
 @try_except_finally(f"neuro kill {MK_SETUP_JOB}")
@@ -231,7 +222,7 @@ def _run_import_code_in_notebooks_test() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_code() -> None:
-    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
+    assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -253,7 +244,7 @@ def test_make_upload_code() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_data() -> None:
-    assert len(ls(MK_DATA_DIR)) == N_FILES
+    assert len(ls_files(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -274,9 +265,8 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_config() -> None:
-    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -299,7 +289,7 @@ def test_make_upload_config() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 @try_except_finally()
 def test_make_upload_notebooks() -> None:
-    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -453,7 +443,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
 
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
-    cmd = "make develop PRESET=cpu-small"
+    cmd = "make develop"
     with measure_time(cmd):
         run(
             cmd,

@@ -80,7 +80,7 @@ MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_CONFIG_DIR, MK_NOTEBOOKS_DIR}
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
+PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 
 # TODO(artem): hidden files is a hack, see issue #93

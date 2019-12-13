@@ -395,11 +395,21 @@ def get_job_status(job_id: str) -> str:
     return status
 
 
-def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
+def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
     return {
         f.name
         for f in path.iterdir()
         if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
+    }
+
+
+def ls_dirs(local_path: t.Union[Path, str]) -> t.Set[str]:
+    path = Path(local_path)
+    assert path.is_dir(), f"path {path} does not exist"
+    return {
+        f.name
+        for f in path.iterdir()
+        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
     }
