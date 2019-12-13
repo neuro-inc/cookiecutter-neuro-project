@@ -68,7 +68,7 @@ else
 endif
 
 ifdef GCP_AUTH_EXISTS
-    OPTION_GCP_CREDENTIALS=--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV}
+    OPTION_GCP_CREDENTIALS=--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} --env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
 else
     OPTION_GCP_CREDENTIALS=
 endif
@@ -162,10 +162,14 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 
 .PHONY: gcloud-check-auth
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
-	@echo Using variable: GCP_SECRET_FILE=${GCP_SECRET_FILE}
+	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
 	@test ${GCP_AUTH_EXISTS} \
-		&& echo "Google Cloud will be authenticated via service account key file: './${GCP_SECRET_PATH_LOCAL}'" \
-		|| { echo -e "ERROR: Not found Google Cloud service account key file: './${GCP_SECRET_PATH_LOCAL}'.\nPlease put the key file named '${GCP_SECRET_FILE}' to '${CONFIG_DIR}/'"; false; }
+		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
+		|| { \
+			echo -e "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; \
+			}
 
 ##### JOBS #####
 
