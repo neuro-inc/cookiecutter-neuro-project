@@ -64,7 +64,7 @@ from tests.e2e.helpers.runners import (
     try_except_finally,
     wait_job_change_status_to,
 )
-from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
+from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
 
 
 STEP_PRE_SETUP = 0
@@ -429,15 +429,14 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
         out = run(cmd, verbose=True, detect_new_jobs=False)
     assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
 
-    with timeout(2 * 60):
-        repeat_until_success(
-            f"curl --fail {url}{path}",
-            job_id,
-            expect_patterns=["<html.*>"],
-            error_patterns=["curl: .+"],
-            verbose=False,
-            assert_exit_code=False,
-        )
+    repeat_until_success(
+        f"curl --fail {url}{path}",
+        job_id,
+        expect_patterns=["<html.*>"],
+        error_patterns=["curl: .+"],
+        verbose=False,
+        assert_exit_code=False,
+    )
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):

@@ -20,7 +20,7 @@ from tests.e2e.configuration import (
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.utils import log_errors_and_finalize, timeout
+from tests.e2e.helpers.utils import log_errors_and_finalize
 
 
 class ExitCodeException(Exception):
@@ -96,14 +96,14 @@ def _run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
-    with timeout(timeout_s):
-        out = _run_once(
-            cmd,
-            expect_patterns,
-            verbose=verbose,
-            detect_new_jobs=detect_new_jobs,
-            assert_exit_code=assert_exit_code,
-        )
+    out = _run_once(
+        cmd,
+        expect_patterns,
+        timeout_s=timeout_s,
+        verbose=verbose,
+        detect_new_jobs=detect_new_jobs,
+        assert_exit_code=assert_exit_code,
+    )
     if skip_error_patterns_check:
         all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
         errors = detect_errors(out, all_error_patterns, verbose=verbose)
@@ -116,6 +116,7 @@ def _run_once(
     cmd: str,
     expect_patterns: t.Sequence[str] = (),
     *,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
@@ -168,7 +169,7 @@ def _run_once(
 
     child = pexpect.spawn(
         cmd,
-        timeout=DEFAULT_TIMEOUT_LONG,
+        timeout=timeout_s,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
@@ -288,20 +289,23 @@ def repeat_until_success(
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:
+    time_start = time.time()
     if not any(verb in cmd for verb in VERBS_SECRET):
         log_msg(f"Running command until success: `{cmd}`")
-    with timeout(timeout_total_s):
-        while True:
-            job_status = get_job_status(job_id)
-            if job_status in JOB_STATUSES_TERMINATED:
-                raise RuntimeError(
-                    f"Job {job_id} has terminated with status {job_status}"
-                )
-            try:
-                return run(cmd, **kwargs)
-            except RuntimeError:
-                pass
-            time.sleep(interval_s)
+    while True:
+        job_status = get_job_status(job_id)
+        if job_status in JOB_STATUSES_TERMINATED:
+            raise RuntimeError(f"Job {job_id} has terminated with status {job_status}")
+        try:
+            return run(cmd, **kwargs)
+        except RuntimeError as e:
+            log_msg(f"Error while running '{cmd}': {e}")
+        elapsed = time.time() - time_start
+        if elapsed >= timeout_total_s:
+            msg = f"Timeout error while repeating '{cmd}': elapsed {elapsed:.3}"
+            log_msg(msg, logger=LOGGER.error)
+            raise RuntimeError(msg)
+        time.sleep(interval_s)
 
 
 # == execution helpers ==
@@ -369,13 +373,19 @@ def wait_job_change_status_to(
     delay_s: int = 1,
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status {target_status}...")
-    with timeout(timeout_s):
+    time_start = time.time()
+    while True:
         status = get_job_status(job_id)
         if status == target_status:
             log_msg("Done.")
             return
         if status in JOB_STATUSES_TERMINATED:
             raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
+        elapsed = time.time() - time_start
+        if elapsed >= timeout_s:
+            msg = f"Timeout error while getting status {job_id}: elapsed {elapsed:.3}"
+            log_msg(msg, logger=LOGGER.error)
+            raise RuntimeError(msg)
         time.sleep(delay_s)
 
 
