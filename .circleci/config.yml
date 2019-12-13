@@ -103,9 +103,9 @@ workflows:
             branches:
               only:
                 - master
-  jobs:
-      - test_dev
-      - test_staging
+    jobs:
+        - test_dev
+        - test_staging
 
   hourly:
     triggers:
