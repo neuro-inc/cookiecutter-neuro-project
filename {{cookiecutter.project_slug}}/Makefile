@@ -188,7 +188,6 @@ develop: upload-code upload-config upload-notebooks  ### Run a development job
 		--env JOB_LIFETIME=1d \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
-		@echo -e "[+] Job ${DEVELOP_JOB} successfully started!\n[!] PLEASE DON'T FORGET TO KILL it via 'make kill-develop'\n"
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job

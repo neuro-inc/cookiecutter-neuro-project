@@ -86,15 +86,13 @@ Alternatively, set this value directly in `Makefile`.
 Check that Neuro has found and this file:
 ```
 $ make gcloud-check-auth
-[+] Found Google Cloud service account authentication file: 'config/key.json'
+Using variable: GCP_SECRET_FILE='key.json'
+Google Cloud will be authenticated via service account key file: '/path/to/project/config/key.json'
 ```
 
 Great! Now, if you run a development job, Neuro will authenticate Google Cloud SDK via your secret file:
 ```
 $ make develop
-...
-Activated service account credentials for: [project-id@service-account-name.iam.gserviceaccount.com]
-[+] Google Cloud SDK configured for job develop-name-of-the-project
 ```
 
 Then, you can connect to the development job and use `gsutil` or `gcloud` there!

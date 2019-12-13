@@ -530,16 +530,39 @@ def test_make_develop_connect_gsutil(decrypt_gcp_key: Any) -> None:
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _test_make_develop_connect_gsutil() -> None:
     cmd = "make develop  PRESET=cpu-small"
-    with measure_time(cmd):
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_train_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_train_connect_gsutil() -> None:
+    cmd = "make develop  PRESET=cpu-small TRAINING_COMMAND='sleep 1h'"
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_jupyter_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_jupyter_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_jupyter_connect_gsutil() -> None:
+    cmd = "make jupyter  PRESET=cpu-small"
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+def _test_make_run_job_connect_gsutil(run_job_cmd: str) -> None:
+    with measure_time(run_job_cmd):
         out = run(
-            cmd,
+            run_job_cmd,
             verbose=True,
-            expect_patterns=[
-                r"Status:[^\n]+running",
-                r"Job [^\n]+ successfully started!",
-                "Activated service account credentials",
-            ],
+            expect_patterns=[r"Status:[^\n]+running"],
             timeout_s=TIMEOUT_NEURO_RUN_CPU,
+            assert_exit_code=False,
         )
         job_id = parse_job_id(out)
 
