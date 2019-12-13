@@ -434,7 +434,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
         repeat_until_success(
             f"curl --fail {url}{path}",
             job_id,
-            expect_patterns=["<html.*>"],
+            expect_patterns=[r"<[^>]*html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,
             assert_exit_code=False,
