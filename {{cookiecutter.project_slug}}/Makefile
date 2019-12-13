@@ -53,7 +53,6 @@ GCP_SECRET_FILE?=neuro-job-key.json
 
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
 GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
-GCP_AUTH_COMMAND=gcloud auth activate-service-account --key-file "${GCP_SECRET_PATH_ENV}"
 
 ##### COMMANDS #####
 
@@ -61,16 +60,14 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
 
-ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
-	GCP_AUTH_EXISTS=true
-else
-	GCP_AUTH_EXISTS=
-endif
 
-ifdef GCP_AUTH_EXISTS
-    OPTION_GCP_CREDENTIALS=--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} --env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
+# Check if GCP authentication file exists, then set up variables
+ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
+	OPTION_GCP_CREDENTIALS=\
+		--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} \
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
 else
-    OPTION_GCP_CREDENTIALS=
+	OPTION_GCP_CREDENTIALS=
 endif
 
 ##### HELP #####
@@ -163,12 +160,11 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 .PHONY: gcloud-check-auth
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
 	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
-	@test ${GCP_AUTH_EXISTS} \
+	@test "${OPTION_GCP_CREDENTIALS}" \
 		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
-		|| { \
-			echo -e "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
-			false; \
+		|| {	echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+				echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+				false; \
 			}
 
 ##### JOBS #####

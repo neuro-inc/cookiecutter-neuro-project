@@ -478,7 +478,7 @@ def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
         run(
             cmd,
             verbose=True,
-            expect_patterns=[r"Status:[^\n]+running",],
+            expect_patterns=[r"Status:[^\n]+running"],
             timeout_s=neuro_run_timeout,
         )
 
