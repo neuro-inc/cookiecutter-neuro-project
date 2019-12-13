@@ -478,11 +478,7 @@ def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
         run(
             cmd,
             verbose=True,
-            expect_patterns=[
-                r"Status:[^\n]+running",
-                r"Job [^\n]+ successfully started!",
-                "PLEASE DON'T FORGET TO KILL it via 'make kill-develop'",
-            ],
+            expect_patterns=[r"Status:[^\n]+running",],
             timeout_s=neuro_run_timeout,
         )
 
