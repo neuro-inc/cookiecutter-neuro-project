@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    GCP_KEY_JSON,
     JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
@@ -98,6 +99,35 @@ def test_make_setup_required() -> None:
     run(
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_gcloud_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Google Cloud service account key file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=[
+            "Google Cloud will be authenticated via service account key file"
+        ],
         assert_exit_code=False,
     )
 
@@ -265,7 +295,7 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_config() -> None:
+def test_make_upload_config(decrypt_gcp_key: None) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
@@ -487,6 +517,80 @@ def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
     cmd = "make kill-develop"
     with measure_time(cmd):
         run(cmd, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_develop_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_develop_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_develop_connect_gsutil() -> None:
+    cmd = "make develop  PRESET=cpu-small"
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_train_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_train_connect_gsutil() -> None:
+    cmd = "make develop  PRESET=cpu-small TRAINING_COMMAND='sleep 1h'"
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_jupyter_connect_gsutil(decrypt_gcp_key: Any) -> None:
+    _test_make_jupyter_connect_gsutil()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_make_jupyter_connect_gsutil() -> None:
+    cmd = "make jupyter  PRESET=cpu-small"
+    _test_make_run_job_connect_gsutil(cmd)
+
+
+def _test_make_run_job_connect_gsutil(run_job_cmd: str) -> None:
+    with measure_time(run_job_cmd):
+        out = run(
+            run_job_cmd,
+            verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
+            timeout_s=TIMEOUT_NEURO_RUN_CPU,
+            assert_exit_code=False,
+        )
+        job_id = parse_job_id(out)
+
+    bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
+    cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Hello world!"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+        )
+
+    py_cmd_list = [
+        "from google.cloud import storage",
+        'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
+        'text = bucket.get_blob("hello.txt").download_as_string()',
+        "print(text)",
+        'assert "Hello world" in text.decode()',
+    ]
+    py_cmd = "; ".join(py_cmd_list)
+    py_cmd = py_cmd.replace('"', r"\"")
+    cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=["Hello world!"],
+            error_patterns=["AssertionError"],
+            timeout_s=TIMEOUT_NEURO_EXEC,
+        )
 
 
 @pytest.mark.run(order=STEP_KILL)

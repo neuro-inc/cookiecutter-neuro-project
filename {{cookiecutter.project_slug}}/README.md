@@ -53,15 +53,59 @@ Follow the instructions below to set up the environment and start Jupyter develo
 
 ## Data
 
-### Uploading via Web UI
+### Uploading to the Storage via Web UI
 
-On local machine run `make filebrowser` and open job's URL on your mobile device or desktop.
+On local machine, run `make filebrowser` and open job's URL on your mobile device or desktop.
 Through a simple file explorer interface, you can upload test images and perform file operations.
 
-### Uploading via CLI
+### Uploading to the Storage via CLI
 
-On local machine run `make upload-data`. This command pushes local files stored in `./data`
+On local machine, run `make upload-data`. This command pushes local files stored in `./data`
 into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development environment's `/project/data`.
+
+### Uploading to the Job from Google Cloud
+
+Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
+
+Neuro Project Template provides a fast way to authenticate Google Cloud SDK to work with Google Service Account (see instructions on setting up your Google Project and Google Service Account and creating the secret key for this Service Account in [documentation](https://neu.ro/docs/google_cloud_storage)).
+
+Download service account key to the local config directory `./config/` and set appropriate permissions on it:
+
+```bash
+$ SA_NAME="neuro-job"
+$ gcloud iam service-accounts keys create ./config/$SA_NAME-key.json \
+  --iam-account $SA_NAME@$PROJECT_ID.iam.gserviceaccount.com
+$ chmod 600 ./config/$SA_NAME-key.json
+```
+
+Inform Neuro about this file:
+
+```bash
+$ export GCP_SECRET_FILE=$SA_NAME-key.json
+```
+
+Alternatively, set this value directly in `Makefile`.
+
+Check that Neuro can access and use this file for authentication:
+
+```bash
+$ make gcloud-check-auth
+Using variable: GCP_SECRET_FILE='neuro-job-key.json'
+Google Cloud will be authenticated via service account key file: '/path/to/project/config/neuro-job-key.json'
+```
+
+Now, if you run a `develop`, `train`, or `jupyter` job, Neuro will authenticate Google Cloud SDK via your secret file, so you will be able to use `gsutil` or `gcloud` there:
+
+```bash
+$ make develop
+...
+$ make connect-develop
+...
+root@job-56e9b297-5034-4492-ba1a-2284b8dcd613:/# gsutil cat gs://my-neuro-bucket-42/hello.txt
+Hello World
+```
+
+Also, environment variable `GOOGLE_APPLICATION_CREDENTIALS` is set up for these jobs, so that you an access your data on Google Cloud Storage via Python API (see example in [Google Cloud Storage documentation](https://cloud.google.com/storage/docs/reference/libraries)).
 
 ## Customization
 
