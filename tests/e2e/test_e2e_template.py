@@ -147,7 +147,8 @@ def _run_make_setup_test() -> None:
         r"Pushing image .+ => .+",
         r"image://.*",
         # neuro kill
-        r"neuro[\w\- ]* kill [\w\- ]+\r\njob\-[^\n]+",
+        r"neuro[\w\- ]* kill ",
+        r"job\-[^\n]+",
     ]
 
     make_cmd = "make setup"
@@ -423,7 +424,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
         repeat_until_success(
             f"curl --fail {url}{path}",
             job_id,
-            expect_patterns=["<html.*>"],
+            expect_patterns=[r"<[^>]*html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,
             assert_exit_code=False,
