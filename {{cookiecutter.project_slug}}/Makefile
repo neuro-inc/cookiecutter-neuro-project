@@ -162,10 +162,10 @@ gcloud-check-auth:  ### Check if the file containing Google Cloud service accoun
 	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
 	@test "${OPTION_GCP_CREDENTIALS}" \
 		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
-		|| {	echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
-				echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
-				false; \
-			}
+		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; \
+		}
 
 ##### JOBS #####
 
