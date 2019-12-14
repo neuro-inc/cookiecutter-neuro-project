@@ -33,6 +33,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
+    WANDB_KEY_FILE,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.runners import run
@@ -269,3 +270,13 @@ def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
 @pytest.fixture(autouse=True, scope="function")
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
+
+
+@pytest.fixture(autouse=True)
+def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
+
+
+@pytest.fixture(autouse=True, scope="function")
+def generate_wandb_key() -> t.Iterator[None]:
+    yield from _decrypt_key(WANDB_KEY_FILE)

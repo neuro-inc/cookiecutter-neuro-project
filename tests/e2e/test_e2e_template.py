@@ -47,6 +47,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
+    WANDB_KEY_FILE,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
@@ -128,6 +129,33 @@ def test_make_gcloud_check_auth_success() -> None:
         expect_patterns=[
             "Google Cloud will be authenticated via service account key file"
         ],
+        assert_exit_code=True,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_wandb_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make wandb-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Weights & Biases key file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_wandb_check_auth_success(generate_wandb_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make wandb-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
         assert_exit_code=True,
     )
 
