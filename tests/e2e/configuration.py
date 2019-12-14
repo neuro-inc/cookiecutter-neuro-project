@@ -82,14 +82,14 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
-GCP_KEY_JSON = "gcp-key.json"
-GCP_KEY_JSON_ENC = "gcp-key.json.enc"
+GCP_KEY_FILE = "gcp-key.json"
+SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
-PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_JSON}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 
