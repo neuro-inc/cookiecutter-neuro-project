@@ -353,9 +353,7 @@ def neuro_ls(path: str) -> t.Set[str]:
     return result
 
 
-def neuro_rm_dir(
-    path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG
-) -> None:
+def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
     log_msg(f"Deleting remote directory `{path}`")
     run(f"neuro rm -r {path}", timeout_s=timeout_s)
     log_msg("Done.")
