@@ -122,7 +122,7 @@ you need to change the following line to point to its location. For example:
 
 `DATA_DIR_STORAGE?=storage:datasets/cifar10`
 
-### Model development job
+### Run development job
 
 If you want to debug your code on GPU, you can run a sleeping job via `make develop`, then connect to its bash over SSH
 via `make connect-develop` (type `exit` or `^D` to close SSH connection), see its logs via `make logs-develop`, or 
@@ -130,6 +130,37 @@ forward port 22 from the job to localhost via `make port-forward-develop` to use
 
 Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
 
+### Weight & Biases integration
+
+Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb.com), an experiment tracking tool for deep learning.
+The instructions look similar to ones for Google Cloud integration above. 
+First, you need to [register your own W&B account](https://app.wandb.ai/login?signup=true). 
+Then, find your API key on [W&B's settings page](https://app.wandb.ai/settings) (section "API keys"),
+save it to a file in local directory `./config/`, protect by setting appropriate permissions 
+and check that Neuro can access and use this file for authentication:
+
+```
+$ export WANDB_SECRET_FILE=wandb-key.txt
+$ echo "cf23df2207d99a74fbe169e3eba035e633b65d94" > config/$WANDB_SECRET_FILE
+$ chmod 600 config/$WANDB_SECRET_FILE
+$ make wandb-check-auth 
+Using variable: WANDB_SECRET_FILE=wandb-token.txt
+Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-key.txt'
+```
+
+Now, if you run `develop`, `train`, or `jupyter` job, Neuro will authenticate W&B via your API key, 
+so that you will be able to use `wandb` there:
+
+```bash
+$ make develop
+...
+$ make connect-develop
+...
+root@job-fe752aaf-5f76-4ba8-a477-0809632c4a59:/# wandb status
+Logged in? True
+...
+```
+ 
 
 ### Training machine type
 
