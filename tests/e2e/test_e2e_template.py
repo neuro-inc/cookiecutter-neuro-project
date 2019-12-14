@@ -432,8 +432,12 @@ def _test_make_run_tensorboard() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-@try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
 def test_make_run_filebrowser(env_var_no_http_auth: None) -> None:
+    _test_make_run_filebrowser()
+
+
+@try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
+def _test_make_run_filebrowser() -> None:
     _test_make_run_something_useful(
         "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
     )
