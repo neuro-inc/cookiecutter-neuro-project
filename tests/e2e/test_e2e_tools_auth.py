@@ -140,16 +140,17 @@ def _test_make_run_job_connect_wandb(run_job_cmd: str) -> None:
     py_cmd_list = [
         "import wandb",
         "api = wandb.Api()",
-        "api.runs('art-em/cookiecutter-neuro-project')",
+        "runs = api.runs('art-em/cookiecutter-neuro-project')",
+        "print(runs)",
     ]
     py_cmd = "; ".join(py_cmd_list)
     py_cmd = py_cmd.replace('"', r"\"")
-    cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
+    cmd = f'neuro exec -T --no-key-check {job_id} "python -c "{py_cmd}""'
     with measure_time(cmd):
         tests.e2e.helpers.runners.run(
             cmd,
             verbose=True,
             expect_patterns=["<Runs art-em/cookiecutter-neuro-project"],
-            error_patterns=["TypeError"],
+            error_patterns=["TypeError", "Permission denied"],
             timeout_s=TIMEOUT_NEURO_EXEC,
         )

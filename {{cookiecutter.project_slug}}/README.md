@@ -161,9 +161,12 @@ Logged in? True
 ...
 ```
 
-When you start any job derived from the base environment, Neuro Platform checks if the env var `NM_WANDB_TOKEN_PATH`
+So now, you can do `import wandb; api = wandb.Api()` in your Python code and use W&B! 
+
+Technically, authentication is being done as follows: 
+when you start any job derived from the base environment, Neuro Platform checks if the env var `NM_WANDB_TOKEN_PATH`
 is set and stores path to existing file, and then it runs the command `wandb login $(cat $NM_WANDB_TOKEN_PATH)`
-before the job starts. 
+before the job starts.
  
 Please find instructions on using Weights & Biases in your code in [W&B documentation](https://docs.wandb.com/library/api/examples).
 You can also find [W&B example projects](https://github.com/wandb/examples) or an exmaple of Neuro Template-base [ML Recipe that uses W&B as a part of workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention).
