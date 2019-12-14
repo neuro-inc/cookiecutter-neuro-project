@@ -11,8 +11,7 @@ from cryptography.fernet import Fernet
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
-    GCP_KEY_JSON,
-    GCP_KEY_JSON_ENC,
+    GCP_KEY_FILE,
     LOCAL_CLEANUP_STORAGE_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
@@ -29,6 +28,7 @@ from tests.e2e.configuration import (
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
+    SECRET_FILE_ENC_PATTERN,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
@@ -39,6 +39,16 @@ from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
 
+
+STEP_PRE_SETUP = 0
+STEP_SETUP = 3
+STEP_POST_SETUP = 7
+STEP_UPLOAD = 10
+STEP_DOWNLOAD = 20
+STEP_RUN = 30
+STEP_KILL = 90
+STEP_CLEANUP = 100
+STEP_LOCAL = 200
 
 # == pytest config ==
 
@@ -212,6 +222,16 @@ def neuro_login(
     yield
 
 
+@pytest.fixture()
+def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("PRESET", "cpu-small")
+
+
+@pytest.fixture()
+def env_var_no_http_auth(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("HTTP_AUTH", "--no-http-auth")
+
+
 def _decrypt_file(file_enc: Path, output: Path) -> None:
     log_msg(f"Decrypting `{file_enc}` to `{output}`")
     assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"
@@ -223,17 +243,12 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
             f_dec.write(dec)
 
 
-@pytest.fixture(autouse=True)
-def set_env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_JSON)
-
-
-@pytest.fixture()
-def decrypt_gcp_key() -> t.Iterator[None]:
-    key = Path(MK_CONFIG_DIR) / GCP_KEY_JSON
+def _decrypt_key(key_name: str) -> t.Iterator[None]:
+    key = Path(MK_CONFIG_DIR) / key_name
     try:
         if not key.exists():
-            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / GCP_KEY_JSON_ENC
+            key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / key_enc_name
             _decrypt_file(key_enc, key)
         yield
     finally:
@@ -244,3 +259,13 @@ def decrypt_gcp_key() -> t.Iterator[None]:
                 log_msg(
                     f"Could not delete file {key.absolute()}: {e}", logger=LOGGER.warn
                 )
+
+
+@pytest.fixture(autouse=True)
+def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
+
+
+@pytest.fixture(autouse=True, scope="function")
+def decrypt_gcp_key() -> t.Iterator[None]:
+    yield from _decrypt_key(GCP_KEY_FILE)

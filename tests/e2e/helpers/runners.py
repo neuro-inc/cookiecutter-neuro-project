@@ -344,7 +344,6 @@ def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
         timeout_s=TIMEOUT_NEURO_LS,
-        verbose=True,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
@@ -355,10 +354,10 @@ def neuro_ls(path: str) -> t.Set[str]:
 
 
 def neuro_rm_dir(
-    path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG, verbose: bool = False
+    path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG
 ) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
+    run(f"neuro rm -r {path}", timeout_s=timeout_s)
     log_msg("Done.")
 
 
