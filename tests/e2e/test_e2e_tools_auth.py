@@ -130,14 +130,11 @@ def _test_make_run_job_connect_wandb(run_job_cmd: str) -> None:
         )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
-    bash_cmd = "wandb status | grep -e 'Logged in.* True'"
-    cmd = f"neuro exec -T --no-key-check {job_id} bash -c ''{bash_cmd}''"
+    bash_cmd = 'bash -c "wandb status | grep -e "Logged in.* True""'
+    cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
     with measure_time(cmd):
         tests.e2e.helpers.runners.run(
-            cmd,
-            verbose=True,
-            expect_patterns=["Hello world!"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
+            cmd, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC, assert_exit_code=True
         )
 
     py_cmd_list = [
