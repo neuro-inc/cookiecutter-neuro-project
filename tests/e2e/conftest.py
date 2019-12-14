@@ -240,7 +240,6 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
         with output.open(mode="wb") as f_dec:
             fernet = Fernet(os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"])
             dec = fernet.decrypt(f_enc.read())
-            assert "cookiecutter-e2e" in dec.decode(), "could not decrypt file"
             f_dec.write(dec)
 
 
