@@ -48,9 +48,7 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 
 LOCAL_PORT?=2211
 
-
-# Weights & Biases ingegration settings:
-WANDB_SECRET_FILE?=wandb-token.txt
+##### SECRETS ######
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json

@@ -130,11 +130,11 @@ forward port 22 from the job to localhost via `make port-forward-develop` to use
 
 Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
 
-### Weight & Biases integration
+### Weights & Biases integration
 
 Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb.com), an experiment tracking tool for deep learning.
 The instructions look similar to ones for Google Cloud integration above. 
-First, you need to [register your own W&B account](https://app.wandb.ai/login?signup=true). 
+First, you need to [register your W&B account](https://app.wandb.ai/login?signup=true). 
 Then, find your API key on [W&B's settings page](https://app.wandb.ai/settings) (section "API keys"),
 save it to a file in local directory `./config/`, protect by setting appropriate permissions 
 and check that Neuro can access and use this file for authentication:
@@ -161,7 +161,7 @@ Logged in? True
 ...
 ```
 
-So now, you can do `import wandb; api = wandb.Api()` in your Python code and use W&B! 
+So now, you can do `import wandb; api = wandb.Api()` in your Python code and use W&B.
 
 Technically, authentication is being done as follows: 
 when you start any job derived from the base environment, Neuro Platform checks if the env var `NM_WANDB_TOKEN_PATH`
@@ -169,8 +169,8 @@ is set and stores path to existing file, and then it runs the command `wandb log
 before the job starts.
  
 Please find instructions on using Weights & Biases in your code in [W&B documentation](https://docs.wandb.com/library/api/examples).
-You can also find [W&B example projects](https://github.com/wandb/examples) or an exmaple of Neuro Template-base [ML Recipe that uses W&B as a part of workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention).
- 
+You can also find [W&B example projects](https://github.com/wandb/examples) or an example of Neuro Project Template-based 
+[ML Recipe that uses W&B as a part of the workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention). 
 
 ### Training machine type
 
