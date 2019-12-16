@@ -52,9 +52,13 @@ LOCAL_PORT?=2211
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
+GCP_PROJECT_ID?=
+GCP_SERVICE_ACCOUNT_NAME?=
+GCP_BUCKET_NAME?=
 
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
 GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
@@ -73,7 +77,8 @@ NEURO?=neuro
 ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
 	OPTION_GCP_CREDENTIALS=\
 		--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} \
-		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV} \
+		$(foreach var,$(shell make gcloud-env), --env $(var))
 else
 	OPTION_GCP_CREDENTIALS=
 endif
@@ -176,10 +181,96 @@ clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, 
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
 	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
 	@test "${OPTION_GCP_CREDENTIALS}" \
-		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
+		&& { echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+			 echo "--"; \
+			 make --silent gcloud-env; \
+			 echo "--"; } \
 		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
 			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
 			false; }
+
+.PHONY: gcloud-setup
+gcloud-setup:   ### Set up Google Cloud environment to work with Neuro Platform
+	@echo "Google Cloud configuration:"
+	@echo "--"
+	@make --silent gcloud-env
+	@echo "--"
+	@test "${GCP_PROJECT_ID}" || { echo "ERROR: env var 'GCP_PROJECT_ID' is not set"; false; }
+	@test "${GCP_SERVICE_ACCOUNT_NAME}" || { echo "ERROR: env var 'GCP_SERVICE_ACCOUNT_NAME' is not set"; false; }
+	@test "${GCP_BUCKET_NAME}" || { echo "ERROR: env var 'GCP_BUCKET_NAME' is not set"; false; }
+	# Checking that Google Cloud SDK is installed...
+	@gcloud --version >/dev/null && gsutil --version >/dev/null \
+		&& echo "OK" \
+		|| { echo "Please install Google Cloud SDK (see https://cloud.google.com/sdk/install)"; false; }
+	# Checking that Google Project GCP_PROJECT_ID="${GCP_PROJECT_ID}" exists...
+	@gcloud projects describe ${GCP_PROJECT_ID} >/dev/null \
+		&& echo "OK" \
+		|| { echo -e "Google project GCP_PROJECT_ID=${GCP_PROJECT_ID} does not exist.\nPlease run 'gcloud projects create ${GCP_PROJECT_ID}'"; false; }
+	# Checking that gcloud is set up to use Google Project GCP_PROJECT_ID"${GCP_PROJECT_ID}" by default...
+	@[ `gcloud config list --format 'value(core.project)'` == ${GCP_PROJECT_ID} ] \
+		&& echo "OK" \
+		|| { echo -e "Google project GCP_PROJECT_ID=${GCP_PROJECT_ID} is not default.\nPlease run 'gcloud config set project ${GCP_PROJECT_ID}'"; false; }
+	# Checking that Google Service Account GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}" exists...
+	@gcloud iam service-accounts describe ${GCP_SERVICE_ACCOUNT} >/dev/null \
+		&& echo "OK" \
+		|| { echo -e "Could not find Google service account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT}.\nPlease run 'gcloud iam service-accounts create ${GCP_SERVICE_ACCOUNT} --description \"Neuro Platform Job Service Account for Google Project '${GCP_PROJECT_ID}'\" --display-name \"Neuro Platform Job for '${GCP_PROJECT_ID}'\"'"; false; }
+	# Checking that Bucket GCP_BUCKET_NAME="${GCP_BUCKET_NAME}" exists...
+	@gsutil ls gs://${GCP_BUCKET_NAME}/ >/dev/null \
+		&& echo "OK" \
+		|| { echo -e "Bucket GCP_BUCKET_NAME=${GCP_BUCKET_NAME} does not exist.\nPlease run 'gsutil mb gs://${GCP_BUCKET_NAME}'"; false; }
+	# Checking that Service Account GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}" is an 'objectAdmin' of Bucket GCP_BUCKET_NAME="${GCP_BUCKET_NAME}"...
+	@gsutil iam get gs://${GCP_BUCKET_NAME} | jq --exit-status '.bindings | map(select(.role == "roles/storage.objectAdmin")) | .[].members[] | contains("${GCP_SERVICE_ACCOUNT}")' >/dev/null \
+		&& echo "OK" \
+		|| { echo -e "Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} cannot manage Bucket GCP_BUCKET_NAME=${GCP_BUCKET_NAME}.\nPlease run 'gsutil iam ch serviceAccount:${GCP_SERVICE_ACCOUNT}:roles/storage.objectAdmin gs://r${GCP_BUCKET_NAME}'"; false; }
+	# Downloading authentication file for Service Account GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT} to local directory "./${CONFIG_DIR}"...
+	@[ ! -f ${GCP_SECRET_PATH_LOCAL} ] \
+		&& { gcloud iam service-accounts keys create ./${GCP_SECRET_PATH_LOCAL} --iam-account ${GCP_SERVICE_ACCOUNT} \
+			|| echo "Please note: maximum 9 keys are allowed (see 'make gcloud-list-keys' for cleanup instructions)"; } \
+		|| echo "WARNING: File ./${GCP_SECRET_PATH_LOCAL} already exists, skipping"
+	# Setting restricted permissions on the secret file "${GCP_SECRET_PATH_LOCAL}"...
+	@chmod 600 ./${GCP_SECRET_PATH_LOCAL} \
+		&& echo "OK"
+	@echo "Google Cloud environment successfully configured!"
+	@echo 'Please run "export $$(make gcloud-env)" to set up environment variables locally (will be already set up in the development job)'
+
+.PHONY: _check_gcloud_setup
+_check_gcloud_setup:
+	@test ${OPTION_GCP_CREDENTIALS} || { echo "Please run 'make gcloud-setup' first"; false; }
+
+.PHONY: _gcloud_require_bucket
+_gcloud_require_bucket:
+	@test $${GCP_BUCKET_NAME} || { echo 'Please run "export $$(make gcloud-env)" first'; false; }
+
+.PHONY: gcloud-list-keys
+gcloud-list-keys:   ### List keys used by Google Service Account ""${GCP_SERVICE_ACCOUNT}""
+	gcloud iam service-accounts keys list --iam-account ${GCP_SERVICE_ACCOUNT}
+	@echo "Run 'gcloud iam service-accounts keys delete --iam-account ${GCP_SERVICE_ACCOUNT} {KEY_ID}' to delete unnecessary keys."
+
+.PHONY: gcloud-clean-auth
+gcloud-clean-auth:   ### Removes secret file used to authenticate Google Cloud SDK
+	rm ${GCP_SECRET_PATH_LOCAL}
+
+.PHONY:  gcloud-env
+gcloud-env:  ### Print environment variables that store Google Cloud configuration (run "export `make gcloud-env`" to apply)
+	@echo GCP_PROJECT_ID="${GCP_PROJECT_ID}"
+	@echo GCP_SERVICE_ACCOUNT_NAME="${GCP_SERVICE_ACCOUNT_NAME}"
+ifdef GCP_SERVICE_ACCOUNT_NAME
+	@echo GCP_SERVICE_ACCOUNT="${GCP_SERVICE_ACCOUNT}"
+endif
+	@echo GCP_BUCKET_NAME="${GCP_BUCKET_NAME}"
+
+.PHONY:  gcloud-ls
+gcloud-ls: _check_gcloud_setup _gcloud_require_bucket  ### TBD
+	gsutil ls $${GCP_BUCKET_NAME}
+
+.PHONY:  gcloud-upload-data
+gcloud-upload-data: _check_gcloud_setup _gcloud_require_bucket  ### TBD
+	gsutil -m cp -r ${DATA_DIR}/ $${GCP_BUCKET_NAME}
+
+.PHONY:  gcloud-download-data
+gcloud-download-data: _check_gcloud_setup _gcloud_require_bucket  ### TBD
+	gsutil -m cp -r $${GCP_BUCKET_NAME}/${DATA_DIR} .
+
 
 ##### WandB Integration #####
 

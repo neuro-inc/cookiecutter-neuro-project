@@ -107,6 +107,51 @@ Hello World
 
 Also, environment variable `GOOGLE_APPLICATION_CREDENTIALS` is set up for these jobs, so that you an access your data on Google Cloud Storage via Python API (see example in [Google Cloud Storage documentation](https://cloud.google.com/storage/docs/reference/libraries)).
 
+### Uploading to the Job from Google Cloud
+
+Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
+Neuro Project Template provides a fast way to authenticate Google Cloud SDK to work with Google Service Account 
+(see instructions on setting up your Google Project and Google Service Account and creating the secret key for
+this Service Account in [documentation](https://neu.ro/docs/google_cloud_storage)).
+
+Once you have created the key file via command `gcloud iam service-accounts keys create key.json ...`,
+put this file to the local config directory `./config/` and set appropriate permissions on it:
+
+```
+chmod 600 ./config/key.json
+```
+
+Then, inform Neuro about this file:
+```
+export GCP_SECRET_FILE=key.json
+```
+Alternatively, set this value directly in `Makefile`.
+
+Check that Neuro has found and this file:
+```
+$ make gcloud-check-auth
+[+] Found Google Cloud service account authentication file: 'config/key.json'
+```
+
+Great! Now, if you run a development job, Neuro will authenticate Google Cloud SDK via your secret file:
+```
+$ make develop
+...
+Activated service account credentials for: [project-id@service-account-name.iam.gserviceaccount.com]
+[+] Google Cloud SDK configured for job develop-name-of-the-project
+```
+
+Then, you can connect to the development job and use `gsutil` or `gcloud` there!
+```
+$ make connect-develop
+...
+root@job-56e9b297-5034-4492-ba1a-2284b8dcd613:/# gsutil cat gs://my-neuro-bucket-42/hello.txt
+Hello World
+```
+
+Also, development job has environment variable `GOOGLE_APPLICATION_CREDENTIALS` set up, which means that you an access your data on Google Cloud Storage via Python API (see usage example on [Google Cloud Storage documentation](https://cloud.google.com/storage/docs/reference/libraries)).
+
+
 ## Customization
 
 Several variables in `Makefile` are intended to be modified according to the project specifics. 
