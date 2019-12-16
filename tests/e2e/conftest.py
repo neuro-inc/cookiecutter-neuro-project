@@ -33,6 +33,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
+    WANDB_KEY_FILE,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.runners import run
@@ -239,7 +240,6 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
         with output.open(mode="wb") as f_dec:
             fernet = Fernet(os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"])
             dec = fernet.decrypt(f_enc.read())
-            assert "cookiecutter-e2e" in dec.decode(), "could not decrypt file"
             f_dec.write(dec)
 
 
@@ -269,3 +269,13 @@ def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
 @pytest.fixture(autouse=True, scope="function")
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
+
+
+@pytest.fixture(autouse=True)
+def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
+
+
+@pytest.fixture(autouse=True, scope="function")
+def generate_wandb_key() -> t.Iterator[None]:
+    yield from _decrypt_key(WANDB_KEY_FILE)

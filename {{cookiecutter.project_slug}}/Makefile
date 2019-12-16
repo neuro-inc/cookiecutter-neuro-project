@@ -48,11 +48,19 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 
 LOCAL_PORT?=2211
 
+##### SECRETS ######
+
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
 
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
 GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+
+# Weights and Biases integration settings:
+WANDB_SECRET_FILE?=wandb-token.txt
+
+WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
 
 ##### COMMANDS #####
 
@@ -68,6 +76,13 @@ ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
 		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
 else
 	OPTION_GCP_CREDENTIALS=
+endif
+
+# Check if Weights & Biases key file exists, then set up variables
+ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
+	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH=${WANDB_SECRET_PATH_ENV}
+else
+	OPTION_WANDB_CREDENTIALS=
 endif
 
 ##### HELP #####
@@ -166,6 +181,17 @@ gcloud-check-auth:  ### Check if the file containing Google Cloud service accoun
 			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
 			false; }
 
+##### WandB Integration #####
+
+.PHONY: wandb-check-auth
+wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
+	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
+	@test "${OPTION_WANDB_CREDENTIALS}" \
+		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
+
 ##### JOBS #####
 
 .PHONY: develop
@@ -179,6 +205,7 @@ develop: upload-code upload-config upload-notebooks  ### Run a development job
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
 		$(CUSTOM_ENV_NAME) \
@@ -211,6 +238,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -237,6 +265,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
