@@ -47,6 +47,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
+    TIMEOUT_NEURO_RUN_GPU,
     WANDB_KEY_FILE,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
@@ -504,6 +505,38 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
     wait_job_change_status_to(job_id, "succeeded")
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_gpu_available(environment: str) -> None:
+    if environment in ["dev"]:
+        pytest.skip(f"Skipped as GPU is not available on {environment}")
+    _test_gpu_available()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_gpu_available() -> None:
+    cmd = "make develop PRESET=gpu-small"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
+            timeout_s=TIMEOUT_NEURO_RUN_GPU,
+        )
+
+    py_commands = [
+        "import tensorflow as tf; assert tf.test.is_gpu_available()",
+        "import torch; print(torch.randn(2,2).cuda())",
+        "import torch; assert torch.cuda.is_available()",
+    ]
+    for py in py_commands:
+        cmd = (
+            f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
+            f"'python -c \"{py}\"'"
+        )
+        with measure_time(cmd):
+            run(cmd, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC, assert_exit_code=True)
 
 
 @pytest.mark.run(order=STEP_RUN)
