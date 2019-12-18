@@ -93,19 +93,18 @@ workflows:
   main:
     jobs:
       - test_dev
-
       - test_staging:
           filters:
             branches:
               only: master
 
-  nightly:
+  hourly:
     triggers:
       - schedule:
           cron: "0 * * * *"
           filters:
             branches:
               only:
-                - master
+                - release
     jobs:
       - test_staging
