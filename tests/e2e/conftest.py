@@ -266,7 +266,7 @@ def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest.fixture()
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
 
@@ -276,6 +276,6 @@ def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest.fixture()
 def generate_wandb_key() -> t.Iterator[None]:
     yield from _decrypt_key(WANDB_KEY_FILE)

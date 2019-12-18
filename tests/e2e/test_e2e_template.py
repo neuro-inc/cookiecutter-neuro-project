@@ -88,14 +88,12 @@ def test_project_structure() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-@try_except_finally()
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-@try_except_finally()
 def test_make_setup_required() -> None:
     run(
         "make jupyter",
@@ -119,7 +117,7 @@ def test_make_gcloud_check_auth_failure() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_gcloud_check_auth_success() -> None:
+def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
     key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
@@ -280,7 +278,6 @@ def _run_import_code_in_notebooks_test() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_code() -> None:
     assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
@@ -302,7 +299,6 @@ def test_make_upload_code() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_data() -> None:
     assert len(ls_files(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
@@ -325,7 +321,7 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_config() -> None:
+def test_make_upload_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
@@ -347,7 +343,6 @@ def test_make_upload_config() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_notebooks() -> None:
     assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
@@ -369,7 +364,6 @@ def test_make_upload_notebooks() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_all() -> None:
     # just check exit code
     cmd = "make upload-all"
@@ -377,7 +371,6 @@ def test_make_upload_all() -> None:
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
-@try_except_finally()
 def test_make_download_noteboooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -592,7 +585,6 @@ def _test_make_connect_train_kill_train() -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
-@try_except_finally()
 def test_make_kill_all() -> None:
     # just check exit code
     cmd = f"make kill-all"
@@ -601,7 +593,6 @@ def test_make_kill_all() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_code() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
@@ -618,8 +609,7 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
-def test_make_clean_config() -> None:
+def test_make_clean_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 
@@ -635,7 +625,6 @@ def test_make_clean_config() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_data() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
@@ -653,7 +642,6 @@ def test_make_clean_data() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_notebooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -670,7 +658,6 @@ def test_make_clean_notebooks() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_all() -> None:
     # just check exit code
     cmd = "make clean-all"
@@ -678,7 +665,6 @@ def test_make_clean_all() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
-@try_except_finally()
 def test_make_setup_local() -> None:
     # just check exit code
     cmd = "make setup-local"
@@ -693,7 +679,6 @@ def test_make_setup_local() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
-@try_except_finally()
 def test_make_lint() -> None:
     # just check exit code
     cmd = "make lint"
