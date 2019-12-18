@@ -78,7 +78,7 @@ def pytest_addoption(parser: t.Any) -> None:
 def pytest_configure(config: t.Any) -> None:
     # register an additional marker
     config.addinivalue_line(
-        "markers", "skip_if_no_gpu_available(): skip test if no GPU available"
+        "markers", "env(name): mark test to run only on named environment"
     )
 
 
