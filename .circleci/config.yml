@@ -2,7 +2,7 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
+version: 2.1
 
 orbs:
   slack: circleci/slack@3.4.1
@@ -66,7 +66,6 @@ jobs:
           path: tests/e2e/output
           destination: ouptut
           when: always
-
 
   test_staging:
     docker:
