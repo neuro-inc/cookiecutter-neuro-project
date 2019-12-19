@@ -28,7 +28,6 @@ jobs:
             # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
             pip install --upgrade cryptography
             make init
-
       - save_cache: &step_save_cache
           paths:
             - ./venv
@@ -39,19 +38,16 @@ jobs:
           command: |
             . venv/bin/activate
             make lint
-
       - run: &step_unit_tests
           name: run unit tests
           command: |
             . venv/bin/activate
             make test_unit
-
       - run:
           name: run e2e tests
           command: |
             . venv/bin/activate
             make test_e2e_dev
-
       - run: &step_cleanup_e2e
           name: cleanup e2e
           command: |
@@ -93,6 +89,7 @@ workflows:
   main:
     jobs:
       - test_dev
+
       - test_staging:
           filters:
             branches:
@@ -101,21 +98,10 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - test_staging
-
-  hourly:
-    triggers:
-      - schedule:
           cron: "0 * * * *"
           filters:
             branches:
               only:
-                - release
+                - master
     jobs:
       - test_staging
