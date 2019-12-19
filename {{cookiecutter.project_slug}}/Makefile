@@ -166,15 +166,15 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
 .PHONY: upload-results
-upload-results:  ### Upload results directory to the platform storage
+upload-results: _check_setup  ### Upload results directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 .PHONY: download-results
-download-results:  ### Download results directory from the platform storage
+download-results: _check_setup  ### Download results directory from the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
 
 .PHONY: clean-results
-clean-results:  ### Delete results directory from the platform storage
+clean-results: _check_setup  ### Delete results directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
 
 .PHONY: upload-all
