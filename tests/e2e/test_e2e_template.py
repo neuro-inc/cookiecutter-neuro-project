@@ -255,7 +255,7 @@ def _run_import_code_in_notebooks_test() -> None:
     )
     job_id = parse_job_id(out)
 
-    expected_string = "----\r\nHello World!\r\n----"
+    expected_string = "----\r\nYour training script here\r\n----"
 
     out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
