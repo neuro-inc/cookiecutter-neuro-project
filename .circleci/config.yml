@@ -98,10 +98,10 @@ workflows:
             branches:
               only: master
 
-  hourly:
+  nightly:
     triggers:
       - schedule:
-          cron: "0 * * * *"
+          cron: "35 * * * *"
           filters:
             branches:
               only:
