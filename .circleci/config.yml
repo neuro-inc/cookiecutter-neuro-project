@@ -100,7 +100,9 @@ workflows:
       - test_staging:
           filters:
             branches:
-              only: master
+              only:
+                - master
+                - release
 
   nightly:
     triggers:
