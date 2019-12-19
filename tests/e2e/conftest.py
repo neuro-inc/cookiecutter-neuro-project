@@ -39,7 +39,7 @@ from tests.e2e.configuration import (
     WANDB_KEY_FILE,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.runners import run
+from tests.e2e.helpers.runners import ls, run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
 
@@ -198,12 +198,12 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "notebooks", notebooks_dir)
-    assert set(notebooks_dir.iterdir()) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls(notebooks_dir) == PROJECT_NOTEBOOKS_DIR_CONTENT
 
     results_dir = Path(MK_RESULTS_DIR)
     assert results_dir.is_dir()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "results", results_dir)
-    assert set(results_dir.iterdir()) == PROJECT_RESULTS_DIR_CONTENT
+    assert ls(results_dir) == PROJECT_RESULTS_DIR_CONTENT
 
     # Save project directory on storage for further cleanup:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)

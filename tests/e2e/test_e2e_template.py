@@ -73,6 +73,7 @@ from tests.e2e.conftest import (
     STEP_UPLOAD,
 )
 from tests.e2e.helpers.runners import (
+    ls,
     ls_dirs,
     ls_files,
     neuro_ls,
@@ -371,7 +372,7 @@ def test_make_upload_notebooks() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_results() -> None:
-    assert ls_files(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
+    assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -431,7 +432,7 @@ def test_make_download_results() -> None:
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_RESULTS_DIR)],
             # TODO: add upload-specific error patterns
         )
-    assert ls_files(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
+    assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -737,7 +738,7 @@ def test_make_clean_results() -> None:
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert not ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
