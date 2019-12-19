@@ -48,11 +48,42 @@ TRAINING_COMMAND?='echo "Replace this placeholder with a training script executi
 
 LOCAL_PORT?=2211
 
+##### SECRETS ######
+
+# Google Cloud integration settings:
+GCP_SECRET_FILE?=neuro-job-key.json
+
+GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+
+# Weights and Biases integration settings:
+WANDB_SECRET_FILE?=wandb-token.txt
+
+WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+
 ##### COMMANDS #####
 
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
+
+
+# Check if GCP authentication file exists, then set up variables
+ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
+	OPTION_GCP_CREDENTIALS=\
+		--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} \
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
+else
+	OPTION_GCP_CREDENTIALS=
+endif
+
+# Check if Weights & Biases key file exists, then set up variables
+ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
+	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH=${WANDB_SECRET_PATH_ENV}
+else
+	OPTION_WANDB_CREDENTIALS=
+endif
 
 ##### HELP #####
 
@@ -139,17 +170,42 @@ upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and
 .PHONY: clean-all
 clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
 
+##### Google Cloud Integration #####
+
+.PHONY: gcloud-check-auth
+gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
+	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
+	@test "${OPTION_GCP_CREDENTIALS}" \
+		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
+
+##### WandB Integration #####
+
+.PHONY: wandb-check-auth
+wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
+	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
+	@test "${OPTION_WANDB_CREDENTIALS}" \
+		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
+
 ##### JOBS #####
 
 .PHONY: develop
-develop: upload-code upload-notebooks  ### Run a development job
+develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
 		$(CUSTOM_ENV_NAME) \
@@ -181,6 +237,8 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -188,11 +246,11 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-train
-kill-train: _check_setup  ### Terminate the training job
+kill-train:  ### Terminate the training job
 	$(NEURO) kill $(TRAIN_JOB)
 
 .PHONY: connect-train
-connect-train:  ### Connect to the remote shell running on the training job
+connect-train: _check_setup  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-key-check $(TRAIN_JOB) bash
 
 .PHONY: jupyter
@@ -203,8 +261,11 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
+		--detach \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
@@ -214,7 +275,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
 	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
@@ -231,7 +292,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard: _check_setup  ### Terminate the job with TensorBoard
+kill-tensorboard:  ### Terminate the job with TensorBoard
 	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
@@ -248,25 +309,25 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--noauth
 
 .PHONY: kill-filebrowser
-kill-filebrowser: _check_setup  ### Terminate the job with File Browser
+kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
 .PHONY: setup-local
-setup-local: _check_setup  ### Install pip requirements locally
+setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: lint
-lint: _check_setup  ### Run static code analysis locally
+lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 ##### MISC #####
 
 .PHONY: ps
-ps: _check_setup  ### List all running and pending jobs
+ps:  ### List all running and pending jobs
 	$(NEURO) ps

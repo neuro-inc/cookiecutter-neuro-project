@@ -4,7 +4,7 @@
 #
 version: 2
 cache_key: &cache_key
-  v1-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
+  v2-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
 jobs:
   test_dev:
     docker:
@@ -24,6 +24,9 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
+            pip install --upgrade pip certifi
+            # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
+            pip install --upgrade cryptography
             make init
 
       - save_cache: &step_save_cache
@@ -90,7 +93,6 @@ workflows:
   main:
     jobs:
       - test_dev
-
       - test_staging:
           filters:
             branches:
@@ -99,10 +101,21 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "0 * * * *"
+          cron: "0 0 * * *"
           filters:
             branches:
               only:
                 - master
+    jobs:
+      - test_staging
+
+  hourly:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only:
+                - release
     jobs:
       - test_staging

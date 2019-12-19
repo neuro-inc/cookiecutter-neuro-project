@@ -6,10 +6,12 @@ from collections import namedtuple
 from pathlib import Path
 
 import pytest
+from cryptography.fernet import Fernet
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
+    GCP_KEY_FILE,
     LOCAL_CLEANUP_STORAGE_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
@@ -26,16 +28,28 @@ from tests.e2e.configuration import (
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
+    SECRET_FILE_ENC_PATTERN,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
+    WANDB_KEY_FILE,
 )
-from tests.e2e.helpers.logs import log_msg
+from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
 
+
+STEP_PRE_SETUP = 0
+STEP_SETUP = 3
+STEP_POST_SETUP = 7
+STEP_UPLOAD = 10
+STEP_DOWNLOAD = 20
+STEP_RUN = 30
+STEP_KILL = 90
+STEP_CLEANUP = 100
+STEP_LOCAL = 200
 
 # == pytest config ==
 
@@ -124,7 +138,9 @@ def change_directory_to_temp() -> t.Iterator[None]:
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
-    if not EXISTING_PROJECT_SLUG:
+    if EXISTING_PROJECT_SLUG:
+        log_msg(f"Running tests for existing project: {EXISTING_PROJECT_SLUG}")
+    else:
         run(
             f"cookiecutter --no-input --config-file={LOCAL_PROJECT_CONFIG_PATH} "
             f'{LOCAL_ROOT_PATH} project_name="{UNIQUE_PROJECT_NAME}"',
@@ -132,6 +148,7 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
             verbose=False,
         )
     with inside_dir(MK_PROJECT_SLUG):
+        log_msg(f"Working inside test project: {Path().absolute()}")
         yield
 
 
@@ -156,7 +173,9 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
 
-    config_file = Path(MK_CONFIG_DIR) / "test-config"
+    config_dir = Path(MK_CONFIG_DIR)
+    assert config_dir.is_dir() and config_dir.exists()
+    config_file = config_dir / "test-config"
     log_msg(f"Generating `{config_file}`")
     with config_file.open("w") as f:
         f.write("[foo]\nkey=val\n")
@@ -177,7 +196,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir() and notebooks_dir.exists()
-    copy_local_files(LOCAL_TESTS_SAMPLES_PATH, notebooks_dir)
+    copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "notebooks", notebooks_dir)
     assert list(notebooks_dir.iterdir())
 
     # Save project directory on storage for further cleanup:
@@ -205,3 +224,61 @@ def neuro_login(
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
+
+
+@pytest.fixture()
+def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("PRESET", "cpu-small")
+
+
+@pytest.fixture()
+def env_var_no_http_auth(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("HTTP_AUTH", "--no-http-auth")
+
+
+def _decrypt_file(file_enc: Path, output: Path) -> None:
+    log_msg(f"Decrypting `{file_enc}` to `{output}`")
+    assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"
+    with file_enc.open(mode="rb") as f_enc:
+        with output.open(mode="wb") as f_dec:
+            fernet = Fernet(os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"])
+            dec = fernet.decrypt(f_enc.read())
+            f_dec.write(dec)
+
+
+def _decrypt_key(key_name: str) -> t.Iterator[None]:
+    key = Path(MK_CONFIG_DIR) / key_name
+    try:
+        if not key.exists():
+            key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / key_enc_name
+            _decrypt_file(key_enc, key)
+        yield
+    finally:
+        if key.exists():
+            try:
+                key.unlink()
+            except Exception as e:
+                log_msg(
+                    f"Could not delete file {key.absolute()}: {e}", logger=LOGGER.warn
+                )
+
+
+@pytest.fixture(autouse=True)
+def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
+
+
+@pytest.fixture()
+def decrypt_gcp_key() -> t.Iterator[None]:
+    yield from _decrypt_key(GCP_KEY_FILE)
+
+
+@pytest.fixture(autouse=True)
+def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
+
+
+@pytest.fixture()
+def generate_wandb_key() -> t.Iterator[None]:
+    yield from _decrypt_key(WANDB_KEY_FILE)

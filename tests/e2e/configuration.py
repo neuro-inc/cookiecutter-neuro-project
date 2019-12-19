@@ -48,7 +48,7 @@ TIMEOUT_NEURO_PORT_FORWARD = 15
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-EXISTING_PROJECT_SLUG = os.environ.get("EXISTING_PROJECT_SLUG")
+EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
 MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
@@ -80,14 +80,17 @@ MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_CONFIG_DIR, MK_NOTEBOOKS_DIR}
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
+PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+GCP_KEY_FILE = "gcp-key.json"
+WANDB_KEY_FILE = "wandb-fake-key.txt"
+SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
-PROJECT_CONFIG_DIR_CONTENT = {"test-config"}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 
