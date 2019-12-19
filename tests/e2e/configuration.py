@@ -48,7 +48,7 @@ TIMEOUT_NEURO_PORT_FORWARD = 15
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-EXISTING_PROJECT_SLUG = os.environ.get("EXISTING_PROJECT_SLUG")
+EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
 MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
