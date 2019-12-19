@@ -23,11 +23,14 @@ from tests.e2e.configuration import (
     MK_NOTEBOOKS_DIR,
     MK_PROJECT_PATH_STORAGE,
     MK_PROJECT_SLUG,
+    MK_RESULTS_DIR,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
+    PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
+    PROJECT_RESULTS_DIR_CONTENT,
     SECRET_FILE_ENC_PATTERN,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_RUN_CPU,
@@ -45,6 +48,7 @@ STEP_PRE_SETUP = 0
 STEP_SETUP = 3
 STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
+STEP_POST_UPLOAD = 11
 STEP_DOWNLOAD = 20
 STEP_RUN = 30
 STEP_KILL = 90
@@ -171,7 +175,7 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
             f.write("\n" + package)
 
     config_dir = Path(MK_CONFIG_DIR)
-    assert config_dir.is_dir() and config_dir.exists()
+    assert config_dir.is_dir()
     config_file = config_dir / "test-config"
     log_msg(f"Generating `{config_file}`")
     with config_file.open("w") as f:
@@ -179,22 +183,27 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
     data_dir = Path(MK_DATA_DIR)
     log_msg(f"Generating data to `{data_dir}/`")
-    assert data_dir.is_dir() and data_dir.exists()
+    assert data_dir.is_dir()
     for _ in range(N_FILES):
         generate_random_file(data_dir, FILE_SIZE_B)
     assert len(list(data_dir.iterdir())) >= N_FILES
 
     code_dir = Path(MK_CODE_DIR)
     log_msg(f"Generating code files to `{code_dir}/`")
-    assert code_dir.is_dir() and code_dir.exists()
+    assert code_dir.is_dir()
     code_file = code_dir / "main.py"
     code_file.write_text('print("Hello world!")\n')
     assert code_file.exists()
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
-    assert notebooks_dir.is_dir() and notebooks_dir.exists()
+    assert notebooks_dir.is_dir()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "notebooks", notebooks_dir)
-    assert list(notebooks_dir.iterdir())
+    assert set(notebooks_dir.iterdir()) == PROJECT_NOTEBOOKS_DIR_CONTENT
+
+    results_dir = Path(MK_RESULTS_DIR)
+    assert results_dir.is_dir()
+    copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "results", results_dir)
+    assert set(results_dir.iterdir()) == PROJECT_RESULTS_DIR_CONTENT
 
     # Save project directory on storage for further cleanup:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
