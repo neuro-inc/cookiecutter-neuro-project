@@ -419,7 +419,7 @@ def test_make_download_noteboooks() -> None:
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_results() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
 
     # Download:
     make_cmd = "make download-results"
