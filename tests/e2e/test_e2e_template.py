@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
+    GCP_KEY_FILE,
     JOB_ID_PATTERN,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
@@ -46,6 +47,8 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RMDIR_DATA,
     TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
+    TIMEOUT_NEURO_RUN_GPU,
+    WANDB_KEY_FILE,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
@@ -53,8 +56,20 @@ from tests.e2e.configuration import (
     _pattern_copy_file_started,
     _pattern_upload_dir,
 )
+from tests.e2e.conftest import (
+    STEP_CLEANUP,
+    STEP_DOWNLOAD,
+    STEP_KILL,
+    STEP_LOCAL,
+    STEP_POST_SETUP,
+    STEP_PRE_SETUP,
+    STEP_RUN,
+    STEP_SETUP,
+    STEP_UPLOAD,
+)
 from tests.e2e.helpers.runners import (
-    ls,
+    ls_dirs,
+    ls_files,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -67,49 +82,80 @@ from tests.e2e.helpers.runners import (
 from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
 
 
-STEP_PRE_SETUP = 0
-STEP_SETUP = 3
-STEP_POST_SETUP = 7
-STEP_UPLOAD = 10
-STEP_DOWNLOAD = 20
-STEP_RUN = 30
-STEP_KILL = 90
-STEP_CLEANUP = 100
-STEP_LOCAL = 200
-
-
-@try_except_finally()
+@pytest.mark.run(order=STEP_PRE_SETUP)
 def test_project_structure() -> None:
-    dirs = {
-        f.name
-        for f in Path().iterdir()
-        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
-    }
-    assert dirs == MK_PROJECT_DIRS
-    assert ls(".") == {
-        "Makefile",
-        "README.md",
-        ".gitignore",
-        ".setup_done",
-        *MK_PROJECT_FILES,
-    }
+    assert ls_dirs(".") == MK_PROJECT_DIRS
+    assert ls_files(".") == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-@try_except_finally()
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
     assert "setup" in out, f"not found in output: `{out}`"
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-@try_except_finally()
 def test_make_setup_required() -> None:
-    # TODO: one exit code check is fixed (see #191), drop this try-catch
     run(
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
         assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_gcloud_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Google Cloud service account key file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=[
+            "Google Cloud will be authenticated via service account key file"
+        ],
+        assert_exit_code=True,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_wandb_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make wandb-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Weights & Biases key file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_wandb_check_auth_success(generate_wandb_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make wandb-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
+        assert_exit_code=True,
     )
 
 
@@ -158,7 +204,8 @@ def _run_make_setup_test() -> None:
         r"Pushing image .+ => .+",
         r"image://.*",
         # neuro kill
-        r"neuro[\w\- ]* kill [\w\- ]+\r\njob\-[^\n]+",
+        r"neuro[\w\- ]* kill ",
+        r"job\-[^\n]+",
     ]
 
     make_cmd = "make setup"
@@ -170,6 +217,8 @@ def _run_make_setup_test() -> None:
             expect_patterns=expected_patterns,
             # TODO: add specific error patterns
         )
+
+    assert ".setup_done" in ls_files(".")
 
 
 @pytest.mark.run(order=STEP_POST_SETUP)
@@ -189,14 +238,16 @@ def test_make_kill_setup() -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
-def test_import_code_in_notebooks() -> None:
+def test_import_code_in_notebooks(
+    env_var_preset_cpu_small: None, env_var_no_http_auth: None
+) -> None:
     _run_import_code_in_notebooks_test()
 
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
     out = run(
-        "make jupyter HTTP_AUTH=--no-http-auth PRESET=cpu-small",
+        "make jupyter",
         verbose=True,
         expect_patterns=[_get_pattern_status_running()],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
@@ -228,9 +279,8 @@ def _run_import_code_in_notebooks_test() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_code() -> None:
-    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
+    assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -250,9 +300,8 @@ def test_make_upload_code() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_data() -> None:
-    assert len(ls(MK_DATA_DIR)) == N_FILES
+    assert len(ls_files(MK_DATA_DIR)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -273,9 +322,8 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
-def test_make_upload_config() -> None:
-    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+def test_make_upload_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
+    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -296,9 +344,8 @@ def test_make_upload_config() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_notebooks() -> None:
-    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -318,7 +365,6 @@ def test_make_upload_notebooks() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-@try_except_finally()
 def test_make_upload_all() -> None:
     # just check exit code
     cmd = "make upload-all"
@@ -326,7 +372,6 @@ def test_make_upload_all() -> None:
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
-@try_except_finally()
 def test_make_download_noteboooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -387,7 +432,9 @@ def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> 
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_jupyter(env_neuro_run_timeout: int) -> None:
+def test_make_run_jupyter(
+    env_neuro_run_timeout: int, env_var_no_http_auth: None
+) -> None:
     _run_make_run_jupyter_test(env_neuro_run_timeout)
 
 
@@ -397,14 +444,22 @@ def _run_make_run_jupyter_test(neuro_run_timeout: int) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_make_run_tensorboard(env_var_no_http_auth: None) -> None:
+    _test_make_run_tensorboard()
+
+
 @try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
-def test_make_run_tensorboard() -> None:
+def _test_make_run_tensorboard() -> None:
     _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_make_run_filebrowser(env_var_no_http_auth: None) -> None:
+    _test_make_run_filebrowser()
+
+
 @try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
-def test_make_run_filebrowser() -> None:
+def _test_make_run_filebrowser() -> None:
     _test_make_run_something_useful(
         "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
     )
@@ -412,7 +467,7 @@ def test_make_run_filebrowser() -> None:
 
 def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     # Can't test web UI with HTTP auth
-    make_cmd = f"make {target} HTTP_AUTH=--no-http-auth"
+    make_cmd = f"make {target}"
     with measure_time(make_cmd):
         out = run(
             make_cmd,
@@ -433,7 +488,7 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
         repeat_until_success(
             f"curl --fail {url}{path}",
             job_id,
-            expect_patterns=["<html.*>"],
+            expect_patterns=[r"<[^>]*html.*>"],
             error_patterns=["curl: .+"],
             verbose=False,
             assert_exit_code=False,
@@ -446,13 +501,45 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_gpu_available(environment: str) -> None:
+    if environment in ["dev"]:
+        pytest.skip(f"Skipped as GPU is not available on {environment}")
+    _test_gpu_available()
+
+
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+def _test_gpu_available() -> None:
+    cmd = "make develop PRESET=gpu-small"
+    with measure_time(cmd):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[r"Status:[^\n]+running"],
+            timeout_s=TIMEOUT_NEURO_RUN_GPU,
+        )
+
+    py_commands = [
+        "import tensorflow as tf; assert tf.test.is_gpu_available()",
+        "import torch; print(torch.randn(2,2).cuda())",
+        "import torch; assert torch.cuda.is_available()",
+    ]
+    for py in py_commands:
+        cmd = (
+            f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
+            f"'python -c \"{py}\"'"
+        )
+        with measure_time(cmd):
+            run(cmd, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC, assert_exit_code=True)
+
+
+@pytest.mark.run(order=STEP_RUN)
 def test_make_develop_all(env_neuro_run_timeout: int) -> None:
     _run_make_develop_all_test(env_neuro_run_timeout)
 
 
 @try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
-    cmd = "make develop PRESET=cpu-small"
+    cmd = "make develop"
     with measure_time(cmd):
         run(
             cmd,
@@ -499,9 +586,13 @@ def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
+def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
+    _test_make_connect_train_kill_train()
+
+
 @try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
-def test_make_connect_train_kill_train() -> None:
-    cmd = "make train PRESET=cpu-small TRAINING_COMMAND='sleep 3h'"
+def _test_make_connect_train_kill_train() -> None:
+    cmd = "make train  TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):
         run(
             cmd,
@@ -527,7 +618,6 @@ def test_make_connect_train_kill_train() -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
-@try_except_finally()
 def test_make_kill_all() -> None:
     # just check exit code
     cmd = f"make kill-all"
@@ -536,7 +626,6 @@ def test_make_kill_all() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_code() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
@@ -553,8 +642,7 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
-def test_make_clean_config() -> None:
+def test_make_clean_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 
@@ -570,7 +658,6 @@ def test_make_clean_config() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_data() -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
@@ -588,7 +675,6 @@ def test_make_clean_data() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_notebooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -605,7 +691,6 @@ def test_make_clean_notebooks() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-@try_except_finally()
 def test_make_clean_all() -> None:
     # just check exit code
     cmd = "make clean-all"
@@ -613,7 +698,6 @@ def test_make_clean_all() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
-@try_except_finally()
 def test_make_setup_local() -> None:
     # just check exit code
     cmd = "make setup-local"
@@ -628,7 +712,6 @@ def test_make_setup_local() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
-@try_except_finally()
 def test_make_lint() -> None:
     # just check exit code
     cmd = "make lint"
