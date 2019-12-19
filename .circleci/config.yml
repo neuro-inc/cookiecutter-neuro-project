@@ -98,9 +98,11 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "30 * * * *"
+          cron: "0 * * * *"
           filters:
             branches:
-              only: release
+              only:
+                - master
+                - release
     jobs:
       - test_staging
