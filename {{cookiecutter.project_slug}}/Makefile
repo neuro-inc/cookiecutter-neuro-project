@@ -111,6 +111,7 @@ setup: ### Setup remote environment
 	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
@@ -164,11 +165,26 @@ download-notebooks: _check_setup  ### Download notebooks directory from the plat
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
+.PHONY: upload-results
+upload-results: _check_setup  ### Upload results directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+
+.PHONY: download-results
+download-results: _check_setup  ### Download results directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+
+.PHONY: clean-results
+clean-results: _check_setup  ### Delete results directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
+
 .PHONY: upload-all
-upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
+upload-all: upload-code upload-data upload-notebooks upload-results  ### Upload code, data, notebooks and results directories to the platform storage
+
+.PHONY: download-all
+download-all: download-data download-notebooks download-results  ### Download data, notebooks and results directories from the platform storage
 
 .PHONY: clean-all
-clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ### Delete code, data, config and notebooks directories from the platform storage
 
 ##### Google Cloud Integration #####
 
