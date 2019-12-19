@@ -13,7 +13,9 @@ from tests.e2e.helpers.utils import measure_time
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_develop_connect_gsutil(env_var_preset_cpu_small: None) -> None:
+def test_make_develop_connect_gsutil(
+    decrypt_gcp_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_develop_connect_gsutil()
 
 
@@ -24,7 +26,9 @@ def _test_make_develop_connect_gsutil() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_connect_gsutil(env_var_preset_cpu_small: None) -> None:
+def test_make_train_connect_gsutil(
+    decrypt_gcp_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_train_connect_gsutil()
 
 
@@ -35,7 +39,9 @@ def _test_make_train_connect_gsutil() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_jupyter_connect_gsutil(env_var_preset_cpu_small: None) -> None:
+def test_make_jupyter_connect_gsutil(
+    decrypt_gcp_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_jupyter_connect_gsutil()
 
 
@@ -87,7 +93,9 @@ def _test_make_run_job_connect_gsutil(run_job_cmd: str) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_develop_connect_wandb(env_var_preset_cpu_small: None) -> None:
+def test_make_develop_connect_wandb(
+    generate_wandb_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_develop_connect_wandb()
 
 
@@ -98,7 +106,9 @@ def _test_make_develop_connect_wandb() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_connect_wandb(env_var_preset_cpu_small: None) -> None:
+def test_make_train_connect_wandb(
+    generate_wandb_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_train_connect_wandb()
 
 
@@ -109,7 +119,9 @@ def _test_make_train_connect_wandb() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_jupyter_connect_wandb(env_var_preset_cpu_small: None) -> None:
+def test_make_jupyter_connect_wandb(
+    generate_wandb_key: None, env_var_preset_cpu_small: None
+) -> None:
     _test_make_jupyter_connect_wandb()
 
 
