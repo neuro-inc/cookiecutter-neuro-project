@@ -738,7 +738,7 @@ def test_make_clean_results() -> None:
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
-    assert not ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
