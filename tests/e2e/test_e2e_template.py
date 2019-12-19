@@ -399,7 +399,7 @@ def test_make_download_noteboooks() -> None:
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
         _get_pattern_status_succeeded_or_running(),
-        "Replace this placeholder with a training script execution",
+        "Your training script here",
     ]
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
 

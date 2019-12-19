@@ -43,8 +43,8 @@ PRESET?=gpu-small
 HTTP_AUTH?=--http-auth
 
 # Command to run training inside the environment. Example:
-# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
-TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
+TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
+
 
 LOCAL_PORT?=2211
 
