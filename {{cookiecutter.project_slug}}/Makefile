@@ -1,6 +1,7 @@
 ##### PATHS #####
 
 DATA_DIR?=data
+CONFIG_DIR?=config
 CODE_DIR?={{cookiecutter.code_directory}}
 NOTEBOOKS_DIR?=notebooks
 RESULTS_DIR?=results
@@ -16,6 +17,7 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 PROJECT_POSTFIX?={{cookiecutter.project_slug}}
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
 TRAINING_JOB?=training-$(PROJECT_POSTFIX)
 JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
 TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
@@ -44,11 +46,44 @@ HTTP_AUTH?=--http-auth
 # TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
+LOCAL_PORT?=2211
+
+##### SECRETS ######
+
+# Google Cloud integration settings:
+GCP_SECRET_FILE?=neuro-job-key.json
+
+GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+
+# Weights and Biases integration settings:
+WANDB_SECRET_FILE?=wandb-token.txt
+
+WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+
 ##### COMMANDS #####
 
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off
 NEURO?=neuro
+
+
+# Check if GCP authentication file exists, then set up variables
+ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
+	OPTION_GCP_CREDENTIALS=\
+		--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} \
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
+else
+	OPTION_GCP_CREDENTIALS=
+endif
+
+# Check if Weights & Biases key file exists, then set up variables
+ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
+	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH=${WANDB_SECRET_PATH_ENV}
+else
+	OPTION_WANDB_CREDENTIALS=
+endif
 
 ##### HELP #####
 
@@ -73,7 +108,8 @@ setup: ### Setup remote environment
 		'sleep infinity'
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(DATA_DIR) | true
+	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
@@ -108,6 +144,14 @@ upload-data: _check_setup  ### Upload data directory to the platform storage
 clean-data: _check_setup  ### Delete data directory from the platform storage
 	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
 
+.PHONY: upload-config
+upload-config: _check_setup  ### Upload config directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+
+.PHONY: clean-config
+clean-config: _check_setup  ### Delete config directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/*
+
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
@@ -124,18 +168,77 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
 
 .PHONY: clean-all
-clean-all: clean-code clean-data clean-notebooks  ### Delete code, data, and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
+
+##### Google Cloud Integration #####
+
+.PHONY: gcloud-check-auth
+gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
+	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
+	@test "${OPTION_GCP_CREDENTIALS}" \
+		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
+
+##### WandB Integration #####
+
+.PHONY: wandb-check-auth
+wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
+	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
+	@test "${OPTION_WANDB_CREDENTIALS}" \
+		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
 
 ##### JOBS #####
 
+.PHONY: develop
+develop: upload-code upload-config upload-notebooks  ### Run a development job
+	$(NEURO) run \
+		--name $(DEVELOP_JOB) \
+		--preset $(PRESET) \
+		--detach \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
+		--env EXPOSE_SSH=yes \
+		--env JOB_LIFETIME=1d \
+		$(CUSTOM_ENV_NAME) \
+		"sleep infinity"
+
+.PHONY: connect-develop
+connect-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) exec --no-key-check $(DEVELOP_JOB) bash
+
+.PHONY: logs-develop
+logs-develop:  ### Connect to the remote shell running on the development job
+	$(NEURO) logs $(DEVELOP_JOB)
+
+.PHONY: port-forward-develop
+port-forward-develop:  ### Forward SSH port to localhost for remote debugging
+	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
+	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
+
+.PHONY: kill-develop
+kill-develop:  ### Terminate the development job
+	$(NEURO) kill $(DEVELOP_JOB)
+
 .PHONY: train
-train: _check_setup  ### Run a training job
+train: _check_setup upload-code upload-config   ### Run a training job
 	$(NEURO) run \
 		--name $(TRAINING_JOB) \
 		--preset $(PRESET) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -151,17 +254,21 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
-jupyter: _check_setup upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
 		--preset $(PRESET) \
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
+		--detach \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		${OPTION_GCP_CREDENTIALS} \
+		${OPTION_WANDB_CREDENTIALS} \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		$(CUSTOM_ENV_NAME) \

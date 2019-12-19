@@ -24,6 +24,8 @@ TIMEOUT_MAKE_UPLOAD_CODE = 10
 TIMEOUT_MAKE_CLEAN_CODE = 3
 TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
+TIMEOUT_MAKE_UPLOAD_CONFIG = 10
+TIMEOUT_MAKE_CLEAN_CONFIG = 3
 TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
 
@@ -31,11 +33,15 @@ TIMEOUT_NEURO_LOGIN = 15
 TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
 TIMEOUT_NEURO_RMDIR_CODE = 10
+TIMEOUT_NEURO_RMDIR_CONFIG = 10
 TIMEOUT_NEURO_RMDIR_DATA = 60
 TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
 TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 20
 TIMEOUT_NEURO_KILL = 20
+TIMEOUT_NEURO_EXEC = 15
+TIMEOUT_NEURO_LOGS = 10
+TIMEOUT_NEURO_PORT_FORWARD = 15
 
 # == Makefile constants ==
 
@@ -46,6 +52,7 @@ EXISTING_PROJECT_SLUG = os.environ.get("EXISTING_PROJECT_SLUG")
 MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
+MK_CONFIG_DIR = "config"
 MK_DATA_DIR = "data"
 MK_NOTEBOOKS_DIR = "notebooks"
 MK_RESULTS_DIR = "results"
@@ -56,6 +63,7 @@ MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 
 MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
 MK_TRAINING_JOB = f"training-{MK_PROJECT_SLUG}"
+MK_DEVELOP_JOB = f"develop-{MK_PROJECT_SLUG}"
 MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
@@ -67,18 +75,22 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
 
-MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_NOTEBOOKS_DIR}
+MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_CONFIG_DIR, MK_NOTEBOOKS_DIR}
 # NOTE: order of these constants must be the same as in Makefile
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
+PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+GCP_KEY_FILE = "gcp-key.json"
+WANDB_KEY_FILE = "wandb-fake-key.txt"
+SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
 
 
@@ -118,7 +130,7 @@ JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
 JOB_ID_PATTERN = (
     r"job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-JOB_ID_DECLARATION_PATTERN = re.compile(
+JOB_ID_DECLARATION_REGEX = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
     rf"Job ID.*: ({JOB_ID_PATTERN})",
     re.IGNORECASE,
