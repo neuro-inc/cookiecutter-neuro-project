@@ -344,7 +344,6 @@ def neuro_ls(path: str) -> t.Set[str]:
     out = run(
         f"neuro ls {path}",
         timeout_s=TIMEOUT_NEURO_LS,
-        verbose=True,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     result = set(out.split())
@@ -354,11 +353,9 @@ def neuro_ls(path: str) -> t.Set[str]:
     return result
 
 
-def neuro_rm_dir(
-    path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG, verbose: bool = False
-) -> None:
+def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(f"neuro rm -r {path}", timeout_s=timeout_s, verbose=verbose)
+    run(f"neuro rm -r {path}", timeout_s=timeout_s)
     log_msg("Done.")
 
 
@@ -370,13 +367,16 @@ def wait_job_change_status_to(
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status {target_status}...")
     with timeout(timeout_s):
-        status = get_job_status(job_id)
-        if status == target_status:
-            log_msg("Done.")
-            return
-        if status in JOB_STATUSES_TERMINATED:
-            raise RuntimeError(f"Unexpected terminated job status: {job_id}, {status}")
-        time.sleep(delay_s)
+        while True:
+            status = get_job_status(job_id)
+            if status == target_status:
+                log_msg("Done.")
+                return
+            if status in JOB_STATUSES_TERMINATED:
+                raise RuntimeError(
+                    f"Unexpected terminated job status: {job_id}, {status}"
+                )
+            time.sleep(delay_s)
 
 
 def get_job_status(job_id: str) -> str:
@@ -392,11 +392,21 @@ def get_job_status(job_id: str) -> str:
     return status
 
 
-def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
+def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
     return {
         f.name
         for f in path.iterdir()
         if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
+    }
+
+
+def ls_dirs(local_path: t.Union[Path, str]) -> t.Set[str]:
+    path = Path(local_path)
+    assert path.is_dir(), f"path {path} does not exist"
+    return {
+        f.name
+        for f in path.iterdir()
+        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
     }
