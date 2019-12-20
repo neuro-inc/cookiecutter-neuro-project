@@ -70,9 +70,11 @@ def run(
             if num_retries < attempts:
                 log_msg(f"Retry #{num_retries}...")
             else:
+                command = cmd if not _is_command_secret(cmd) else cmd[:30] + "<hidden>"
+                s = "s" if attempts > 1 else ""
                 err_msg = (
-                    f"Failed to run command `{cmd}` in {attempts} attempts."
-                    " Errors:\n"
+                    f"Failed to run command `{command}` in {attempts} attempt{s}."
+                    f" Error{s}:\n"
                 )
                 for err in errors:
                     err_msg += f"  {err}\n"
@@ -163,7 +165,7 @@ def _run_once(
     >>> _run_once('false', verbose=False, assert_exit_code=False)
     """
 
-    if verbose and not any(verb in cmd for verb in VERBS_SECRET):
+    if verbose and _is_command_secret(cmd):
         log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(
@@ -225,6 +227,10 @@ def _run_once(
         if verbose and need_dump:
             log_msg(f"DUMP: {repr(output)}")
     return output
+
+
+def _is_command_secret(cmd: str) -> bool:
+    return any(verb in cmd for verb in VERBS_SECRET)
 
 
 def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
