@@ -38,7 +38,7 @@ test_e2e_staging:
 
 .PHONY: get_e2e_failures
 get_e2e_failures:
-	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "<missing!>"
+	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "(no data)"
 
 .PHONY: cleanup_e2e
 cleanup_e2e:
