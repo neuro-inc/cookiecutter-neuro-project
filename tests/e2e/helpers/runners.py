@@ -392,6 +392,10 @@ def get_job_status(job_id: str) -> str:
     return status
 
 
+def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
+    return ls_files(local_path) | ls_dirs(local_path)
+
+
 def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"

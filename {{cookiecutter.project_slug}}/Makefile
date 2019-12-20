@@ -111,6 +111,7 @@ setup: ### Setup remote environment
 	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
 	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
+	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
@@ -164,11 +165,26 @@ download-notebooks: _check_setup  ### Download notebooks directory from the plat
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
+.PHONY: upload-results
+upload-results: _check_setup  ### Upload results directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+
+.PHONY: download-results
+download-results: _check_setup  ### Download results directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+
+.PHONY: clean-results
+clean-results: _check_setup  ### Delete results directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
+
 .PHONY: upload-all
-upload-all: upload-code upload-data upload-notebooks  ### Upload code, data, and notebooks directories to the platform storage
+upload-all: upload-code upload-data upload-notebooks upload-results  ### Upload code, data, notebooks and results directories to the platform storage
+
+.PHONY: download-all
+download-all: download-data download-notebooks download-results  ### Download data, notebooks and results directories from the platform storage
 
 .PHONY: clean-all
-clean-all: clean-code clean-data clean-config clean-notebooks  ### Delete code, data, config and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ### Delete code, data, config and notebooks directories from the platform storage
 
 ##### Google Cloud Integration #####
 
@@ -195,7 +211,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 ##### JOBS #####
 
 .PHONY: develop
-develop: upload-code upload-config upload-notebooks  ### Run a development job
+develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
 		--preset $(PRESET) \
@@ -246,11 +262,11 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-train
-kill-train: _check_setup  ### Terminate the training job
+kill-train:  ### Terminate the training job
 	$(NEURO) kill $(TRAINING_JOB)
 
 .PHONY: connect-train
-connect-train: _check_setup  ### Connect to the remote shell running on the training job
+connect-train:  ### Connect to the remote shell running on the training job
 	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
@@ -275,7 +291,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter: _check_setup  ### Terminate the job with Jupyter Notebook
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
 	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
@@ -292,7 +308,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard: _check_setup  ### Terminate the job with TensorBoard
+kill-tensorboard:  ### Terminate the job with TensorBoard
 	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
@@ -309,25 +325,25 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--noauth
 
 .PHONY: kill-filebrowser
-kill-filebrowser: _check_setup  ### Terminate the job with File Browser
+kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-train kill-jupyter kill-tensorboard kill-filebrowser  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
 .PHONY: setup-local
-setup-local: _check_setup  ### Install pip requirements locally
+setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: lint
-lint: _check_setup  ### Run static code analysis locally
+lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
 ##### MISC #####
 
 .PHONY: ps
-ps: _check_setup  ### List all running and pending jobs
+ps:  ### List all running and pending jobs
 	$(NEURO) ps

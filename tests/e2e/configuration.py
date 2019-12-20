@@ -26,8 +26,10 @@ TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
 TIMEOUT_MAKE_UPLOAD_CONFIG = 10
 TIMEOUT_MAKE_CLEAN_CONFIG = 3
-TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
+TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 10
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
+TIMEOUT_MAKE_UPLOAD_RESULTS = TIMEOUT_MAKE_DOWNLOAD_RESULTS = 10
+TIMEOUT_MAKE_CLEAN_RESULTS = 5
 
 TIMEOUT_NEURO_LOGIN = 15
 TIMEOUT_NEURO_RUN_CPU = 30
@@ -39,7 +41,7 @@ TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
 TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 20
 TIMEOUT_NEURO_KILL = 20
-TIMEOUT_NEURO_EXEC = 15
+TIMEOUT_NEURO_EXEC = 20
 TIMEOUT_NEURO_LOGS = 10
 TIMEOUT_NEURO_PORT_FORWARD = 15
 
@@ -48,7 +50,7 @@ TIMEOUT_NEURO_PORT_FORWARD = 15
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-EXISTING_PROJECT_SLUG = os.environ.get("EXISTING_PROJECT_SLUG")
+EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
 MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
@@ -75,7 +77,13 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
 
-MK_PROJECT_DIRS = {MK_DATA_DIR, MK_CODE_DIR, MK_CONFIG_DIR, MK_NOTEBOOKS_DIR}
+MK_PROJECT_DIRS = {
+    MK_DATA_DIR,
+    MK_CODE_DIR,
+    MK_CONFIG_DIR,
+    MK_NOTEBOOKS_DIR,
+    MK_RESULTS_DIR,
+}
 # NOTE: order of these constants must be the same as in Makefile
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
@@ -91,7 +99,8 @@ PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pyca
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
 PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, WANDB_KEY_FILE}
-PROJECT_NOTEBOOKS_DIR_CONTENT = {"hello_world.ipynb", "00_notebook_tutorial.ipynb"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}
+PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
 
 
 # == tests constants ==
@@ -152,6 +161,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
     r"Docker API error: .+",
+    r"connection reset by peer",
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
