@@ -216,9 +216,7 @@ def _run_make_setup_test() -> None:
 
     make_cmd = "make setup"
     with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
-        run(
-            make_cmd, verbose=True, expect_patterns=expected_patterns,
-        )
+        run(make_cmd, verbose=True, expect_patterns=expected_patterns)
 
     assert ".setup_done" in ls_files(".")
 
@@ -457,9 +455,7 @@ def test_make_train_custom_command(
 def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
-        run(
-            cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True,
-        )
+        run(cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True)
 
 
 @pytest.mark.run(order=STEP_RUN)
