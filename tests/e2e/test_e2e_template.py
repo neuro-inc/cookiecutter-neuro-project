@@ -90,7 +90,6 @@ from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_project_structure() -> None:
-    assert False, "failure!"
     assert ls_dirs(".") == MK_PROJECT_DIRS
     assert ls_files(".") == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
@@ -98,7 +97,6 @@ def test_project_structure() -> None:
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_help_works() -> None:
     out = run("make help", verbose=True)
-    raise RuntimeError("My own ecx")
     assert "setup" in out, f"not found in output: `{out}`"
 
 

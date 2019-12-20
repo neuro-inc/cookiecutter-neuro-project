@@ -30,7 +30,7 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	PRESET=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=dev --tb=short tests/e2e -k "structure or test_make_help_works"
+	PRESET=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=dev --tb=short tests/e2e
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
@@ -38,7 +38,7 @@ test_e2e_staging:
 
 .PHONY: get_e2e_failures
 get_e2e_failures:
-	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || true
+	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "<missing!>"
 
 .PHONY: cleanup_e2e
 cleanup_e2e:

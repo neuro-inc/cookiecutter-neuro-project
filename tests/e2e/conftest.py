@@ -97,7 +97,7 @@ def pytest_runtest_makereport(item: t.Any, call: t.Any) -> t.Iterator[None]:
         rep = outcome.get_result()
         if rep.failed:
             details = f"{call.excinfo.typename}: {call.excinfo.value}"
-            line = f"{item.nodeid} run {rep.duration:.2f} sec: {details}"
+            line = f"- {item.nodeid} run in {rep.duration:.2f} sec: {details}"
             with LOCAL_FAILURES_REPORT_FILE.open("a") as f:
                 f.write(line)
     except Exception as e:
