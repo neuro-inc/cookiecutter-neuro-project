@@ -337,10 +337,17 @@ kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser
 setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
+.PHONY: format
+format:  ### Automatically format the code
+	isort -rc {{cookiecutter.code_directory}}
+	black {{cookiecutter.code_directory}}
+
 .PHONY: lint
 lint:  ### Run static code analysis locally
-	flake8 .
-	mypy .
+	isort -c -rc {{cookiecutter.code_directory}}
+	black --check {{cookiecutter.code_directory}}
+	mypy {{cookiecutter.code_directory}}
+	flake8 {{cookiecutter.code_directory}}
 
 ##### MISC #####
 
