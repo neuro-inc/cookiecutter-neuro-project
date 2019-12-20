@@ -34,7 +34,7 @@ def test_make_train_connect_gsutil(
 
 @tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_gsutil() -> None:
-    cmd = "make train  TRAINING_COMMAND='sleep 1h'"
+    cmd = "make train TRAIN_CMD='sleep 1h'"
     _test_make_run_job_connect_gsutil(cmd)
 
 
@@ -114,7 +114,7 @@ def test_make_train_connect_wandb(
 
 @tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_wandb() -> None:
-    cmd = "make train  TRAINING_COMMAND='sleep 1h'"
+    cmd = "make train TRAIN_CMD='sleep 1h'"
     _test_make_run_job_connect_wandb(cmd)
 
 

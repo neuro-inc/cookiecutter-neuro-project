@@ -639,7 +639,7 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
 
 @try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_connect_train_kill_train() -> None:
-    cmd = "make train  TRAINING_COMMAND='sleep 3h'"
+    cmd = "make train TRAIN_CMD='sleep 3h'"
     with measure_time(cmd):
         run(
             cmd,
