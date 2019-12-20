@@ -23,7 +23,7 @@ from tests.e2e.configuration import (
     MK_RESULTS_DIR,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    MK_TRAINING_JOB,
+    MK_TRAIN_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -465,7 +465,7 @@ def test_make_train_custom_command(
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=[])
 
 
-@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd):
@@ -637,7 +637,7 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
     _test_make_connect_train_kill_train()
 
 
-@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_connect_train_kill_train() -> None:
     cmd = "make train  TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):
