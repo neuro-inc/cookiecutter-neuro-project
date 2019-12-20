@@ -36,6 +36,10 @@ test_e2e_dev:
 test_e2e_staging:
 	PRESET=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=staging --tb=short tests/e2e
 
+.PHONY: get_e2e_failures
+get_e2e_failures:
+	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "(no data)"
+
 .PHONY: cleanup_e2e
 cleanup_e2e:
 	bash -c tests/e2e/cleanup.sh
