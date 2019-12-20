@@ -197,7 +197,7 @@ setup-local:  ### Install pip requirements locally
 	$(PIP) -r requirements.txt
 
 .PHONY: format
-format:  ### Run static code analysis locally
+format:  ### Automatically format the code
 	isort -rc {{cookiecutter.code_directory}}
 	black {{cookiecutter.code_directory}}
 
