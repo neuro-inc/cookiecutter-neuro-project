@@ -251,14 +251,11 @@ def test_import_code_in_notebooks(
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
-    ls_notebooks = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert "Untitled.ipynb" in ls_notebooks, "Source notebook not found"
-
-    ls_code = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
-    assert "main.py" in ls_code, "Source code file not found"
+    assert "demo.ipynb" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert "train.py" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
-    out = run(
+    run(
         "make jupyter",
         verbose=True,
         expect_patterns=[_get_pattern_status_running()],
@@ -270,7 +267,6 @@ def _run_import_code_in_notebooks_test() -> None:
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
         assert_exit_code=False,
     )
-    job_id = parse_job_id(out)
 
     expected_string = "----\r\nYour training script here\r\n----"
 
@@ -282,7 +278,7 @@ def _run_import_code_in_notebooks_test() -> None:
         f"cat {out_file}.asciidoc"
     )
     run(
-        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        f"neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} 'bash -c \"{cmd}\"'",
         verbose=True,
         expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
         error_patterns=["Error: ", "CRITICAL"],

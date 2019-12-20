@@ -43,8 +43,8 @@ def cleanup_local_dirs(*dirs: t.Union[str, Path]) -> None:
         assert not ls, f"directory should be empty here: {ls}"
 
 
-def copy_local_files(from_dir: Path, to_dir: Path, glob: str = "*") -> None:
-    for f in from_dir.glob(glob):
+def copy_local_files(from_dir: Path, to_dir: Path) -> None:
+    for f in from_dir.glob("*"):
         if not f.is_file():
             continue
         target = to_dir / f.name
