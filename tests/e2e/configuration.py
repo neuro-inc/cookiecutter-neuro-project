@@ -24,28 +24,37 @@ TIMEOUT_MAKE_UPLOAD_CODE = 10
 TIMEOUT_MAKE_CLEAN_CODE = 3
 TIMEOUT_MAKE_UPLOAD_DATA = 500
 TIMEOUT_MAKE_CLEAN_DATA = 50
-TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 5
+TIMEOUT_MAKE_UPLOAD_CONFIG = 10
+TIMEOUT_MAKE_CLEAN_CONFIG = 3
+TIMEOUT_MAKE_UPLOAD_NOTEBOOKS = TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS = 10
 TIMEOUT_MAKE_CLEAN_NOTEBOOKS = 5
+TIMEOUT_MAKE_UPLOAD_RESULTS = TIMEOUT_MAKE_DOWNLOAD_RESULTS = 10
+TIMEOUT_MAKE_CLEAN_RESULTS = 5
 
 TIMEOUT_NEURO_LOGIN = 15
 TIMEOUT_NEURO_RUN_CPU = 30
 TIMEOUT_NEURO_RUN_GPU = 5 * 60
 TIMEOUT_NEURO_RMDIR_CODE = 10
+TIMEOUT_NEURO_RMDIR_CONFIG = 10
 TIMEOUT_NEURO_RMDIR_DATA = 60
 TIMEOUT_NEURO_RMDIR_NOTEBOOKS = 10
 TIMEOUT_NEURO_LS = 10
 TIMEOUT_NEURO_STATUS = 20
 TIMEOUT_NEURO_KILL = 20
+TIMEOUT_NEURO_EXEC = 20
+TIMEOUT_NEURO_LOGS = 10
+TIMEOUT_NEURO_PORT_FORWARD = 15
 
 # == Makefile constants ==
 
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
-EXISTING_PROJECT_SLUG = os.environ.get("EXISTING_PROJECT_SLUG")
+EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
 MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
+MK_CONFIG_DIR = "config"
 MK_DATA_DIR = "data"
 MK_NOTEBOOKS_DIR = "notebooks"
 MK_RESULTS_DIR = "results"
@@ -56,6 +65,7 @@ MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 
 MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
 MK_TRAINING_JOB = f"training-{MK_PROJECT_SLUG}"
+MK_DEVELOP_JOB = f"develop-{MK_PROJECT_SLUG}"
 MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
@@ -67,18 +77,30 @@ MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 PROJECT_APT_FILE_NAME = "apt.txt"
 PROJECT_PIP_FILE_NAME = "requirements.txt"
 
+MK_PROJECT_DIRS = {
+    MK_DATA_DIR,
+    MK_CODE_DIR,
+    MK_CONFIG_DIR,
+    MK_NOTEBOOKS_DIR,
+    MK_RESULTS_DIR,
+}
 # NOTE: order of these constants must be the same as in Makefile
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_CUSTOM = ["python", "expect", "figlet"]
+PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+GCP_KEY_FILE = "gcp-key.json"
+WANDB_KEY_FILE = "wandb-fake-key.txt"
+SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
-PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", "__pycache__"}
+PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
-PROJECT_CODE_DIR_CONTENT = {"__init__.py", "main.py"}
-PROJECT_NOTEBOOKS_DIR_CONTENT = {"Untitled.ipynb", "00_notebook_tutorial.ipynb"}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, WANDB_KEY_FILE}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}
+PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
 
 
 # == tests constants ==
@@ -114,9 +136,12 @@ JOB_STATUS_RUNNING = "running"
 JOB_STATUS_SUCCEEDED = "succeeded"
 JOB_STATUS_FAILED = "failed"
 JOB_STATUSES_TERMINATED = (JOB_STATUS_SUCCEEDED, JOB_STATUS_FAILED)
-JOB_ID_DECLARATION_PATTERN = re.compile(
+JOB_ID_PATTERN = (
+    r"job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
+JOB_ID_DECLARATION_REGEX = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    r"Job ID.*: (job-[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})",  # noqa: E501 line too long
+    rf"Job ID.*: ({JOB_ID_PATTERN})",
     re.IGNORECASE,
 )
 
@@ -137,6 +162,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
     r"ERROR[^:]*: .+",
     r"Error: .+",
     r"Docker API error: .+",
+    r"connection reset by peer",
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
@@ -152,3 +178,15 @@ def _pattern_copy_file_finished(file_name: str) -> str:
 
 def _pattern_upload_dir(project_slug: str, dir_name: str) -> str:
     return rf"'(file|storage)://[^']*/{project_slug}/{dir_name}' DONE"
+
+
+def _get_pattern_status_running() -> str:
+    return r"Status:[^\n]+running"
+
+
+def _get_pattern_status_succeeded_or_running() -> str:
+    return r"Status:[^\n]+(succeeded|running)"
+
+
+def _get_pattern_pip_installing(pip: str) -> str:
+    return fr"(Collecting|Requirement already satisfied)[^\n]*{pip}"
