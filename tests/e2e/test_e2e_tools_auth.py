@@ -52,24 +52,20 @@ def _test_make_jupyter_connect_gsutil() -> None:
 
 
 def _test_make_run_job_connect_gsutil(run_job_cmd: str) -> None:
-    with measure_time(run_job_cmd):
+    with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
         out = tests.e2e.helpers.runners.run(
             run_job_cmd,
             verbose=True,
             expect_patterns=[r"Status:[^\n]+running"],
-            timeout_s=TIMEOUT_NEURO_RUN_CPU,
             assert_exit_code=False,
         )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
     bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
     cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
-    with measure_time(cmd):
+    with measure_time(cmd, TIMEOUT_NEURO_EXEC):
         tests.e2e.helpers.runners.run(
-            cmd,
-            verbose=True,
-            expect_patterns=["Hello world!"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
+            cmd, verbose=True, expect_patterns=["Hello world!"],
         )
 
     py_cmd_list = [
@@ -82,13 +78,12 @@ def _test_make_run_job_connect_gsutil(run_job_cmd: str) -> None:
     py_cmd = "; ".join(py_cmd_list)
     py_cmd = py_cmd.replace('"', r"\"")
     cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
-    with measure_time(cmd):
+    with measure_time(cmd, TIMEOUT_NEURO_EXEC):
         tests.e2e.helpers.runners.run(
             cmd,
             verbose=True,
             expect_patterns=["Hello world!"],
             error_patterns=["AssertionError"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
         )
 
 
@@ -132,22 +127,19 @@ def _test_make_jupyter_connect_wandb() -> None:
 
 
 def _test_make_run_job_connect_wandb(run_job_cmd: str) -> None:
-    with measure_time(run_job_cmd):
+    with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
         out = tests.e2e.helpers.runners.run(
             run_job_cmd,
             verbose=True,
             expect_patterns=[r"Status:[^\n]+running"],
-            timeout_s=TIMEOUT_NEURO_RUN_CPU,
             assert_exit_code=False,
         )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
     bash_cmd = 'bash -c "wandb status | grep -e "Logged in.* True""'
     cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
-    with measure_time(cmd):
-        tests.e2e.helpers.runners.run(
-            cmd, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC, assert_exit_code=True
-        )
+    with measure_time(cmd, TIMEOUT_NEURO_EXEC):
+        tests.e2e.helpers.runners.run(cmd, verbose=True, assert_exit_code=True)
 
     py_cmd_list = [
         "import wandb",
@@ -158,11 +150,10 @@ def _test_make_run_job_connect_wandb(run_job_cmd: str) -> None:
     py_cmd = "; ".join(py_cmd_list)
     py_cmd = py_cmd.replace('"', r"\"")
     cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
-    with measure_time(cmd):
+    with measure_time(cmd, TIMEOUT_NEURO_EXEC):
         tests.e2e.helpers.runners.run(
             cmd,
             verbose=True,
             expect_patterns=["<Runs art-em/cookiecutter-neuro-project"],
             error_patterns=["TypeError", "Permission denied"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
         )

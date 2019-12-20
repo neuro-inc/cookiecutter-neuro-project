@@ -215,13 +215,9 @@ def _run_make_setup_test() -> None:
     ]
 
     make_cmd = "make setup"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
         run(
-            make_cmd,
-            verbose=True,
-            timeout_s=TIMEOUT_MAKE_SETUP,
-            expect_patterns=expected_patterns,
-            # TODO: add specific error patterns
+            make_cmd, verbose=True, expect_patterns=expected_patterns,
         )
 
     assert ".setup_done" in ls_files(".")
@@ -255,18 +251,19 @@ def _run_import_code_in_notebooks_test() -> None:
     assert "train.py" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
-    run(
-        "make jupyter",
-        verbose=True,
-        expect_patterns=[_get_pattern_status_running()],
-        error_patterns=[
-            fr"pattern '{notebook_path}' matched no files",
-            "CellExecutionError",
-            "ModuleNotFoundError",
-        ],
-        timeout_s=TIMEOUT_NEURO_RUN_CPU,
-        assert_exit_code=False,
-    )
+    cmd = "make jupyter"
+    with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+        run(
+            cmd,
+            verbose=True,
+            expect_patterns=[_get_pattern_status_running()],
+            error_patterns=[
+                fr"pattern '{notebook_path}' matched no files",
+                "CellExecutionError",
+                "ModuleNotFoundError",
+            ],
+            assert_exit_code=False,
+        )
 
     expected_string = "----\r\nYour training script here\r\n----"
 
@@ -298,13 +295,11 @@ def test_make_upload_code() -> None:
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
 
-    # Upload:
     make_cmd = "make upload-code"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CODE):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CODE_DIR)],
             # TODO: add upload-specific error patterns
         )
@@ -319,16 +314,14 @@ def test_make_upload_data() -> None:
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
 
-    # Upload:
     make_cmd = "make upload-data"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_DATA,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_DATA_DIR)],
-            # TODO: add upload-specific error patterns
         )
+
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
@@ -342,16 +335,14 @@ def test_make_upload_config(decrypt_gcp_key: None, generate_wandb_key: None) -> 
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
     )
 
-    # Upload:
     make_cmd = "make upload-config"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CONFIG_DIR)],
-            # TODO: add upload-specific error patterns
         )
+
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 
@@ -365,14 +356,13 @@ def test_make_upload_notebooks() -> None:
     )
 
     make_cmd = "make upload-notebooks"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_NOTEBOOKS):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
-            # TODO: add upload-specific error patterns
         )
+
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
@@ -386,13 +376,13 @@ def test_make_upload_results() -> None:
     )
 
     make_cmd = "make upload-results"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_RESULTS):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_RESULTS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_RESULTS_DIR)],
         )
+
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
     assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
 
@@ -412,14 +402,13 @@ def test_make_download_noteboooks() -> None:
     # Download:
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_NOTEBOOKS_DIR)],
-            # TODO: add upload-specific error patterns
         )
+
     assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
@@ -431,14 +420,13 @@ def test_make_download_results() -> None:
     # Download:
     make_cmd = "make download-results"
     cleanup_local_dirs(MK_RESULTS_DIR)
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_RESULTS):
         run(
             make_cmd,
             verbose=True,
-            timeout_s=TIMEOUT_MAKE_DOWNLOAD_RESULTS,
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_RESULTS_DIR)],
-            # TODO: add upload-specific error patterns
         )
+
     assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
 
 
@@ -468,13 +456,9 @@ def test_make_train_custom_command(
 @try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
-    with measure_time(cmd):
+    with measure_time(cmd, neuro_run_timeout):
         run(
-            cmd,
-            timeout_s=neuro_run_timeout,
-            expect_patterns=expect_patterns,
-            verbose=True,
-            detect_new_jobs=True,
+            cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True,
         )
 
 
@@ -515,11 +499,10 @@ def _test_make_run_filebrowser() -> None:
 def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     # Can't test web UI with HTTP auth
     make_cmd = f"make {target}"
-    with measure_time(make_cmd):
+    with measure_time(make_cmd, timeout_run):
         out = run(
             make_cmd,
             verbose=True,
-            timeout_s=timeout_run,
             expect_patterns=[_get_pattern_status_running()],
             assert_exit_code=False,
         )
