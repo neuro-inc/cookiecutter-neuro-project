@@ -17,8 +17,8 @@ PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 PROJECT_POSTFIX?={{cookiecutter.project_slug}}
 
 SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+TRAIN_JOB?=train-$(PROJECT_POSTFIX)
 DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
-TRAINING_JOB?=training-$(PROJECT_POSTFIX)
 JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
 TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
 FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
@@ -247,7 +247,7 @@ kill-develop:  ### Terminate the development job
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job
 	$(NEURO) run \
-		--name $(TRAINING_JOB) \
+		--name $(TRAIN_JOB) \
 		--preset $(PRESET) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
@@ -263,11 +263,11 @@ train: _check_setup upload-code upload-config   ### Run a training job
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job
-	$(NEURO) kill $(TRAINING_JOB)
+	$(NEURO) kill $(TRAIN_JOB)
 
 .PHONY: connect-train
-connect-train:  ### Connect to the remote shell running on the training job
-	$(NEURO) exec --no-key-check $(TRAINING_JOB) bash
+connect-train: _check_setup  ### Connect to the remote shell running on the training job
+	$(NEURO) exec --no-key-check $(TRAIN_JOB) bash
 
 .PHONY: jupyter
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser

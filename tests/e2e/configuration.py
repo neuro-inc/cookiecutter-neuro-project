@@ -64,7 +64,7 @@ MK_PROJECT_PATH_ENV = f"/{MK_PROJECT_SLUG}"
 
 
 MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
-MK_TRAINING_JOB = f"training-{MK_PROJECT_SLUG}"
+MK_TRAIN_JOB = f"train-{MK_PROJECT_SLUG}"
 MK_DEVELOP_JOB = f"develop-{MK_PROJECT_SLUG}"
 MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
@@ -160,6 +160,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
+    r"Error: .+",
     r"Docker API error: .+",
     r"connection reset by peer",
 )

@@ -23,7 +23,7 @@ from tests.e2e.configuration import (
     MK_RESULTS_DIR,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    MK_TRAINING_JOB,
+    MK_TRAIN_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -242,8 +242,7 @@ def test_make_kill_setup() -> None:
         run(cmd, detect_new_jobs=False)
 
 
-@pytest.mark.run(order=STEP_RUN)
-@pytest.mark.skip(reason="Flaky but not crucially important test, see issue #190")
+@pytest.mark.run(order=STEP_POST_UPLOAD)
 def test_import_code_in_notebooks(
     env_var_preset_cpu_small: None, env_var_no_http_auth: None
 ) -> None:
@@ -252,14 +251,22 @@ def test_import_code_in_notebooks(
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _run_import_code_in_notebooks_test() -> None:
-    out = run(
+    assert "demo.ipynb" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert "train.py" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
+    run(
         "make jupyter",
         verbose=True,
         expect_patterns=[_get_pattern_status_running()],
+        error_patterns=[
+            fr"pattern '{notebook_path}' matched no files",
+            "CellExecutionError",
+            "ModuleNotFoundError",
+        ],
         timeout_s=TIMEOUT_NEURO_RUN_CPU,
         assert_exit_code=False,
     )
-    job_id = parse_job_id(out)
 
     expected_string = "----\r\nYour training script here\r\n----"
 
@@ -267,11 +274,11 @@ def _run_import_code_in_notebooks_test() -> None:
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
     notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/demo.ipynb"
     cmd = (
-        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
+        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
         f"cat {out_file}.asciidoc"
     )
     run(
-        f"neuro exec --no-key-check --no-tty {job_id} 'bash -c \"{cmd}\"'",
+        f"neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} 'bash -c \"{cmd}\"'",
         verbose=True,
         expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
         error_patterns=["Error: ", "CRITICAL"],
@@ -458,7 +465,7 @@ def test_make_train_custom_command(
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=[])
 
 
-@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd):
@@ -630,7 +637,7 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
     _test_make_connect_train_kill_train()
 
 
-@try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_connect_train_kill_train() -> None:
     cmd = "make train  TRAINING_COMMAND='sleep 3h'"
     with measure_time(cmd):

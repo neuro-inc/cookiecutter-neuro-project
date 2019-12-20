@@ -4,7 +4,7 @@ import tests.e2e.helpers.runners
 from tests.e2e.configuration import (
     MK_DEVELOP_JOB,
     MK_JUPYTER_JOB,
-    MK_TRAINING_JOB,
+    MK_TRAIN_JOB,
     TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_RUN_CPU,
 )
@@ -32,7 +32,7 @@ def test_make_train_connect_gsutil(
     _test_make_train_connect_gsutil()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_gsutil() -> None:
     cmd = "make train  TRAINING_COMMAND='sleep 1h'"
     _test_make_run_job_connect_gsutil(cmd)
@@ -112,7 +112,7 @@ def test_make_train_connect_wandb(
     _test_make_train_connect_wandb()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAINING_JOB}")
+@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_wandb() -> None:
     cmd = "make train  TRAINING_COMMAND='sleep 1h'"
     _test_make_run_job_connect_wandb(cmd)
