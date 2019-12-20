@@ -261,11 +261,11 @@ def _run_import_code_in_notebooks_test() -> None:
     )
     job_id = parse_job_id(out)
 
-    expected_string = "----\r\nHello World!\r\n----"
+    expected_string = "----\r\nYour training script here\r\n----"
 
     out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
     jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
+    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/demo.ipynb"
     cmd = (
         f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} &&"
         f"cat {out_file}.asciidoc"
@@ -439,7 +439,7 @@ def test_make_download_results() -> None:
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
         _get_pattern_status_succeeded_or_running(),
-        "Replace this placeholder with a training script execution",
+        "Your training script here",
     ]
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
 
