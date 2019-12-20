@@ -160,6 +160,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
+    r"Error: .+",
     r"Docker API error: .+",
     r"connection reset by peer",
 )
