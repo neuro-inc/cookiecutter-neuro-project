@@ -56,6 +56,8 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 
 
 # == helpers ==
+
+
 @contextmanager
 def timeout(time_s: int) -> t.Iterator[None]:
     """ source: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
@@ -81,14 +83,30 @@ def timeout(time_s: int) -> t.Iterator[None]:
 
 
 @contextmanager
-def measure_time(command_name: str = "") -> t.Iterator[None]:
+def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
+    """
+    >>> t_0 = time.time()
+    >>> try:
+    ...     with measure_time("sleep", timeout=0.01):
+    ...         time.sleep(0.1)
+    ...     assert False, "should not be here"
+    ... except TimeoutError as e:
+    ...     assert str(e) == "Time summary [sleep]: 0.10 sec (timeout: 0.01 sec)", e
+    >>> elapsed = time.time() - t_0
+    >>> assert elapsed >= 0.1
+    """
     start_time = time.time()
-    log_msg(f"Measuring time for command: `{command_name}`")
-    yield
-    elapsed_time = time.time() - start_time
-    msg = f"TIME SUMMARY [{command_name}]: {elapsed_time:.2f} sec"
-    log_msg(msg)
-    log_msg("-" * len(msg))
+    log_msg(f"Measuring time for command: `{cmd}`")
+    try:
+        yield
+    finally:
+        elapsed = time.time() - start_time
+        msg = f"Time summary [{cmd}]: {elapsed:.2f} sec (timeout: {timeout:.2f} sec)"
+        if 0 < timeout < elapsed:
+            log_msg(msg, logger=LOGGER.error)
+            raise TimeoutError(msg)
+        log_msg(msg)
+        log_msg("-" * len(msg))
 
 
 @contextmanager
