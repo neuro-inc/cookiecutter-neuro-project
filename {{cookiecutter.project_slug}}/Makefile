@@ -97,7 +97,12 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	$(NEURO) kill $(SETUP_JOB) >/dev/null 2>&1
+	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE) \
+		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) \
+		$(DATA_DIR_STORAGE) \
+		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
+		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
 		--preset cpu-small \
@@ -106,12 +111,6 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
-	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
