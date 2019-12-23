@@ -52,12 +52,14 @@ def run(
     it so that overall the command `cmd` is executed not more than `attempts` times.
     >>> try:
     ...     run("foo", attempts=1)
+    ...     assert False, "should not be here"
     ... except RuntimeError as e:
     ...     print(e)
     ...
     Failed to run command `foo`: ExceptionPexpect('The command was not found or was not executable: foo.')
     >>> try:
     ...     run("foo", attempts=3)
+    ...     assert False, "should not be here"
     ... except RuntimeError as e:
     ...     print(e)
     ...
