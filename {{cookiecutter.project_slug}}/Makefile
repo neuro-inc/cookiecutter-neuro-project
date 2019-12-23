@@ -97,7 +97,7 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	$(NEURO) mkdir --parent $(PROJECT_PATH_STORAGE) \
+	$(NEURO) mkdir --parents $(PROJECT_PATH_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) \
 		$(DATA_DIR_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
