@@ -9,6 +9,9 @@
 # Weights & Biases folders
 wandb/
 
+# Mac OS: Finder's system file
+.DS_Store
+
 
 # Default Python .gitignore from: https://github.com/github/gitignore/blob/master/Python.gitignore
 
