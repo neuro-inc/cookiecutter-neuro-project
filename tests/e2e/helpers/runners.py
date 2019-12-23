@@ -20,7 +20,7 @@ from tests.e2e.configuration import (
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.utils import log_errors_and_finalize, timeout
+from tests.e2e.helpers.utils import log_errors_and_finalize, merge_similars, timeout
 
 
 class ExitCodeException(Exception):
@@ -82,7 +82,8 @@ def run(
             if verbose and num_retries < attempts:
                 log_msg(f"Retry {num_retries}...")
                 continue
-            err_det = ", ".join(set(repr(e) for e in errors))
+
+            err_det = ", ".join(merge_similars(repr(e) for e in errors))
             err_msg = f"Failed to run command `{_hide_secret_cmd(cmd)}`"
             if attempts > 1:
                 err_msg += f" in {attempts} attempts"

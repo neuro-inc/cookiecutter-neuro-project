@@ -107,3 +107,18 @@ def log_errors_and_finalize(
             log_msg("Running finalization callback...")
             finalizer_callback()
             log_msg("Done")
+
+
+def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
+    """
+    >>> list(merge_similars("a b b c c c d d e".split()))
+    ['a', 'b', 'c', 'd', 'e']
+    >>> list(merge_similars("a b b c c c d d e e".split()))
+    ['a', 'b', 'c', 'd', 'e']
+    """
+    prev: t.Optional[str] = None
+    for el in collection:
+        assert el is not None, "expect all elements to be 'str', not None"
+        if el != prev:
+            yield el
+        prev = el
