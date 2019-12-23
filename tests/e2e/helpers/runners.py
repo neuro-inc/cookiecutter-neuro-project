@@ -50,7 +50,19 @@ def run(
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
     it so that overall the command `cmd` is executed not more than `attempts` times.
-    """
+    >>> try:
+    ...     run("foo", attempts=1)
+    ... except RuntimeError as e:
+    ...     print(e)
+    ...
+    Failed to run command `foo`: ExceptionPexpect('The command was not found or was not executable: foo.')
+    >>> try:
+    ...     run("foo", attempts=3)
+    ... except RuntimeError as e:
+    ...     print(e)
+    ...
+    Failed to run command `foo` in 3 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')
+    """  # noqa
     errors: t.List[Exception] = []
     while True:
         try:
@@ -67,18 +79,15 @@ def run(
         except Exception as exc:
             errors.append(exc)
             num_retries = len(errors)
-            if num_retries < attempts:
-                log_msg(f"Retry #{num_retries}...")
-            else:
-                command = cmd if not _is_command_secret(cmd) else cmd[:30] + "<hidden>"
-                s = "s" if attempts > 1 else ""
-                err_msg = (
-                    f"Failed to run command `{command}` in {attempts} attempt{s}."
-                    f" Error{s}:\n"
-                )
-                for err in errors:
-                    err_msg += f"  {err}\n"
-                raise RuntimeError(err_msg)
+            if verbose and num_retries < attempts:
+                log_msg(f"Retry {num_retries}...")
+                continue
+            err_det = ", ".join(set(repr(e) for e in errors))
+            err_msg = f"Failed to run command `{_hide_secret_cmd(cmd)}`"
+            if attempts > 1:
+                err_msg += f" in {attempts} attempts"
+            err_msg += f": {err_det}"
+            raise RuntimeError(err_msg)
 
 
 def _run(
@@ -231,6 +240,14 @@ def _run_once(
 
 def _is_command_secret(cmd: str) -> bool:
     return any(verb in cmd for verb in VERBS_SECRET)
+
+
+def _hide_secret_cmd(cmd: str) -> str:
+    """
+    >>> _hide_secret_cmd("neuro login-with-token secret.jwt.token")
+    'neuro login-with-token secret.<hidden>'
+    """
+    return cmd if not _is_command_secret(cmd) else cmd[:30] + "<hidden>"
 
 
 def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
