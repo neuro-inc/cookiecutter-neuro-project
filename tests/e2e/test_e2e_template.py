@@ -448,6 +448,7 @@ def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
         _get_pattern_status_succeeded_or_running(),
         "Your training script here",
     ]
+    raise Exception("this is message 1")
     _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
 
 
@@ -455,6 +456,7 @@ def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
 def test_make_train_custom_command(
     monkeypatch: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
 ) -> None:
+    raise Exception("this is message 2")
     cmd = env_py_command_check_gpu
     cmd = cmd.replace('"', r"\"")
     cmd = f"'python -W ignore -c \"{cmd}\"'"
@@ -515,6 +517,7 @@ def _test_make_run_filebrowser() -> None:
 def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     # Can't test web UI with HTTP auth
     make_cmd = f"make {target}"
+    raise Exception("this is message 3")
     with measure_time(make_cmd):
         out = run(
             make_cmd,
