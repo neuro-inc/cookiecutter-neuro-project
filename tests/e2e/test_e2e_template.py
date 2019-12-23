@@ -443,6 +443,18 @@ def test_make_download_results() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_make_train_extra_option_works(env_neuro_run_timeout: int) -> None:
+    run(
+        "make train NEURO_RUN_EXTRA_OPTIONS='--non-existing-option'",
+        expect_patterns=[r"Error: no such option: \-\-non\-existing\-option"],
+        error_patterns=[_get_pattern_status_succeeded_or_running()],
+        verbose=True,
+        assert_exit_code=False,
+        detect_new_jobs=False,
+    )
+
+
+@pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     expect_patterns = [
         _get_pattern_status_succeeded_or_running(),

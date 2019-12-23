@@ -48,6 +48,8 @@ TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train
 
 LOCAL_PORT?=2211
 
+NEURO_RUN_EXTRA_OPTIONS?=
+
 ##### SECRETS ######
 
 # Google Cloud integration settings:
@@ -224,6 +226,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		${OPTION_WANDB_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
+		$(NEURO_RUN_EXTRA_OPTIONS) \
 		$(CUSTOM_ENV_NAME) \
 		"sleep infinity"
 
@@ -258,6 +261,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
+		$(NEURO_RUN_EXTRA_OPTIONS) \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
@@ -287,6 +291,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		$(NEURO_RUN_EXTRA_OPTIONS) \
 		$(CUSTOM_ENV_NAME) \
 		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
@@ -304,6 +309,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--browse \
 		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
+		$(NEURO_RUN_EXTRA_OPTIONS) \
 		$(CUSTOM_ENV_NAME) \
 		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
@@ -321,6 +327,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--browse \
 		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
+		$(NEURO_RUN_EXTRA_OPTIONS) \
 		filebrowser/filebrowser \
 		--noauth
 
