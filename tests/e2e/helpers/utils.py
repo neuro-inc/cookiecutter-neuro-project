@@ -89,6 +89,7 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
     >>> try:
     ...     with measure_time("sleep", timeout=0.01):
     ...         time.sleep(0.1)
+    ...     assert False, "should not be here"
     ... except TimeoutError as e:
     ...     assert str(e) == "Time summary [sleep]: 0.10 sec (timeout: 0.01 sec)", e
     >>> elapsed = time.time() - t_0
