@@ -30,7 +30,7 @@ test_unit:
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	PRESET=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=dev --tb=short tests/e2e -k test_nothing
+	PRESET=cpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=dev --tb=short tests/e2e
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
