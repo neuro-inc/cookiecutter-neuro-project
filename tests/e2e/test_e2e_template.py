@@ -496,7 +496,6 @@ def _run_make_run_jupyter_notebook_test(neuro_run_timeout: int) -> None:
 def test_make_run_jupyter_lab(
     env_neuro_run_timeout: int, env_var_no_http_auth: None, monkeypatch: Any
 ) -> None:
-    monkeypatch.setenv("JUPYTER_MODE", "lab")
     _run_make_run_jupyter_lab_test(env_neuro_run_timeout)
 
 
