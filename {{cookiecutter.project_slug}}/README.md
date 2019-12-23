@@ -189,11 +189,8 @@ the platform, you may disable the authentication updating this line to `HTTP_AUT
 
 ### Training command
 
-`TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'`
+To tweak your training command, change the line in `Makefile`:
+ 
+`TRAIN_CMD=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)`
 
-If you want to train some models from code instead of Jupyter Notebooks, you need to update this line. For example:
-
-`TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"`
-
-Please note that commands with arguments should be wrapped with either quotes `'` or double quotes `"` 
-in order to be processed correctly.  
+You can assume that this command runs in project's root directory.
