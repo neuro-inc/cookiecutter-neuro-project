@@ -1,1 +1,2 @@
 tqdm==4.32.1
+jupyterlab
