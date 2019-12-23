@@ -293,8 +293,8 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		$(CUSTOM_ENV_NAME) \
 		'jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
-.PHONY: jupyter-lab
-jupyter-lab:
+.PHONY: jupyterlab
+jupyterlab:
 	@make --silent jupyter JUPYTER_MODE=lab
 
 .PHONY: kill-jupyter

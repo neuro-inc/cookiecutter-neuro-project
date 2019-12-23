@@ -492,10 +492,9 @@ def _run_make_run_jupyter_notebook_test(neuro_run_timeout: int) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter_lab(
-    env_neuro_run_timeout: int, env_var_no_http_auth: None, monkeypatch: Any
+    env_neuro_run_timeout: int, env_var_no_http_auth: None
 ) -> None:
-    monkeypatch.setenv("JUPYTER_MODE", "lab")
-    _run_make_run_jupyter_lab_test(env_neuro_run_timeout)
+    _test_make_run_something_useful("jupyterlab", "/lab", env_neuro_run_timeout)
 
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
