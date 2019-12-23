@@ -70,7 +70,7 @@ jobs:
       - slack/status:
           channel: 'CQUBMRDHV'  # channel: template-nightly-testing
           only_for_branches: "ay/tests-reporting"
-          failure_message: "This is a test run.\n*Failures:*\n```\n$(make get_e2e_failures)\n```\n[ \"$(make get_e2e_failures)\" ] && echo 'has something' || echo 'empty'"
+          failure_message: "This is a test run.\n*Failures:*\n$(make get_e2e_failures)\n"
 
   test_staging:
     docker:
