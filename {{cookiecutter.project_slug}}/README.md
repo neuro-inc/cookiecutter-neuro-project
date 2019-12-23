@@ -140,12 +140,12 @@ save it to a file in local directory `./config/`, protect by setting appropriate
 and check that Neuro can access and use this file for authentication:
 
 ```
-$ export WANDB_SECRET_FILE=wandb-key.txt
+$ export WANDB_SECRET_FILE=wandb-token.txt
 $ echo "cf23df2207d99a74fbe169e3eba035e633b65d94" > config/$WANDB_SECRET_FILE
 $ chmod 600 config/$WANDB_SECRET_FILE
 $ make wandb-check-auth 
 Using variable: WANDB_SECRET_FILE=wandb-token.txt
-Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-key.txt'
+Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-token.txt'
 ```
 
 Now, if you run `develop`, `train`, or `jupyter` job, Neuro will authenticate W&B via your API key, 
