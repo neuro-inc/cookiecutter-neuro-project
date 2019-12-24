@@ -1,4 +1,3 @@
-jupyterlab
 flake8
 mypy
 isort
