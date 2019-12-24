@@ -291,13 +291,17 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		$(CUSTOM_ENV_NAME) \
 		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 
+.PHONY: kill-jupyter
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
+	$(NEURO) kill $(JUPYTER_JOB)
+
 .PHONY: jupyterlab
 jupyterlab:  ### Run a job with JupyterLab and open UI in the default browser
 	@make --silent jupyter JUPYTER_MODE=lab
 
-.PHONY: kill-jupyter
-kill-jupyter:  ### Terminate the job with Jupyter Notebook
-	$(NEURO) kill $(JUPYTER_JOB)
+.PHONY: kill-jupyterlab
+kill-jupyterlab:  ### Terminate the job with JupyterLab
+	@make --silent kill-jupyter
 
 .PHONY: tensorboard
 tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
