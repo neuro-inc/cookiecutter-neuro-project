@@ -1,2 +1,5 @@
-tqdm==4.32.1
 jupyterlab
+flake8
+mypy
+isort
+black

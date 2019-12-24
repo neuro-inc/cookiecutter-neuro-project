@@ -46,8 +46,7 @@ PRESET?=gpu-small
 HTTP_AUTH?=--http-auth
 
 # Command to run training inside the environment. Example:
-TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
-
+TRAIN_CMD=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
 LOCAL_PORT?=2211
 
@@ -100,7 +99,12 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	$(NEURO) kill $(SETUP_JOB) >/dev/null 2>&1
+	$(NEURO) mkdir --parents $(PROJECT_PATH_STORAGE) \
+		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) \
+		$(DATA_DIR_STORAGE) \
+		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
+		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
 		--preset cpu-small \
@@ -109,12 +113,6 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CODE_DIR) | true
-	$(NEURO) mkdir $(DATA_DIR_STORAGE) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) | true
-	$(NEURO) mkdir $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) | true
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
@@ -228,7 +226,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
 		$(CUSTOM_ENV_NAME) \
-		"sleep infinity"
+		sleep infinity
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job
@@ -262,7 +260,7 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
 		$(CUSTOM_ENV_NAME) \
-		$(TRAINING_COMMAND)
+		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job
@@ -291,7 +289,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		$(CUSTOM_ENV_NAME) \
-		'jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
+		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 
 .PHONY: jupyterlab
 jupyterlab:  ### Run a job with JupyterLab and open UI in the default browser
@@ -312,7 +310,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
-		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
+		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard

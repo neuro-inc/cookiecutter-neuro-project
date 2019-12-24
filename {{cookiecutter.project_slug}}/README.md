@@ -127,6 +127,7 @@ you need to change the following line to point to its location. For example:
 If you want to debug your code on GPU, you can run a sleeping job via `make develop`, then connect to its bash over SSH
 via `make connect-develop` (type `exit` or `^D` to close SSH connection), see its logs via `make logs-develop`, or 
 forward port 22 from the job to localhost via `make port-forward-develop` to use it for remote debugging.
+Please find instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm). 
 
 Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
 
@@ -140,12 +141,12 @@ save it to a file in local directory `./config/`, protect by setting appropriate
 and check that Neuro can access and use this file for authentication:
 
 ```
-$ export WANDB_SECRET_FILE=wandb-key.txt
+$ export WANDB_SECRET_FILE=wandb-token.txt
 $ echo "cf23df2207d99a74fbe169e3eba035e633b65d94" > config/$WANDB_SECRET_FILE
 $ chmod 600 config/$WANDB_SECRET_FILE
 $ make wandb-check-auth 
 Using variable: WANDB_SECRET_FILE=wandb-token.txt
-Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-key.txt'
+Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-token.txt'
 ```
 
 Now, if you run `develop`, `train`, or `jupyter` job, Neuro will authenticate W&B via your API key, 
@@ -188,11 +189,8 @@ the platform, you may disable the authentication updating this line to `HTTP_AUT
 
 ### Training command
 
-`TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'`
+To tweak your training command, change the line in `Makefile`:
+ 
+`TRAIN_CMD=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)`
 
-If you want to train some models from code instead of Jupyter Notebooks, you need to update this line. For example:
-
-`TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"`
-
-Please note that commands with arguments should be wrapped with either quotes `'` or double quotes `"` 
-in order to be processed correctly.  
+You can assume that this command runs in project's root directory.
