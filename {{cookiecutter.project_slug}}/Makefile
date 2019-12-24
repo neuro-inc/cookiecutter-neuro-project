@@ -64,7 +64,7 @@ WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
 ##### COMMANDS #####
 
 APT?=apt-get -qq
-PIP?=pip install --progress-bar=off
+PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
 
 
