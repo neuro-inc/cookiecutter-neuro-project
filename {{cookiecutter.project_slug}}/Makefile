@@ -30,7 +30,7 @@ CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
-# jupyter mode. Available options: notebook, lab.
+# Jupyter mode. Available options: notebook (to run Jupyter Notebook), lab (to run JupyterLab).
 JUPYTER_MODE?=notebook
 
 # Location of your dataset on the platform storage. Example:
@@ -294,7 +294,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		'jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: jupyterlab
-jupyterlab:
+jupyterlab:  ### Run a job with JupyterLab and open UI in the default browser
 	@make --silent jupyter JUPYTER_MODE=lab
 
 .PHONY: kill-jupyter
