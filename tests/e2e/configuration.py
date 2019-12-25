@@ -70,7 +70,7 @@ MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
 
-MK_DEFAULT_TRAIN_JOB_RUN = "base"  # env var 'RUN'
+MK_RUN_DEFAULT = "base"  # env var 'RUN'
 MK_TRAIN_JOB_FILE = ".train_jobs"
 
 MK_BASE_ENV_NAME = "neuromation/base"
@@ -171,6 +171,10 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
+
+
+def mk_train_job(run: str = MK_RUN_DEFAULT) -> str:
+    return f"{MK_TRAIN_JOB}-{run}"
 
 
 def _pattern_copy_file_started(file_name: str) -> str:

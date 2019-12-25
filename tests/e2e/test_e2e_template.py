@@ -12,7 +12,6 @@ from tests.e2e.configuration import (
     MK_CODE_DIR,
     MK_CONFIG_DIR,
     MK_DATA_DIR,
-    MK_DEFAULT_TRAIN_JOB_RUN,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
@@ -23,9 +22,11 @@ from tests.e2e.configuration import (
     MK_PROJECT_PATH_STORAGE,
     MK_PROJECT_SLUG,
     MK_RESULTS_DIR,
+    MK_RUN_DEFAULT,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
     MK_TRAIN_JOB,
+    MK_TRAIN_JOB_FILE,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -61,6 +62,7 @@ from tests.e2e.configuration import (
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
     _pattern_upload_dir,
+    mk_train_job,
 )
 from tests.e2e.conftest import (
     STEP_CLEANUP,
@@ -480,13 +482,13 @@ def test_make_train_custom_command(
     _run_make_train(env_neuro_run_timeout, expect_patterns=[])
 
 
-@finalize(f"neuro kill {MK_TRAIN_JOB}")
+@finalize(f"neuro kill {mk_train_job()}")
 def _run_make_train(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
         run(cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True)
-    dumped_jobs = Path(".train_jobs").read_text().splitlines()
-    job_name = f"{MK_TRAIN_JOB}-{MK_DEFAULT_TRAIN_JOB_RUN}"
+    dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
+    job_name = mk_train_job()
     assert job_name in dumped_jobs, f"dumped jobs: {dumped_jobs}"
 
 
@@ -494,11 +496,11 @@ def _run_make_train(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
 def test_make_train_multiple_experiments(
     monkeypatch: Any, env_var_preset_cpu_small: None
 ) -> None:
-    experiments = [MK_DEFAULT_TRAIN_JOB_RUN, "1", "new-idea", "2nd-idea"]
-    jobs = [f"{MK_TRAIN_JOB}-{exp}" for exp in experiments]
+    experiments = [MK_RUN_DEFAULT, "new-idea"]
+    jobs = [mk_train_job(exp) for exp in experiments]
     with finalize(*[f"neuro kill {job}" for job in jobs]):
         for job, exp in zip(jobs, experiments):
-            env_var = f"RUN={exp}" if exp != MK_DEFAULT_TRAIN_JOB_RUN else ""
+            env_var = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
             cmd = f"make train TRAIN_CMD='sleep 1h' {env_var}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
                 run(
@@ -507,13 +509,13 @@ def test_make_train_multiple_experiments(
                     assert_exit_code=False,
                 )
 
-            dumped_jobs = Path(".train_jobs").read_text().splitlines()
+            dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
             assert job in dumped_jobs, f"dumped jobs: {dumped_jobs}"
 
         run("make kill-train-all", detect_new_jobs=False)
         jobs_left = run(f'bash -c "neuro ps | grep {MK_TRAIN_JOB}"')
         assert not jobs_left
-        assert ".train_jobs" not in ls_files(".")
+        assert MK_TRAIN_JOB_FILE not in ls_files(".")
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -664,7 +666,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
 
 @pytest.mark.run(order=STEP_KILL)
 def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
-    with finalize(f"neuro kill {MK_TRAIN_JOB}"):
+    with finalize(f"neuro kill {mk_train_job()}"):
         cmd = "make train TRAIN_CMD='sleep 3h'"
         with measure_time(cmd):
             run(
