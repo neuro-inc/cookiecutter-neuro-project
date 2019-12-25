@@ -138,7 +138,7 @@ def _test_make_run_job_connect_aws(run_job_cmd: str) -> None:
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
     bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
-    cmd = f"neuro exec -T --no-key-check {job_id} bash -c '{bash_cmd}'"
+    cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
     with measure_time(cmd, TIMEOUT_NEURO_EXEC):
         tests.e2e.helpers.runners.run(
             cmd, verbose=True, expect_patterns=["Hello world!"]
