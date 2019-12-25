@@ -9,6 +9,7 @@ import pytest
 from cryptography.fernet import Fernet
 
 from tests.e2e.configuration import (
+    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
     GCP_KEY_FILE,
@@ -304,6 +305,16 @@ def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
 @pytest.fixture()
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
+
+
+@pytest.fixture(autouse=True)
+def env_var_aws_secret_file(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
+
+
+@pytest.fixture()
+def decrypt_aws_key() -> t.Iterator[None]:
+    yield from _decrypt_key(AWS_KEY_FILE)
 
 
 @pytest.fixture(autouse=True)

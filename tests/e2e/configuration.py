@@ -91,6 +91,7 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
 GCP_KEY_FILE = "gcp-key.json"
+AWS_KEY_FILE = "aws_credentials"
 WANDB_KEY_FILE = "wandb-fake-key.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
@@ -98,7 +99,7 @@ SECRET_FILE_ENC_PATTERN = "{key}.enc"
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
-PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, WANDB_KEY_FILE}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, AWS_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}
 PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
 
