@@ -70,6 +70,9 @@ MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
 
+MK_DEFAULT_TRAIN_JOB_RUN = "base"  # env var 'RUN'
+MK_TRAIN_JOB_FILE = ".train_jobs"
+
 MK_BASE_ENV_NAME = "neuromation/base"
 MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
 

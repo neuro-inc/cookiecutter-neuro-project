@@ -12,6 +12,7 @@ from tests.e2e.configuration import (
     MK_CODE_DIR,
     MK_CONFIG_DIR,
     MK_DATA_DIR,
+    MK_DEFAULT_TRAIN_JOB_RUN,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
@@ -25,6 +26,7 @@ from tests.e2e.configuration import (
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
     MK_TRAIN_JOB,
+    MK_TRAIN_JOB_FILE,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -484,6 +486,38 @@ def _run_make_train(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
         run(cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True)
+    dumped_jobs = Path(".train_jobs").read_text().splitlines()
+    job_name = f"{MK_TRAIN_JOB}-{MK_DEFAULT_TRAIN_JOB_RUN}"
+    assert job_name in dumped_jobs, f"dumped jobs: {dumped_jobs}"
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_multiple_experiments(
+    monkeypatch: Any, env_var_preset_cpu_small: None
+) -> None:
+    experiments = [MK_DEFAULT_TRAIN_JOB_RUN, "1", "new-idea", "2nd-idea"]
+    jobs = [f"{MK_TRAIN_JOB}-{exp}" for exp in experiments]
+    with finalize(*[f"neuro kill {job}" for job in jobs]):
+        for job, exp in zip(jobs, experiments):
+            env_var = f"RUN={exp}" if exp != MK_DEFAULT_TRAIN_JOB_RUN else ""
+            cmd = f"make train TRAIN_CMD='sleep 1h' {env_var}"
+            with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+                run(
+                    cmd,
+                    expect_patterns=[
+                        fr"Job name '{job}' saved to file '{MK_TRAIN_JOB_FILE}'",
+                        _get_pattern_status_running(),
+                    ],
+                    assert_exit_code=False,
+                )
+
+            dumped_jobs = Path(".train_jobs").read_text().splitlines()
+            assert job in dumped_jobs, f"dumped jobs: {dumped_jobs}"
+
+        run("make kill-train-all", detect_new_jobs=False)
+        jobs_left = run(f'bash -c "neuro ps | grep {MK_TRAIN_JOB}"')
+        assert not jobs_left
+        assert ".train_jobs" not in ls_files(".")
 
 
 @pytest.mark.run(order=STEP_RUN)

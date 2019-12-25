@@ -46,7 +46,7 @@ PRESET?=gpu-small
 HTTP_AUTH?=--http-auth
 
 # Command to run training inside the environment. Example:
-TRAIN_CMD=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
+TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
 LOCAL_PORT?=2211
 
@@ -92,6 +92,9 @@ ifneq ($(wildcard ${AWS_SECRET_PATH_LOCAL}),)
 else
 	OPTION_AWS_CREDENTIALS=
 endif
+
+_TRAIN_JOB_FILE=.train_jobs
+
 
 # Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
@@ -268,10 +271,14 @@ port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB)
 
+RUN?=base
+
 .PHONY: train
-train: _check_setup upload-code upload-config   ### Run a training job
+train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
+	@[ -f $(_TRAIN_JOB_FILE) ] && grep -qxF '$(TRAIN_JOB)-$(RUN)' $(_TRAIN_JOB_FILE) || \
+		{ echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE); echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"; }
 	$(NEURO) run \
-		--name $(TRAIN_JOB) \
+		--name $(TRAIN_JOB)-$(RUN) \
 		--preset $(PRESET) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
@@ -285,12 +292,20 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 
 .PHONY: kill-train
-kill-train:  ### Terminate the training job
-	$(NEURO) kill $(TRAIN_JOB)
+kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
+	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
+
+.PHONY: kill-train-all
+kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
+ifneq ($(wildcard $(_TRAIN_JOB_FILE)),)
+	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE)) && rm $(_TRAIN_JOB_FILE)
+else
+	@echo -e "No train jobs registered: file '$(_TRAIN_JOB_FILE)' not found.\nPlease check 'neuro ps' to verify."
+endif
 
 .PHONY: connect-train
-connect-train: _check_setup  ### Connect to the remote shell running on the training job
-	$(NEURO) exec --no-key-check $(TRAIN_JOB) bash
+connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
+	$(NEURO) exec --no-key-check $(TRAIN_JOB)-$(RUN) bash
 
 .PHONY: jupyter
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
@@ -359,7 +374,7 @@ kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-develop kill-train kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
