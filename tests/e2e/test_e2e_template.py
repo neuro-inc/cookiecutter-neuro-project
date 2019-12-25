@@ -518,18 +518,20 @@ def _run_make_train(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_multiple_experiments_and_no_wait_start(
+def test_make_train_multiple_experiments(
     monkeypatch: Any, env_var_preset_cpu_small: None
 ) -> None:
     experiments = [MK_RUN_DEFAULT, "new-idea"]
     jobs = [mk_train_job(exp) for exp in experiments]
+    train_cmd = "TRAIN_CMD='sleep 1h'"
+    no_wait = "TRAIN_WAIT_START=--no-wait-start"
+
     with finalize(*[f"neuro kill {job}" for job in jobs]):
         for job, exp in zip(jobs, experiments):
             env = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
-            wait = "TRAIN_WAIT_START=--no-wait-start"
-            cmd = f"make train TRAIN_CMD='sleep 1h' {wait} {env}"
+            cmd = f"make train {train_cmd} {no_wait} {env}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
-                run(cmd, expect_patterns=[_get_pattern_status_running()])
+                run(cmd)
 
             dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
             assert job in dumped_jobs, f"dumped jobs: {dumped_jobs}"
