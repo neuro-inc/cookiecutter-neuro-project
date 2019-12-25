@@ -513,7 +513,11 @@ def test_make_train_multiple_experiments(
             assert job in dumped_jobs, f"dumped jobs: {dumped_jobs}"
 
         run("make kill-train-all", detect_new_jobs=False)
-        jobs_left = run(f'bash -c "neuro ps | grep {MK_TRAIN_JOB}"')
+        jobs_left = run(
+            f'bash -c "neuro -q ps | grep {MK_TRAIN_JOB}"',
+            assert_exit_code=False,
+            detect_new_jobs=False,
+        )
         assert not jobs_left
         assert MK_TRAIN_JOB_FILE not in ls_files(".")
 
