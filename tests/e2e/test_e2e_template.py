@@ -514,7 +514,7 @@ def test_make_train_multiple_experiments(
 
         run("make kill-train-all", detect_new_jobs=False)
         jobs_left = run(
-            f'bash -c "neuro -q ps | grep {MK_TRAIN_JOB}"',
+            f'bash -c "neuro ps | grep {MK_TRAIN_JOB}"',
             assert_exit_code=False,
             detect_new_jobs=False,
         )
