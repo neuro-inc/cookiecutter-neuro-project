@@ -245,10 +245,9 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		sleep infinity
 
@@ -278,11 +277,10 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 
@@ -303,15 +301,14 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		$(HTTP_AUTH) \
 		--browse \
 		--detach \
-		--env JOB_TIMEOUT=1d \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env JOB_TIMEOUT=1d \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 
