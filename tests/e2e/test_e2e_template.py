@@ -354,7 +354,9 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
+def test_make_upload_config(
+    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
