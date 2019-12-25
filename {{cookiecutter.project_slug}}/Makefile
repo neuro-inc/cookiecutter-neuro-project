@@ -41,9 +41,14 @@ DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 PRESET?=gpu-small
 
 # HTTP authentication (via cookies) for the job's HTTP link.
-# Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
+# Applied only to jupyter, tensorboard and filebrowser jobs.
+# Set `HTTP_AUTH=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
+
+# When running the training job, wait until it gets actually running.
+# Set `TRAIN_WAIT_START=--no-wait-start` to disable this feature.
+TRAIN_WAIT_START?=--wait-start
 
 # Command to run training inside the environment. Example:
 TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
@@ -280,6 +285,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--preset $(PRESET) \
+		$(TRAIN_WAIT_START) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
