@@ -9,6 +9,7 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_RUN_CPU,
 )
 from tests.e2e.conftest import STEP_RUN
+from tests.e2e.helpers.runners import try_except_finally
 from tests.e2e.helpers.utils import measure_time
 
 
@@ -19,7 +20,7 @@ def test_make_develop_connect_gsutil(
     _test_make_develop_connect_gsutil()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _test_make_develop_connect_gsutil() -> None:
     cmd = "make develop"
     _test_make_run_job_connect_gsutil(cmd)
@@ -32,7 +33,7 @@ def test_make_train_connect_gsutil(
     _test_make_train_connect_gsutil()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_gsutil() -> None:
     cmd = "make train TRAIN_CMD='sleep 1h'"
     _test_make_run_job_connect_gsutil(cmd)
@@ -45,7 +46,7 @@ def test_make_jupyter_connect_gsutil(
     _test_make_jupyter_connect_gsutil()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _test_make_jupyter_connect_gsutil() -> None:
     cmd = "make jupyter"
     _test_make_run_job_connect_gsutil(cmd)
@@ -94,7 +95,7 @@ def test_make_develop_connect_wandb(
     _test_make_develop_connect_wandb()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
+@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
 def _test_make_develop_connect_wandb() -> None:
     cmd = "make develop"
     _test_make_run_job_connect_wandb(cmd)
@@ -107,7 +108,7 @@ def test_make_train_connect_wandb(
     _test_make_train_connect_wandb()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
+@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
 def _test_make_train_connect_wandb() -> None:
     cmd = "make train TRAIN_CMD='sleep 1h'"
     _test_make_run_job_connect_wandb(cmd)
@@ -120,7 +121,7 @@ def test_make_jupyter_connect_wandb(
     _test_make_jupyter_connect_wandb()
 
 
-@tests.e2e.helpers.runners.try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
 def _test_make_jupyter_connect_wandb() -> None:
     cmd = "make jupyter"
     _test_make_run_job_connect_wandb(cmd)

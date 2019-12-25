@@ -459,15 +459,27 @@ def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> 
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_jupyter(
+def test_make_run_jupyter_notebook(
     env_neuro_run_timeout: int, env_var_no_http_auth: None
 ) -> None:
-    _run_make_run_jupyter_test(env_neuro_run_timeout)
+    _run_make_run_jupyter_notebook_test(env_neuro_run_timeout)
 
 
 @try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def _run_make_run_jupyter_test(neuro_run_timeout: int) -> None:
+def _run_make_run_jupyter_notebook_test(neuro_run_timeout: int) -> None:
     _test_make_run_something_useful("jupyter", "/tree", neuro_run_timeout)
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_run_jupyter_lab(
+    env_neuro_run_timeout: int, env_var_no_http_auth: None
+) -> None:
+    _test_make_run_something_useful("jupyterlab", "/lab", env_neuro_run_timeout)
+
+
+@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
+def _run_make_run_jupyter_lab_test(neuro_run_timeout: int) -> None:
+    _test_make_run_something_useful("jupyter", "/lab", neuro_run_timeout)
 
 
 @pytest.mark.run(order=STEP_RUN)
