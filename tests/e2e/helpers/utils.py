@@ -109,24 +109,6 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
         log_msg("-" * len(msg))
 
 
-@contextmanager
-def log_errors_and_finalize(
-    finalizer_callback: t.Optional[t.Callable[[], t.Any]] = None
-) -> t.Iterator[None]:
-    try:
-        yield
-    except Exception as e:
-        log_msg("-" * 100, logger=LOGGER.error)
-        log_msg(f"Error: {e.__class__}: {e}", logger=LOGGER.error)
-        log_msg("-" * 100, logger=LOGGER.error)
-        raise
-    finally:
-        if finalizer_callback is not None:
-            log_msg("Running finalization callback...")
-            finalizer_callback()
-            log_msg("Done")
-
-
 def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
     """
     >>> list(merge_similars("a b b c c c d d e".split()))
