@@ -63,7 +63,7 @@ Through a simple file explorer interface, you can upload test images and perform
 On local machine, run `make upload-data`. This command pushes local files stored in `./data`
 into `storage:{{ cookiecutter.project_slug }}/data` mounted to your development environment's `/project/data`.
 
-### Uploading to the Job from Google Cloud
+### Uploading data to the Job from Google Cloud Storage
 
 Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
 
@@ -106,6 +106,33 @@ Hello World
 ```
 
 Also, environment variable `GOOGLE_APPLICATION_CREDENTIALS` is set up for these jobs, so that you an access your data on Google Cloud Storage via Python API (see example in [Google Cloud Storage documentation](https://cloud.google.com/storage/docs/reference/libraries)).
+
+### Uploading data to the Job from AWS S3
+
+AWS CLI is pre-installed on all jobs produced from the Base Image.
+
+Neuro Project Template provides a fast way to authenticate AWS CLI to work with AWS user account (see instructions on setting up your AWS user account credentials and creating the secret key in [documentation](https://neu.ro/docs/aws_s3)).
+
+In project directory, write your AWS credentials to a file `./config/aws_credentials`, set appropriate permissions on it,
+inform Neuro about this file by setting a specific env var, and check that Neuro can access and use this file for authentication:
+
+```bash
+$ export AWS_SECRET_FILE=aws_credentials
+$ chmod 600 ./config/$AWS_SECRET_FILE
+$ make aws-check-auth
+AWS will be authenticated via user account credentials file: '/path/to/project/config/aws_credentials'
+```
+
+Now, if you run a `develop`, `train`, or `jupyter` job, Neuro will authenticate AWS CLI via your secret file, so you will be able to use `aws` there:
+
+```bash
+$ make develop
+...
+$ make connect-develop
+...
+root@job-098b8584-1003-4cb9-adfb-3606604a3855:/# aws s3 cp s3://my-neuro-bucket-42/hello.txt -
+Hello World
+```
 
 ## Customization
 
