@@ -347,7 +347,6 @@ def finalize(*finally_commands: str):  # type: ignore
         for cmd in finally_commands:
             log_msg(f"Running finalization command '{_hide_secret_cmd(cmd)}'...")
             run(cmd, verbose=True, assert_exit_code=False)
-            log_msg("Done")
 
 
 # == neuro helpers ==

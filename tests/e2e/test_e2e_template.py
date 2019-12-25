@@ -26,7 +26,6 @@ from tests.e2e.configuration import (
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
     MK_TRAIN_JOB,
-    MK_TRAIN_JOB_FILE,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -504,10 +503,7 @@ def test_make_train_multiple_experiments(
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
                 run(
                     cmd,
-                    expect_patterns=[
-                        fr"Job name '{job}' saved to file '{MK_TRAIN_JOB_FILE}'",
-                        _get_pattern_status_running(),
-                    ],
+                    expect_patterns=[_get_pattern_status_running()],
                     assert_exit_code=False,
                 )
 
