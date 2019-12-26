@@ -287,8 +287,7 @@ RUN?=base
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
-	@[ -f $(_TRAIN_JOB_FILE) ] && grep -qxF '$(TRAIN_JOB)-$(RUN)' $(_TRAIN_JOB_FILE) || \
-		{ echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE); echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"; }
+	echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE) && echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--preset $(PRESET) \
@@ -311,9 +310,8 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
 ifneq ($(wildcard $(_TRAIN_JOB_FILE)),)
-	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE)) && rm $(_TRAIN_JOB_FILE)
-else
-	@echo -e "No train jobs registered: file '$(_TRAIN_JOB_FILE)' not found.\nPlease check 'neuro ps' to verify."
+	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE) | uniq -u)
+	@echo -e "Please check that jobs listed in '$(_TRAIN_JOB_FILE)' are actually deleted.\nUse 'neuro ps' to verify."
 endif
 
 .PHONY: connect-train

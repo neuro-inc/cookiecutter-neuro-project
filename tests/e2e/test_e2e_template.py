@@ -506,18 +506,21 @@ def _run_make_train(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_multiple_concurrent_runs(
-    monkeypatch: Any, env_var_preset_cpu_small: None, env_var_train_no_stream_logs: None
+def test_make_train_multiple_experiments(
+    monkeypatch: Any, env_var_preset_cpu_small: None
 ) -> None:
     experiments = [MK_RUN_DEFAULT, "new-idea"]
     jobs = [mk_train_job(exp) for exp in experiments]
-
     with finalize(*[f"neuro kill {job}" for job in jobs]):
         for job, exp in zip(jobs, experiments):
             env_var = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
             cmd = f"make train TRAIN_CMD='sleep 1h' {env_var}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
-                run(cmd)
+                run(
+                    cmd,
+                    expect_patterns=[_get_pattern_status_running()],
+                    assert_exit_code=False,
+                )
 
             dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
             assert job in dumped_jobs, f"dumped jobs: {dumped_jobs}"
@@ -529,7 +532,61 @@ def test_make_train_multiple_concurrent_runs(
             detect_new_jobs=False,
         )
         assert not jobs_left
-        assert MK_TRAIN_JOB_FILE not in ls_files(".")
+        # File '.train_jobs' must remain
+        assert MK_TRAIN_JOB_FILE in ls_files(".")
+        jobs_in_file = set(Path(MK_TRAIN_JOB_FILE).read_text().splitlines())
+        assert set(jobs) <= jobs_in_file
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_invalid_name(
+    monkeypatch: Any, env_var_preset_cpu_small: None
+) -> None:
+    exp_valid = "postfix"
+    exp_invalid = "InVaLiD-NaMe"
+    job_valid = mk_train_job(exp_valid)
+    job_invalid = mk_train_job(exp_invalid)
+    cmd_prtn = "make train TRAIN_CMD='sleep 1h' RUN={run}"
+
+    with finalize(f"neuro kill {job_valid}"):
+        cmd_valid = cmd_prtn.format(run=exp_valid)
+        with measure_time(cmd_valid, TIMEOUT_NEURO_RUN_CPU):
+            run(
+                cmd_valid,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
+            )
+
+        cmd_invalid = cmd_prtn.format(run=exp_invalid)
+        with measure_time(cmd_invalid, TIMEOUT_NEURO_RUN_CPU):
+            run(
+                cmd_invalid,
+                expect_patterns=["Invalid job name"],
+                assert_exit_code=False,
+            )
+
+        # Both should be dumped:
+        dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
+        assert job_valid in dumped_jobs, f"dumped jobs: {dumped_jobs}"
+        assert job_invalid in dumped_jobs, f"dumped jobs: {dumped_jobs}"
+
+    run(
+        "make kill-train-all",
+        expect_patterns=[f"Cannot kill job {job_invalid}"],
+        detect_new_jobs=False,
+    )
+    jobs_left = run(
+        f'bash -c "neuro ps | grep {MK_TRAIN_JOB}"',
+        assert_exit_code=False,
+        detect_new_jobs=False,
+    )
+    assert not jobs_left
+
+    # file `.train_jobs` must remain:
+    assert MK_TRAIN_JOB_FILE in ls_files("."), "file should not be deleted here"
+    dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
+    assert job_valid in dumped_jobs, f"dumped jobs: {dumped_jobs}"
+    assert job_invalid in dumped_jobs, f"dumped jobs: {dumped_jobs}"
 
 
 @pytest.mark.run(order=STEP_RUN)
