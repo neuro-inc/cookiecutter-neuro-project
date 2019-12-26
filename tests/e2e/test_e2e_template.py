@@ -710,7 +710,9 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-def test_make_clean_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
+def test_make_clean_config(
+    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 
