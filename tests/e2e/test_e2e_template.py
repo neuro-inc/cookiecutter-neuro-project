@@ -438,7 +438,7 @@ def test_make_download_data() -> None:
             expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_DATA_DIR)],
         )
 
-    assert len(ls_files(MK_NOTEBOOKS_DIR)) == N_FILES
+    assert len(ls_files(MK_DATA_DIR)) == N_FILES
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
