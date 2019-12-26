@@ -5,9 +5,11 @@ import pytest
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
+    CONFIG_SECRET_DIR,
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
+    JOB_STATUS_SUCCEEDED,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
@@ -32,6 +34,7 @@ from tests.e2e.configuration import (
     PACKAGES_PIP_CUSTOM,
     PROJECT_CODE_DIR_CONTENT,
     PROJECT_CONFIG_DIR_CONTENT,
+    PROJECT_CONFIG_SECRET_DIR_CONTENT,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_RESULTS_DIR_CONTENT,
     TIMEOUT_MAKE_CLEAN_DATA,
@@ -105,7 +108,7 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
-def test_make_setup_required() -> None:
+def test_require_make_setup() -> None:
     run(
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
@@ -115,7 +118,7 @@ def test_make_setup_required() -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_gcloud_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / GCP_KEY_FILE
     if key.exists():
         key.unlink()  # key must not exist in this test
 
@@ -129,7 +132,7 @@ def test_make_gcloud_check_auth_failure() -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
 def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
-    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / GCP_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
     make_cmd = "make gcloud-check-auth"
@@ -144,7 +147,7 @@ def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_aws_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / AWS_KEY_FILE
     if key.exists():
         key.unlink()  # key must not exist in this test
 
@@ -158,7 +161,7 @@ def test_make_aws_check_auth_failure() -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
 def test_make_aws_check_auth_success(decrypt_aws_key: None) -> None:
-    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / AWS_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
     make_cmd = "make aws-check-auth"
@@ -171,7 +174,7 @@ def test_make_aws_check_auth_success(decrypt_aws_key: None) -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_wandb_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / WANDB_KEY_FILE
     if key.exists():
         key.unlink()  # key must not exist in this test
 
@@ -185,7 +188,7 @@ def test_make_wandb_check_auth_failure() -> None:
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
 def test_make_wandb_check_auth_success(generate_wandb_key: None) -> None:
-    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
+    key = Path(CONFIG_SECRET_DIR) / WANDB_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
     make_cmd = "make wandb-check-auth"
@@ -356,7 +359,8 @@ def test_make_upload_data() -> None:
 def test_make_upload_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
 ) -> None:
-    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls(CONFIG_SECRET_DIR) == PROJECT_CONFIG_SECRET_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -372,6 +376,8 @@ def test_make_upload_config(
 
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{CONFIG_SECRET_DIR}")
+    assert actual == PROJECT_CONFIG_SECRET_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
@@ -458,7 +464,7 @@ def test_make_download_results() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
+def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
     _run_make_train(
         env_neuro_run_timeout,
         expect_patterns=[
@@ -532,10 +538,7 @@ def test_make_train_multiple_experiments(
             detect_new_jobs=False,
         )
         assert not jobs_left
-        # File '.train_jobs' must remain
-        assert MK_TRAIN_JOB_FILE in ls_files(".")
-        jobs_in_file = set(Path(MK_TRAIN_JOB_FILE).read_text().splitlines())
-        assert set(jobs) <= jobs_in_file
+        assert MK_TRAIN_JOB_FILE not in ls_files(".")
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -650,7 +653,7 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
-    wait_job_change_status_to(job_id, "succeeded")
+    wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)

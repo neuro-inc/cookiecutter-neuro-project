@@ -93,16 +93,19 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["expect", "figlet"]
 PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation==19.9.10"]
+SECRET_DIR_NAME = "secret"
+CONFIG_SECRET_DIR = f"{MK_CONFIG_DIR}/{SECRET_DIR_NAME}"
 GCP_KEY_FILE = "gcp-key.json"
 AWS_KEY_FILE = "aws-credentials.txt"
-WANDB_KEY_FILE = "wandb-fake-key.txt"
+WANDB_KEY_FILE = "wandb-token.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
-PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, AWS_KEY_FILE, WANDB_KEY_FILE}
+PROJECT_CONFIG_DIR_CONTENT = {"test-config", SECRET_DIR_NAME}
+PROJECT_CONFIG_SECRET_DIR_CONTENT = {GCP_KEY_FILE, AWS_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}
 PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
 

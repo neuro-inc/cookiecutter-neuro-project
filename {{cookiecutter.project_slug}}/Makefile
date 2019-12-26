@@ -58,21 +58,26 @@ LOCAL_PORT?=2211
 
 ##### SECRETS ######
 
+CONFIG_SECRET_DIR=${CONFIG_DIR}/secret
+
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
-GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
+GCP_SECRET_PATH_LOCAL=${CONFIG_SECRET_DIR}/${GCP_SECRET_FILE}
 GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
 
 # AWS integration settings:
-AWS_SECRET_FILE?=aws-credentials.txt
-AWS_SECRET_PATH_LOCAL=${CONFIG_DIR}/${AWS_SECRET_FILE}
+AWS_SECRET_FILE?=aws_credentials
+AWS_SECRET_PATH_LOCAL=${CONFIG_SECRET_DIR}/${AWS_SECRET_FILE}
 AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
+WANDB_SWEEP_FILE?=wandb-sweep.yaml
 
-WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
+WANDB_SECRET_PATH_LOCAL=${CONFIG_SECRET_DIR}/${WANDB_SECRET_FILE}
 WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+_WANDB_SWEEP_FILE=${CONFIG_DIR}/${WANDB_SWEEP_FILE}
+_WANDB_SWEEP_ID_FILE=.wandb_sweep_id
 
 ##### COMMANDS #####
 
@@ -223,7 +228,7 @@ gcloud-check-auth:  ### Check if the file containing Google Cloud service accoun
 	@test "${OPTION_GCP_CREDENTIALS}" \
 		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
 		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_SECRET_DIR}/'"; \
 			false; }
 
 ##### AWS Integration #####
@@ -234,7 +239,7 @@ aws-check-auth:  ### Check if the file containing AWS user account credentials e
 	@test "${OPTION_AWS_CREDENTIALS}" \
 		&& echo "AWS will be authenticated via user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'" \
 		|| { echo "ERROR: Not found AWS user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named AWS_SECRET_FILE='${AWS_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			echo "Please save the key file named AWS_SECRET_FILE='${AWS_SECRET_FILE}' to './${CONFIG_SECRET_DIR}/'"; \
 			false; }
 
 ##### WandB Integration #####
@@ -245,7 +250,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 	@test "${OPTION_WANDB_CREDENTIALS}" \
 		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
 		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_SECRET_DIR}/'"; \
 			false; }
 
 ##### JOBS #####

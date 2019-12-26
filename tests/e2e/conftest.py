@@ -10,6 +10,7 @@ from cryptography.fernet import Fernet
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
+    CONFIG_SECRET_DIR,
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
     GCP_KEY_FILE,
@@ -290,11 +291,11 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
 
 
 def _decrypt_key(key_name: str) -> t.Iterator[None]:
-    key = Path(MK_CONFIG_DIR) / key_name
+    key = Path(CONFIG_SECRET_DIR) / key_name
     try:
         if not key.exists():
             key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
-            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / key_enc_name
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / CONFIG_SECRET_DIR / key_enc_name
             _decrypt_file(key_enc, key)
         yield
     finally:

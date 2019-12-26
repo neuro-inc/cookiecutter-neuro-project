@@ -1,8 +1,9 @@
 # Neuro Template:
 /data/**/*
-/config/**/*
+/config/secret/**/*
 /.setup_done
-/.train_jobs
+
+!/**/.gitkeep
 
 # IntelliJ IDEA project
 /.idea/

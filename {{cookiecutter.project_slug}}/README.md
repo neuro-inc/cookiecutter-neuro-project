@@ -69,13 +69,13 @@ Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
 
 Neuro Project Template provides a fast way to authenticate Google Cloud SDK to work with Google Service Account (see instructions on setting up your Google Project and Google Service Account and creating the secret key for this Service Account in [documentation](https://neu.ro/docs/google_cloud_storage)).
 
-Download service account key to the local config directory `./config/` and set appropriate permissions on it:
+Download service account key to the local config directory `./config/secret/` and set appropriate permissions on it:
 
 ```
 $ SA_NAME="neuro-job"
-$ gcloud iam service-accounts keys create ./config/$SA_NAME-key.json \
+$ gcloud iam service-accounts keys create ./config/secret/$SA_NAME-key.json \
   --iam-account $SA_NAME@$PROJECT_ID.iam.gserviceaccount.com
-$ chmod 600 ./config/$SA_NAME-key.json
+$ chmod 600 ./config/secret/$SA_NAME-key.json
 ```
 
 Inform Neuro about this file:
@@ -91,7 +91,7 @@ Check that Neuro can access and use this file for authentication:
 ```
 $ make gcloud-check-auth
 Using variable: GCP_SECRET_FILE='neuro-job-key.json'
-Google Cloud will be authenticated via service account key file: '/path/to/project/config/neuro-job-key.json'
+Google Cloud will be authenticated via service account key file: '/path/to/project/config/secret/neuro-job-key.json'
 ```
 
 Now, if you run a `develop`, `train`, or `jupyter` job, Neuro will authenticate Google Cloud SDK via your secret file, so you will be able to use `gsutil` or `gcloud` there:
@@ -113,14 +113,14 @@ AWS CLI is pre-installed on all jobs produced from the Base Image.
 
 Neuro Project Template provides a fast way to authenticate AWS CLI to work with AWS user account (see instructions on setting up your AWS user account credentials and creating the secret key in [documentation](https://neu.ro/docs/aws_s3)).
 
-In project directory, write your AWS credentials to a file `./config/aws-credentials.txt`, set appropriate permissions on it,
+In project directory, write your AWS credentials to a file `./config/secret/aws_credentials`, set appropriate permissions on it,
 inform Neuro about this file by setting a specific env var, and check that Neuro can access and use this file for authentication:
 
 ```
-$ export AWS_SECRET_FILE=aws-credentials.txt
-$ chmod 600 ./config/$AWS_SECRET_FILE
+$ export AWS_SECRET_FILE=aws_credentials
+$ chmod 600 ./config/secret/$AWS_SECRET_FILE
 $ make aws-check-auth
-AWS will be authenticated via user account credentials file: '/path/to/project/config/aws-credentials.txt'
+AWS will be authenticated via user account credentials file: '/path/to/project/config/secret/aws_credentials'
 ```
 
 Now, if you run a `develop`, `train`, or `jupyter` job, Neuro will authenticate AWS CLI via your secret file, so you will be able to use `aws` there:
@@ -164,7 +164,7 @@ Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb
 The instructions look similar to ones for Google Cloud integration above. 
 First, you need to [register your W&B account](https://app.wandb.ai/login?signup=true). 
 Then, find your API key on [W&B's settings page](https://app.wandb.ai/settings) (section "API keys"),
-save it to a file in local directory `./config/`, protect by setting appropriate permissions 
+save it to a file in local directory `./config/secret/`, protect by setting appropriate permissions
 and check that Neuro can access and use this file for authentication:
 
 ```
@@ -173,7 +173,7 @@ $ echo "cf23df2207d99a74fbe169e3eba035e633b65d94" > config/$WANDB_SECRET_FILE
 $ chmod 600 config/$WANDB_SECRET_FILE
 $ make wandb-check-auth 
 Using variable: WANDB_SECRET_FILE=wandb-token.txt
-Weights & Biases will be authenticated via key file: '/path/to/project/config/wandb-token.txt'
+Weights & Biases will be authenticated via key file: '/path/to/project/config/secret/wandb-token.txt'
 ```
 
 Now, if you run `develop`, `train`, or `jupyter` job, Neuro will authenticate W&B via your API key, 
