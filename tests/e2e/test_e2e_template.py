@@ -74,6 +74,7 @@ from tests.e2e.conftest import (
     STEP_UPLOAD,
 )
 from tests.e2e.helpers.runners import (
+    finalize,
     ls,
     ls_dirs,
     ls_files,
@@ -83,7 +84,6 @@ from tests.e2e.helpers.runners import (
     parse_job_url,
     repeat_until_success,
     run,
-    try_except_finally,
     wait_job_change_status_to,
 )
 from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
@@ -206,7 +206,7 @@ def test_make_setup() -> None:
         raise
 
 
-@try_except_finally(f"neuro kill {MK_SETUP_JOB}")
+@finalize(f"neuro kill {MK_SETUP_JOB}")
 def _run_make_setup_test() -> None:
     project_files_messages = []
     for file in MK_PROJECT_FILES:
@@ -250,7 +250,7 @@ def _run_make_setup_test() -> None:
 
 
 @pytest.mark.run(order=STEP_POST_SETUP)
-@try_except_finally(f"neuro kill {MK_SETUP_JOB}")
+@finalize(f"neuro kill {MK_SETUP_JOB}")
 def test_make_kill_setup() -> None:
     cmd = "sleep 1h"
     run(
@@ -268,50 +268,46 @@ def test_make_kill_setup() -> None:
 def test_import_code_in_notebooks(
     env_var_preset_cpu_small: None, env_var_no_http_auth: None
 ) -> None:
-    _run_import_code_in_notebooks_test()
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
+        assert "demo.ipynb" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+        assert "train.py" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
+        notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
+        cmd = "make jupyter"
+        with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=[_get_pattern_status_running()],
+                error_patterns=[
+                    fr"pattern '{notebook_path}' matched no files",
+                    "CellExecutionError",
+                    "ModuleNotFoundError",
+                ],
+                assert_exit_code=False,
+            )
 
-@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def _run_import_code_in_notebooks_test() -> None:
-    assert "demo.ipynb" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert "train.py" in neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+        expected_string = "----\r\nYour training script here\r\n----"
 
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/Untitled.ipynb"
-    cmd = "make jupyter"
-    with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+        out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
+        convert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
+        notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/demo.ipynb"
+        cmd = (
+            f"{convert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
+            f"cat {out_file}.asciidoc"
+        )
         run(
-            cmd,
+            f"neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} 'bash -c \"{cmd}\"'",
             verbose=True,
-            expect_patterns=[_get_pattern_status_running()],
-            error_patterns=[
-                fr"pattern '{notebook_path}' matched no files",
-                "CellExecutionError",
-                "ModuleNotFoundError",
-            ],
+            expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
+            error_patterns=["Error: ", "CRITICAL"],
+            detect_new_jobs=False,
             assert_exit_code=False,
         )
 
-    expected_string = "----\r\nYour training script here\r\n----"
-
-    out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
-    jupyter_nbconvert_cmd = "jupyter nbconvert --execute --no-prompt --no-input"
-    notebook_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/demo.ipynb"
-    cmd = (
-        f"{jupyter_nbconvert_cmd} --to=asciidoc --output={out_file} {notebook_path} && "
-        f"cat {out_file}.asciidoc"
-    )
-    run(
-        f"neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} 'bash -c \"{cmd}\"'",
-        verbose=True,
-        expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
-        error_patterns=["Error: ", "CRITICAL"],
-        detect_new_jobs=False,
-        assert_exit_code=False,
-    )
-
-    cmd = "make kill-jupyter"
-    with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
+        cmd = "make kill-jupyter"
+        with measure_time(cmd):
+            run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
@@ -460,11 +456,13 @@ def test_make_download_results() -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
-    expect_patterns = [
-        _get_pattern_status_succeeded_or_running(),
-        "Your training script here",
-    ]
-    _run_make_train_test(env_neuro_run_timeout, expect_patterns=expect_patterns)
+    _run_make_train(
+        env_neuro_run_timeout,
+        expect_patterns=[
+            _get_pattern_status_succeeded_or_running(),
+            "Your training script here",
+        ],
+    )
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -475,14 +473,14 @@ def test_make_train_custom_command(
     cmd = cmd.replace('"', r"\"")
     cmd = f"'python -W ignore -c \"{cmd}\"'"
     monkeypatch.setenv("TRAINING_COMMAND", cmd)
-    # TODO: tensorflow outputs a lot of debug info even with `python -W ignore`.
+    # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
-    _run_make_train_test(env_neuro_run_timeout, expect_patterns=[])
+    _run_make_train(env_neuro_run_timeout, expect_patterns=[])
 
 
-@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
-def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
+@finalize(f"neuro kill {MK_TRAIN_JOB}")
+def _run_make_train(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
         run(cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True)
@@ -492,49 +490,33 @@ def _run_make_train_test(neuro_run_timeout: int, expect_patterns: List[str]) -> 
 def test_make_run_jupyter_notebook(
     env_neuro_run_timeout: int, env_var_no_http_auth: None
 ) -> None:
-    _run_make_run_jupyter_notebook_test(env_neuro_run_timeout)
-
-
-@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def _run_make_run_jupyter_notebook_test(neuro_run_timeout: int) -> None:
-    _test_make_run_something_useful("jupyter", "/tree", neuro_run_timeout)
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
+        _test_run_something_useful("jupyter", "/tree", env_neuro_run_timeout)
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_jupyter_lab(
-    env_neuro_run_timeout: int, env_var_no_http_auth: None
+def test_make_jupyter_lab(
+    env_var_no_http_auth: None, env_neuro_run_timeout: int
 ) -> None:
-    _test_make_run_something_useful("jupyterlab", "/lab", env_neuro_run_timeout)
-
-
-@try_except_finally(f"neuro kill {MK_JUPYTER_JOB}")
-def _run_make_run_jupyter_lab_test(neuro_run_timeout: int) -> None:
-    _test_make_run_something_useful("jupyter", "/lab", neuro_run_timeout)
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
+        _test_run_something_useful("jupyter", "/lab", env_neuro_run_timeout)
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_tensorboard(env_var_no_http_auth: None) -> None:
-    _test_make_run_tensorboard()
-
-
-@try_except_finally(f"neuro kill {MK_TENSORBOARD_JOB}")
-def _test_make_run_tensorboard() -> None:
-    _test_make_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
+def test_make_tensorboard(env_var_no_http_auth: None) -> None:
+    with finalize(f"neuro kill {MK_TENSORBOARD_JOB}"):
+        _test_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_filebrowser(env_var_no_http_auth: None) -> None:
-    _test_make_run_filebrowser()
+def test_make_filebrowser(env_var_no_http_auth: None) -> None:
+    with finalize(f"neuro kill {MK_FILEBROWSER_JOB}"):
+        _test_run_something_useful(
+            "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
+        )
 
 
-@try_except_finally(f"neuro kill {MK_FILEBROWSER_JOB}")
-def _test_make_run_filebrowser() -> None:
-    _test_make_run_something_useful(
-        "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
-    )
-
-
-def _test_make_run_something_useful(target: str, path: str, timeout_run: int) -> None:
+def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None:
     # Can't test web UI with HTTP auth
     make_cmd = f"make {target}"
     with measure_time(make_cmd, timeout_run):
@@ -572,117 +554,110 @@ def _test_make_run_something_useful(target: str, path: str, timeout_run: int) ->
 def test_gpu_available(environment: str) -> None:
     if environment in ["dev"]:
         pytest.skip(f"Skipped as GPU is not available on {environment}")
-    _test_gpu_available()
-
-
-@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
-def _test_gpu_available() -> None:
-    cmd = "make develop PRESET=gpu-small"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            expect_patterns=[r"Status:[^\n]+running"],
-            timeout_s=TIMEOUT_NEURO_RUN_GPU,
-        )
-
-    py_commands = [
-        "import tensorflow as tf; assert tf.test.is_gpu_available()",
-        "import torch; print(torch.randn(2,2).cuda())",
-        "import torch; assert torch.cuda.is_available()",
-    ]
-    for py in py_commands:
-        cmd = (
-            f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
-            f"'python -c \"{py}\"'"
-        )
+    with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
+        cmd = "make develop PRESET=gpu-small"
         with measure_time(cmd):
-            run(cmd, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC, assert_exit_code=True)
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=[r"Status:[^\n]+running"],
+                timeout_s=TIMEOUT_NEURO_RUN_GPU,
+            )
+
+        py_commands = [
+            "import tensorflow as tf; assert tf.test.is_gpu_available()",
+            "import torch; print(torch.randn(2,2).cuda())",
+            "import torch; assert torch.cuda.is_available()",
+        ]
+        for py in py_commands:
+            cmd = (
+                f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
+                f"'python -c \"{py}\"'"
+            )
+            with measure_time(cmd):
+                run(
+                    cmd,
+                    verbose=True,
+                    timeout_s=TIMEOUT_NEURO_EXEC,
+                    assert_exit_code=True,
+                )
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_develop_all(env_neuro_run_timeout: int) -> None:
-    _run_make_develop_all_test(env_neuro_run_timeout)
+    with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
+        cmd = "make develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=[r"Status:[^\n]+running"],
+                timeout_s=env_neuro_run_timeout,
+            )
 
+        cmd = "make connect-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
+                timeout_s=TIMEOUT_NEURO_EXEC,
+                assert_exit_code=False,
+            )
+        # TODO: improve this test by sending command `echo 123`
+        #  and then reading it via `make logs-develop` (needs improvements of runners)
 
-@try_except_finally(f"neuro kill {MK_DEVELOP_JOB}")
-def _run_make_develop_all_test(neuro_run_timeout: int) -> None:
-    cmd = "make develop"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            expect_patterns=[r"Status:[^\n]+running"],
-            timeout_s=neuro_run_timeout,
-        )
+        cmd = "make logs-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=["Starting SSH server"],
+                timeout_s=TIMEOUT_NEURO_LOGS,
+                assert_exit_code=False,
+            )
 
-    cmd = "make connect-develop"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            expect_patterns=[rf"root@{JOB_ID_PATTERN}:/#"],
-            timeout_s=TIMEOUT_NEURO_EXEC,
-            assert_exit_code=False,
-        )
-    # TODO: improve this test by sending command `echo 123`
-    #  and then reading it via `make logs-develop` (needs improvements of runners)
+        cmd = "make port-forward-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                expect_patterns=[r"Press \^C to stop forwarding"],
+                timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
+                assert_exit_code=False,
+            )
 
-    cmd = "make logs-develop"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            expect_patterns=["Starting SSH server"],
-            timeout_s=TIMEOUT_NEURO_LOGS,
-            assert_exit_code=False,
-        )
-
-    cmd = "make port-forward-develop"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            expect_patterns=[r"Press \^C to stop forwarding"],
-            timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
-            assert_exit_code=False,
-        )
-
-    cmd = "make kill-develop"
-    with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
+        cmd = "make kill-develop"
+        with measure_time(cmd):
+            run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_KILL)
 def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
-    _test_make_connect_train_kill_train()
+    with finalize(f"neuro kill {MK_TRAIN_JOB}"):
+        cmd = "make train TRAIN_CMD='sleep 3h'"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                detect_new_jobs=True,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
+            )
 
+        cmd = "make connect-train"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                detect_new_jobs=False,
+                expect_patterns=[fr"root@{JOB_ID_PATTERN}:/#"],
+                assert_exit_code=False,
+            )
 
-@try_except_finally(f"neuro kill {MK_TRAIN_JOB}")
-def _test_make_connect_train_kill_train() -> None:
-    cmd = "make train TRAIN_CMD='sleep 3h'"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            detect_new_jobs=True,
-            expect_patterns=[_get_pattern_status_running()],
-            assert_exit_code=False,
-        )
-
-    cmd = "make connect-train"
-    with measure_time(cmd):
-        run(
-            cmd,
-            verbose=True,
-            detect_new_jobs=False,
-            expect_patterns=[fr"root@{JOB_ID_PATTERN}:/#"],
-            assert_exit_code=False,
-        )
-
-    cmd = "make kill-train"
-    with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
+        cmd = "make kill-train"
+        with measure_time(cmd):
+            run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_KILL)

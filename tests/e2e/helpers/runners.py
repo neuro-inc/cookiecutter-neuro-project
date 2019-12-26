@@ -1,6 +1,7 @@
 import re
 import time
 import typing as t
+from contextlib import contextmanager
 from pathlib import Path
 
 import pexpect
@@ -20,7 +21,7 @@ from tests.e2e.configuration import (
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.utils import log_errors_and_finalize, merge_similars, timeout
+from tests.e2e.helpers.utils import merge_similars, timeout
 
 
 class ExitCodeException(Exception):
@@ -333,22 +334,20 @@ def repeat_until_success(
 # == execution helpers ==
 
 
-def try_except_finally(*finalizer_commands: str) -> t.Callable[..., t.Any]:
-    def callback() -> None:
-        for cmd in finalizer_commands:
-            run(cmd, verbose=True, error_patterns=())
-
-    def decorator(func: t.Callable[..., t.Any]) -> t.Callable[..., t.Any]:
-        # NOTE(artem) due to specifics of pytest fixture implementations,
-        #  this decorator won't work directly on test functions with fixtures
-        #  (use a separate function, see for example `test_make_setup`)
-        def wrapper(*args: t.Any, **kwargs: t.Any) -> None:
-            with log_errors_and_finalize(callback if finalizer_commands else None):
-                func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+@contextmanager
+def finalize(*finally_commands: str):  # type: ignore
+    try:
+        yield
+    except Exception as e:
+        log_msg("-" * 100, logger=LOGGER.error)
+        log_msg(f"Error: {e.__class__}: {e}", logger=LOGGER.error)
+        log_msg("-" * 100, logger=LOGGER.error)
+        raise
+    finally:
+        for cmd in finally_commands:
+            log_msg(f"Running finalization command '{_hide_secret_cmd(cmd)}'...")
+            run(cmd, verbose=True, assert_exit_code=False)
+            log_msg("Done")
 
 
 # == neuro helpers ==
