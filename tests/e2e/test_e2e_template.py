@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Sequence
 
 import pytest
 
@@ -458,7 +458,7 @@ def test_make_download_results() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
+def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
     _run_make_train(
         env_neuro_run_timeout,
         expect_patterns=[
@@ -479,14 +479,27 @@ def test_make_train_custom_command(
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
-    _run_make_train(env_neuro_run_timeout, expect_patterns=[])
+    _run_make_train(
+        env_neuro_run_timeout,
+        expect_patterns=[_get_pattern_status_succeeded_or_running()],
+    )
 
 
 @finalize(f"neuro kill {mk_train_job()}")
-def _run_make_train(neuro_run_timeout: int, expect_patterns: List[str]) -> None:
+def _run_make_train(
+    neuro_run_timeout: int,
+    expect_patterns: Sequence[str],
+    error_patterns: Sequence[str] = (),
+) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
-        run(cmd, expect_patterns=expect_patterns, verbose=True, detect_new_jobs=True)
+        run(
+            cmd,
+            expect_patterns=expect_patterns,
+            error_patterns=error_patterns,
+            verbose=True,
+            detect_new_jobs=True,
+        )
     dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
     job_name = mk_train_job()
     assert job_name in dumped_jobs, f"dumped jobs: {dumped_jobs}"
