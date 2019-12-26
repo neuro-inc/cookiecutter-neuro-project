@@ -222,7 +222,7 @@ To tweak the training command, change the line in `Makefile`:
 TRAIN_CMD=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 ```
 
-And then, just run `make training`. 
+And then, just run `make train`.
 Alternatively, you can specify training command for one separate training job:
 
 ```
@@ -237,14 +237,14 @@ You can assume that training command `TRAIN_CMD` runs in the project's root dire
 
 You can run multiple training experiments simultaneously by setting up `RUN` environment variable:
 ```
-make training RUN=new-idea
+make train RUN=new-idea
 ```
 Note, this label becomes a postfix of the job name, which may contain only alphanumeric characters and hyphen `-`, and cannot end with hyphen or be longer than 40 characters.
 
 Please, don't forget to kill the jobs you started:
-- `make kill-training` to kill the training job started via `make training`,
-- `make kill-training RUN=new-idea` to kill the training job started via `make training RUN=new-idea`,
-- `make kill-training-all` to kill all training jobs started in current project,
+- `make kill-train` to kill the training job started via `make train`,
+- `make kill-train RUN=new-idea` to kill the training job started via `make train RUN=new-idea`,
+- `make kill-train-all` to kill all training jobs started in current project,
 - `make kill-jupyter` to kill the job started via `make jupyter`,
 - ...
 - `make kill-all` to kill all jobs started in current project.

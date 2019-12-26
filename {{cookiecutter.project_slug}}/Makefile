@@ -276,7 +276,7 @@ RUN?=base
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
 	@[ -f $(_TRAIN_JOB_FILE) ] && grep -qxF '$(TRAIN_JOB)-$(RUN)' $(_TRAIN_JOB_FILE) || \
-		{ echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE); echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"; }
+		{ echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE) && echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"; }
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--preset $(PRESET) \
