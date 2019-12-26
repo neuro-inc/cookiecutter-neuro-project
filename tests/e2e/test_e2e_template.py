@@ -519,7 +519,10 @@ def test_make_train_multiple_experiments(
             detect_new_jobs=False,
         )
         assert not jobs_left
-        assert MK_TRAIN_JOB_FILE not in ls_files(".")
+        # File '.train_jobs' must remain
+        assert MK_TRAIN_JOB_FILE in ls_files(".")
+        jobs_in_file = set(Path(MK_TRAIN_JOB_FILE).read_text().splitlines())
+        assert set(jobs) <= jobs_in_file
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -566,7 +569,7 @@ def test_make_train_invalid_name(
     )
     assert not jobs_left
 
-    # Since we failed to kill invalid job, the file `.train_jobs` must remain:
+    # file `.train_jobs` must remain:
     assert MK_TRAIN_JOB_FILE in ls_files("."), "file should not be deleted here"
     dumped_jobs = Path(MK_TRAIN_JOB_FILE).read_text().splitlines()
     assert job_valid in dumped_jobs, f"dumped jobs: {dumped_jobs}"
