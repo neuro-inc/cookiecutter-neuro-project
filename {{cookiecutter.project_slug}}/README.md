@@ -113,14 +113,14 @@ AWS CLI is pre-installed on all jobs produced from the Base Image.
 
 Neuro Project Template provides a fast way to authenticate AWS CLI to work with AWS user account (see instructions on setting up your AWS user account credentials and creating the secret key in [documentation](https://neu.ro/docs/aws_s3)).
 
-In project directory, write your AWS credentials to a file `./config/secret/aws_credentials`, set appropriate permissions on it,
+In project directory, write your AWS credentials to a file `./config/secret/aws-credentials.txt`, set appropriate permissions on it,
 inform Neuro about this file by setting a specific env var, and check that Neuro can access and use this file for authentication:
 
 ```
-$ export AWS_SECRET_FILE=aws_credentials
+$ export AWS_SECRET_FILE=aws-credentials.txt
 $ chmod 600 ./config/secret/$AWS_SECRET_FILE
 $ make aws-check-auth
-AWS will be authenticated via user account credentials file: '/path/to/project/config/secret/aws_credentials'
+AWS will be authenticated via user account credentials file: '/path/to/project/config/secret/aws-credentials.txt'
 ```
 
 Now, if you run a `develop`, `train`, or `jupyter` job, Neuro will authenticate AWS CLI via your secret file, so you will be able to use `aws` there:
