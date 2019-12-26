@@ -298,7 +298,7 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
 ifneq ($(wildcard $(_TRAIN_JOB_FILE)),)
-	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE)) 2>&1 | grep -Evc "(ERROR: |Cannot kill job)" && rm $(_TRAIN_JOB_FILE)
+	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE)) 2>&1 | tee >&2 | grep -Evc "(ERROR:|Cannot kill job)" && rm $(_TRAIN_JOB_FILE)
 else
 	@echo -e "No train jobs registered: file '$(_TRAIN_JOB_FILE)' not found.\nPlease check 'neuro ps' to verify."
 endif
