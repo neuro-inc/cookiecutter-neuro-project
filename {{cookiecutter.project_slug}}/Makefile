@@ -83,6 +83,8 @@ NEURO?=neuro
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	_TRAIN_WAIT_START_OPTION=--wait-start
+else
+	_TRAIN_WAIT_START_OPTION=--no-wait-start --detach
 endif
 
 # Check if GCP authentication file exists, then set up variables
