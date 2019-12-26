@@ -37,6 +37,9 @@ JUPYTER_MODE?=notebook
 # DATA_DIR_STORAGE?=storage:datasets/cifar10
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
+# Location of your results directory on the platform storage.
+RESULTS_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+
 # The type of the training machine (run `neuro config show` to see the list of available types).
 PRESET?=gpu-small
 
@@ -132,7 +135,7 @@ setup: ### Setup remote environment
 		$(DATA_DIR_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
 		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
-		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+		$(RESULTS_DIR_STORAGE)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
 		--preset cpu-small \
@@ -196,15 +199,15 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(RESULTS_DIR_STORAGE)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR_STORAGE) $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
+	$(NEURO) rm --recursive $(RESULTS_DIR_STORAGE)/*
 
 .PHONY: upload-all
 upload-all: upload-code upload-data upload-notebooks upload-results  ### Upload code, data, notebooks and results directories to the platform storage
@@ -259,7 +262,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -295,7 +298,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -331,7 +334,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -359,7 +362,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		$(HTTP_AUTH) \
 		--browse \
 		--env JOB_TIMEOUT=1d \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
+		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
