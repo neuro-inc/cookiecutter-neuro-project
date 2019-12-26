@@ -4,9 +4,9 @@ import tests.e2e.helpers.runners
 from tests.e2e.configuration import (
     MK_DEVELOP_JOB,
     MK_JUPYTER_JOB,
-    MK_TRAIN_JOB,
     TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_RUN_CPU,
+    mk_train_job,
 )
 from tests.e2e.conftest import STEP_RUN
 from tests.e2e.helpers.runners import finalize
@@ -25,7 +25,7 @@ def test_make_train_connect_gsutil(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_gsutil(
-        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {MK_TRAIN_JOB}"
+        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {mk_train_job()}"
     )
 
 
@@ -86,7 +86,7 @@ def test_make_train_connect_aws(
     decrypt_aws_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_aws(
-        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {MK_TRAIN_JOB}"
+        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {mk_train_job()}"
     )
 
 
@@ -128,7 +128,7 @@ def test_make_train_connect_wandb(
     generate_wandb_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_wandb(
-        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {MK_TRAIN_JOB}"
+        "make train TRAIN_CMD='sleep 1h'", f"neuro kill {mk_train_job()}"
     )
 
 
