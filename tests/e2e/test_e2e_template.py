@@ -37,6 +37,8 @@ from tests.e2e.configuration import (
     TIMEOUT_MAKE_CLEAN_DATA,
     TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
     TIMEOUT_MAKE_CLEAN_RESULTS,
+    TIMEOUT_MAKE_DOWNLOAD_CONFIG,
+    TIMEOUT_MAKE_DOWNLOAD_DATA,
     TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
     TIMEOUT_MAKE_DOWNLOAD_RESULTS,
     TIMEOUT_MAKE_SETUP,
@@ -422,11 +424,28 @@ def test_make_upload_all() -> None:
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
+def test_make_download_data() -> None:
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    assert len(actual_remote) == N_FILES
+
+    # Download:
+    make_cmd = "make download-data"
+    cleanup_local_dirs(MK_DATA_DIR)
+    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
+        run(
+            make_cmd,
+            verbose=True,
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_DATA_DIR)],
+        )
+
+    assert len(ls_files(MK_NOTEBOOKS_DIR)) == N_FILES
+
+
+@pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_noteboooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
 
-    # Download:
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
@@ -437,6 +456,23 @@ def test_make_download_noteboooks() -> None:
         )
 
     assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+
+
+@pytest.mark.run(order=STEP_DOWNLOAD)
+def test_make_download_config() -> None:
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert actual_remote == PROJECT_CONFIG_DIR_CONTENT
+
+    make_cmd = "make download-config"
+    cleanup_local_dirs(MK_CONFIG_DIR)
+    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
+        run(
+            make_cmd,
+            verbose=True,
+            expect_patterns=[_pattern_upload_dir(MK_PROJECT_SLUG, MK_CONFIG_DIR)],
+        )
+
+    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -455,6 +491,13 @@ def test_make_download_results() -> None:
         )
 
     assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
+
+
+@pytest.mark.run(order=STEP_DOWNLOAD)
+def test_make_download_all() -> None:
+    cmd = "make download-all"
+    with measure_time(cmd):
+        run(cmd, verbose=True, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -853,7 +896,8 @@ def test_make_clean_results() -> None:
 def test_make_clean_all() -> None:
     # just check exit code
     cmd = "make clean-all"
-    run(cmd, verbose=True, detect_new_jobs=False)
+    with measure_time(cmd):
+        run(cmd, verbose=True, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_LOCAL)
