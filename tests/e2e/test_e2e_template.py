@@ -545,7 +545,7 @@ def test_make_train_invalid_name(
         with measure_time(cmd_invalid, TIMEOUT_NEURO_RUN_CPU):
             run(
                 cmd_invalid,
-                expect_patterns=[r"ERROR: Invalid job name"],
+                expect_patterns=["Invalid job name"],
                 assert_exit_code=False,
             )
 
