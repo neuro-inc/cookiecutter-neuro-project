@@ -4,6 +4,7 @@ from typing import Any, List
 import pytest
 
 from tests.e2e.configuration import (
+    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
@@ -134,6 +135,33 @@ def test_make_gcloud_check_auth_success(decrypt_gcp_key: None) -> None:
         expect_patterns=[
             "Google Cloud will be authenticated via service account key file"
         ],
+        assert_exit_code=True,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_aws_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make aws-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found AWS user account credentials file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_aws_check_auth_success(decrypt_aws_key: None) -> None:
+    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make aws-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["AWS will be authenticated via user account credentials file"],
         assert_exit_code=True,
     )
 
@@ -326,7 +354,9 @@ def test_make_upload_data() -> None:
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
+def test_make_upload_config(
+    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
@@ -680,7 +710,9 @@ def test_make_clean_code() -> None:
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
-def test_make_clean_config(decrypt_gcp_key: None, generate_wandb_key: None) -> None:
+def test_make_clean_config(
+    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 

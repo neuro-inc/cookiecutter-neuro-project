@@ -57,9 +57,13 @@ LOCAL_PORT?=2211
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
-
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
 GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+
+# AWS integration settings:
+AWS_SECRET_FILE?=aws-credentials.txt
+AWS_SECRET_PATH_LOCAL=${CONFIG_DIR}/${AWS_SECRET_FILE}
+AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
@@ -77,15 +81,24 @@ NEURO?=neuro
 # Check if GCP authentication file exists, then set up variables
 ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
 	OPTION_GCP_CREDENTIALS=\
-		--env GOOGLE_APPLICATION_CREDENTIALS=${GCP_SECRET_PATH_ENV} \
-		--env GCP_SERVICE_ACCOUNT_KEY_PATH=${GCP_SECRET_PATH_ENV}
+		--env GOOGLE_APPLICATION_CREDENTIALS="${GCP_SECRET_PATH_ENV}" \
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH="${GCP_SECRET_PATH_ENV}"
 else
 	OPTION_GCP_CREDENTIALS=
 endif
 
+# Check if AWS authentication file exists, then set up variables
+ifneq ($(wildcard ${AWS_SECRET_PATH_LOCAL}),)
+	OPTION_AWS_CREDENTIALS=\
+		--env AWS_CONFIG_FILE="${AWS_SECRET_PATH_ENV}" \
+		--env NM_AWS_CONFIG_FILE="${AWS_SECRET_PATH_ENV}"
+else
+	OPTION_AWS_CREDENTIALS=
+endif
+
 # Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
-	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH=${WANDB_SECRET_PATH_ENV}
+	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
 else
 	OPTION_WANDB_CREDENTIALS=
 endif
@@ -201,6 +214,17 @@ gcloud-check-auth:  ### Check if the file containing Google Cloud service accoun
 			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
 			false; }
 
+##### AWS Integration #####
+
+.PHONY: aws-check-auth
+aws-check-auth:  ### Check if the file containing AWS user account credentials exists
+	@echo "Using variable: AWS_SECRET_FILE='${AWS_SECRET_FILE}'"
+	@test "${OPTION_AWS_CREDENTIALS}" \
+		&& echo "AWS will be authenticated via user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'" \
+		|| { echo "ERROR: Not found AWS user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'"; \
+			echo "Please save the key file named AWS_SECRET_FILE='${AWS_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+			false; }
+
 ##### WandB Integration #####
 
 .PHONY: wandb-check-auth
@@ -224,10 +248,9 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--env EXPOSE_SSH=yes \
 		--env JOB_LIFETIME=1d \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		sleep infinity
 
@@ -257,11 +280,10 @@ train: _check_setup upload-code upload-config   ### Run a training job
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 
@@ -282,15 +304,14 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		$(HTTP_AUTH) \
 		--browse \
 		--detach \
-		--env JOB_TIMEOUT=1d \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
-		${OPTION_GCP_CREDENTIALS} \
-		${OPTION_WANDB_CREDENTIALS} \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env JOB_TIMEOUT=1d \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 
