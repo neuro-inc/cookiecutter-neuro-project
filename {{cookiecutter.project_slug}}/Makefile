@@ -46,9 +46,10 @@ PRESET?=gpu-small
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 HTTP_AUTH?=--http-auth
 
-# When running the training job, wait until it gets actually running.
-# Set `TRAIN_WAIT_START=--no-wait-start` to disable this feature.
-TRAIN_WAIT_START?=--wait-start
+# When running the training job, wait until it gets actually running,
+# and stream logs to the standard output.
+# Set any other value to disable this feature: `TRAIN_STREAM_LOGS=no`.
+TRAIN_STREAM_LOGS?=yes
 
 # Command to run training inside the environment. Example:
 TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
@@ -79,6 +80,10 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
 
+
+ifeq (${TRAIN_STREAM_LOGS}, yes)
+	_TRAIN_WAIT_START_OPTION=--wait-start
+endif
 
 # Check if GCP authentication file exists, then set up variables
 ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
@@ -285,7 +290,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--preset $(PRESET) \
-		$(TRAIN_WAIT_START) \
+		$(_TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \

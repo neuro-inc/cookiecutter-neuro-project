@@ -58,7 +58,6 @@ from tests.e2e.configuration import (
     WANDB_KEY_FILE,
     _get_pattern_pip_installing,
     _get_pattern_status_running,
-    _get_pattern_status_succeeded,
     _get_pattern_status_succeeded_or_running,
     _pattern_copy_file_finished,
     _pattern_copy_file_started,
@@ -459,7 +458,7 @@ def test_make_download_results() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_default_command(env_neuro_run_timeout: int) -> None:
+def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
     _run_make_train(
         env_neuro_run_timeout,
         expect_patterns=[
@@ -481,19 +480,8 @@ def test_make_train_custom_command(
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
     _run_make_train(
-        env_neuro_run_timeout, expect_patterns=[_get_pattern_status_succeeded()]
-    )
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_train_no_wait_start(env_var_preset_cpu_small: None) -> None:
-    _run_make_train(
-        TIMEOUT_NEURO_RUN_CPU,
-        expect_patterns=[],
-        error_patterns=[
-            _get_pattern_status_succeeded_or_running(),
-            "Your training script here",
-        ],
+        env_neuro_run_timeout,
+        expect_patterns=[_get_pattern_status_succeeded_or_running()],
     )
 
 
@@ -518,18 +506,16 @@ def _run_make_train(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_multiple_experiments(
-    monkeypatch: Any, env_var_preset_cpu_small: None
+def test_make_train_multiple_concurrent_runs(
+    monkeypatch: Any, env_var_preset_cpu_small: None, env_var_train_no_stream_logs: None
 ) -> None:
     experiments = [MK_RUN_DEFAULT, "new-idea"]
     jobs = [mk_train_job(exp) for exp in experiments]
-    train_cmd = "TRAIN_CMD='sleep 1h'"
-    no_wait = "TRAIN_WAIT_START=--no-wait-start"
 
     with finalize(*[f"neuro kill {job}" for job in jobs]):
         for job, exp in zip(jobs, experiments):
-            env = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
-            cmd = f"make train {train_cmd} {no_wait} {env}"
+            env_var = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
+            cmd = f"make train TRAIN_CMD='sleep 1h' {env_var}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
                 run(cmd)
 
