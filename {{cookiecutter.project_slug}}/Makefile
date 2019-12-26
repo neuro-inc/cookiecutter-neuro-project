@@ -298,8 +298,8 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
 ifneq ($(wildcard $(_TRAIN_JOB_FILE)),)
-	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE))
-	@echo -e "Please check that jobs listed in '$(_TRAIN_JOB_FILE)' are actually deleted.\nPlease check 'neuro ps' to verify."
+	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE) | uniq -u)
+	@echo -e "Please check that jobs listed in '$(_TRAIN_JOB_FILE)' are actually deleted.\nUse 'neuro ps' to verify."
 endif
 
 .PHONY: connect-train
