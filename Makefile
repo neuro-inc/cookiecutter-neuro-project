@@ -11,7 +11,7 @@ cook:
 
 .PHONY: version
 version:
-	@grep -Po "BASE_ENV_VERSION=(\Kv.*)" \{\{cookiecutter.project_slug\}\}/Makefile || echo "v?.?"
+	@grep -Po "^VERSION=(\K.+)" \{\{cookiecutter.project_slug\}\}/Makefile || echo "v?.?"
 
 .PHONY: lint
 lint:
