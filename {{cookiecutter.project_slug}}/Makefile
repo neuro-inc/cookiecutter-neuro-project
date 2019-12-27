@@ -1,5 +1,7 @@
 ##### PATHS #####
 
+VERSION=v1.2
+
 DATA_DIR?=data
 CONFIG_DIR?=config
 CODE_DIR?={{cookiecutter.code_directory}}
@@ -25,9 +27,8 @@ FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
 
 ##### ENVIRONMENTS #####
 
-BASE_ENV_VERSION=v1.2
-BASE_ENV_NAME?=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX):$(BASE_ENV_VERSION)
+BASE_ENV_NAME?=neuromation/base:latest
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX):$(VERSION)
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
