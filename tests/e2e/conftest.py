@@ -237,6 +237,15 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
+def neuro_project_id() -> str:
+    prefix = "PROJECT_ID="
+    for line in Path("Makefile").read_text().splitlines():
+        if line.startswith(prefix):
+            return line[len(prefix): ]
+    raise ValueError("Could not find project id in Makefile")
+
+
+@pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
         run("pip install -U neuromation", verbose=False)
