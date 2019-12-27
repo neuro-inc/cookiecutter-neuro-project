@@ -89,8 +89,8 @@ jobs:
       - slack/status:
           channel: 'CQUBMRDHV'  # channel: template-nightly-testing
           only_for_branches: "master,release"
-          success_message: ":tada: $CIRCLE_JOB on *$CIRCLE_BRANCH* has succeeded!"
-          failure_message: ":red_circle: $CIRCLE_JOB on *$CIRCLE_BRANCH* has failed!\n*Failures:*\n$(make get_e2e_failures)\n"
+          success_message: ":tada: $CIRCLE_JOB on *$CIRCLE_BRANCH $(make version)* has succeeded!"
+          failure_message: ":red_circle: $CIRCLE_JOB on *$CIRCLE_BRANCH $(make version)* has failed!"
 
 
 workflows:
