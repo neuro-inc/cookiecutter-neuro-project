@@ -9,6 +9,10 @@ init:
 cook:
 	cookiecutter gh:neuromation/cookiecutter-neuro-project
 
+.PHONY: version
+version:
+	@grep -Po "BASE_ENV_VERSION=(\Kv.*)" \{\{cookiecutter.project_slug\}\}/Makefile || echo "v?.?"
+
 .PHONY: lint
 lint:
 	isort -c -rc ${LINTER_DIRS}
