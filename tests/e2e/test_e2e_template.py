@@ -25,7 +25,6 @@ from tests.e2e.configuration import (
     MK_RUN_DEFAULT,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    MK_TRAIN_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -521,12 +520,12 @@ def test_make_train_multiple_experiments(
                 )
             job_ids.append(parse_job_id(out))
 
-        out = run(ps_cmd, detect_new_jobs=False,)
+        out = run(ps_cmd, detect_new_jobs=False)
         assert len(out.split()) == len(jobs)
 
         run("make kill-train-all", detect_new_jobs=False)
 
-        out = run(ps_cmd, assert_exit_code=False, detect_new_jobs=False,)
+        out = run(ps_cmd, assert_exit_code=False, detect_new_jobs=False)
         assert not out.strip()
 
 
@@ -543,9 +542,7 @@ def test_make_train_invalid_name(
     with finalize(f"neuro kill {job_valid}"):
         cmd_valid = cmd_prtn.format(run=exp_valid)
         with measure_time(cmd_valid, TIMEOUT_NEURO_RUN_CPU):
-            run(
-                cmd_valid, expect_patterns=[_get_pattern_status_running()],
-            )
+            run(cmd_valid, expect_patterns=[_get_pattern_status_running()])
 
         cmd_invalid = cmd_prtn.format(run=exp_invalid)
         with measure_time(cmd_invalid, TIMEOUT_NEURO_RUN_CPU):

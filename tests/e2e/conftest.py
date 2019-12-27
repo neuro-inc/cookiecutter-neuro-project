@@ -241,7 +241,7 @@ def neuro_project_id() -> str:
     prefix = "PROJECT_ID="
     for line in Path("Makefile").read_text().splitlines():
         if line.startswith(prefix):
-            return line[len(prefix): ]
+            return line[len(prefix) :]
     raise ValueError("Could not find project id in Makefile")
 
 
