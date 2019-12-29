@@ -301,6 +301,7 @@ def test_import_code_in_notebooks(
         )
         run(
             f"neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} 'bash -c \"{cmd}\"'",
+            attempts=2,
             verbose=True,
             expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
             error_patterns=["Error: ", "CRITICAL"],
@@ -680,6 +681,7 @@ def test_gpu_available(environment: str) -> None:
             with measure_time(cmd):
                 run(
                     cmd,
+                    attempts=2,
                     verbose=True,
                     timeout_s=TIMEOUT_NEURO_EXEC,
                     assert_exit_code=True,
