@@ -557,10 +557,7 @@ def test_make_train_invalid_name(
         expect_patterns=[f"Cannot kill job {job_invalid}"],
         detect_new_jobs=False,
     )
-    out = run(
-        f"neuro -q ps --description '{neuro_project_id}'",
-        detect_new_jobs=False,
-    )
+    out = run(f"neuro -q ps --description '{neuro_project_id}'", detect_new_jobs=False)
     jobs_left = out.strip().split()
     assert not jobs_left
 
