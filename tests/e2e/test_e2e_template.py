@@ -507,7 +507,7 @@ def test_make_train_multiple_experiments(
     experiments = [MK_RUN_DEFAULT, "new-idea"]
     jobs = [mk_train_job(exp) for exp in experiments]
     job_ids: List[str] = []
-    ps_cmd = f"neuro -q ps --description '{neuro_project_id}'"
+    ps_cmd = f"neuro -q ps --description '{neuro_project_id}:train'"
     with finalize(*[f"neuro kill {job}" for job in jobs]):
         for job, exp in zip(jobs, experiments):
             env_var = f"RUN={exp}" if exp != MK_RUN_DEFAULT else ""
@@ -557,7 +557,9 @@ def test_make_train_invalid_name(
         expect_patterns=[f"Cannot kill job {job_invalid}"],
         detect_new_jobs=False,
     )
-    out = run(f"neuro -q ps --description '{neuro_project_id}'", detect_new_jobs=False)
+    out = run(
+        f"neuro -q ps --description '{neuro_project_id}:train'", detect_new_jobs=False
+    )
     jobs_left = out.strip().split()
     assert not jobs_left
 
