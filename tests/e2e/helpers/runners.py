@@ -358,6 +358,12 @@ def parse_job_id(out: str) -> str:
     return search.group(1)
 
 
+def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
+    jobs = re.findall(JOB_ID_DECLARATION_REGEX, out)
+    assert len(jobs) == expect_num, f"not found some job-IDs in output: `{out}`"
+    return jobs
+
+
 def parse_job_url(out: str) -> str:
     search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
     assert search, f"not found URL in output: `{out}`"

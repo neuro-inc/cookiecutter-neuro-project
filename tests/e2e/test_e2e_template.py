@@ -87,6 +87,7 @@ from tests.e2e.helpers.runners import (
     neuro_rm_dir,
     parse_job_id,
     parse_job_url,
+    parse_jobs_ids,
     repeat_until_success,
     run,
     wait_job_change_status_to,
@@ -643,17 +644,16 @@ def test_make_hypertrain(
     run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
 
     n = 2
-    jobs = [mk_train_job(f"hyper-{i}") for i in range(1, n + 1)]
-    finalize_cmd_list = [f"neuro kill {job}" for job in jobs]
-
-    with finalize(*finalize_cmd_list):
-        run(
+    with finalize("make kill-hypertrain-all"):
+        out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
             expect_patterns=[fr"Started {n} hyper-parameter search jobs"],
             error_patterns=["recipe for target 'hypertrain' failed"],
             assert_exit_code=True,
         )
+        jobs = parse_jobs_ids(out, expect_num=n)
 
+    with finalize(*(f"neuro kill {job}" for job in jobs)):
         for job in jobs:
             wait_job_change_status_to(job, JOB_STATUS_RUNNING, JOB_STATUS_SUCCEEDED)
             run(
