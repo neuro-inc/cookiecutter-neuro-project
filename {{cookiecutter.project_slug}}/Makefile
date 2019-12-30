@@ -81,7 +81,7 @@ WANDB_SWEEP_FILE?=wandb-sweep.yaml
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
 WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
 WANDB_SWEEP_PATH=${CODE_DIR}/${WANDB_SWEEP_FILE}
-WANDB_SWEEPS=.wandb_sweeps
+WANDB_SWEEPS_FILE=.wandb_sweeps
 
 ##### COMMANDS #####
 
@@ -346,10 +346,10 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
 		[ -f "${WANDB_SWEEP_CONFIG_PATH}" ] \
 			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
-			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false \
-		;} && \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -oP 'Created sweep with ID: \K\w+' >> ${WANDB_SWEEPS_FILE} \
-    ;}
+			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
+		} && \
+		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -oP 'Created sweep with ID: \K\w+' >> ${WANDB_SWEEPS_FILE} ; \
+    }
 	@echo "Using Sweep ID: ${SWEEP_REAL}"
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs..."
 	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
