@@ -634,10 +634,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_hypertrain(
-    monkeypatch: Any,
-    decrypt_wandb_key: None,
-    env_var_preset_cpu_small: None,
-    neuro_project_id: str,
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None, neuro_project_id: str
 ) -> None:
     run(
         "make wandb-check-auth",
