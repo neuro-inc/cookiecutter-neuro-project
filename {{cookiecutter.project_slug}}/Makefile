@@ -352,7 +352,7 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
 			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
 		} && \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -oP 'Created sweep with ID: \K\w+' >> ${WANDB_SWEEPS_FILE} ; \
+		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
 	@echo "Using Sweep ID: ${SWEEP_REAL}"
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs..."
