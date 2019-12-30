@@ -578,7 +578,7 @@ def test_make_train_invalid_name(
     exp_invalid = "InVaLiD-NaMe"
     job_valid = mk_train_job(exp_valid)
     job_invalid = mk_train_job(exp_invalid)  # noqa
-    cmd_prtn = "make train TRAIN_CMD='sleep 1h' RUN={run}"
+    cmd_pattern = "make train TRAIN_CMD='sleep 1h' RUN={run}"
 
     with finalize(f"neuro kill {job_valid}"):
         cmd_valid = cmd_pattern.format(run=exp_valid)
