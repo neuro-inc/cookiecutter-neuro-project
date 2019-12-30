@@ -354,6 +354,7 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 		} && \
 		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
+    @[ "${SWEEP_REAL}" ] || { echo "Error while parsing sweep ID"; false; }
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
 	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
 	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
