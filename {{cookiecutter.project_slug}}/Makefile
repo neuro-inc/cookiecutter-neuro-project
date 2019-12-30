@@ -1,6 +1,7 @@
 ##### PATHS #####
 
 VERSION=v1.2
+PROJECT_ID=placeholder
 
 DATA_DIR?=data
 CONFIG_DIR?=config
@@ -110,8 +111,6 @@ else
 	OPTION_AWS_CREDENTIALS=
 endif
 
-_TRAIN_JOB_FILE=.train_jobs
-
 
 # Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
@@ -140,6 +139,7 @@ setup: ### Setup remote environment
 		$(RESULTS_DIR_STORAGE)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
+		--description "$(PROJECT_ID):setup" \
 		--preset cpu-small \
 		--detach \
 		--env JOB_TIMEOUT=1h \
@@ -259,6 +259,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run \
 		--name $(DEVELOP_JOB) \
+		--description "$(PROJECT_ID):develop" \
 		--preset $(PRESET) \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -293,9 +294,9 @@ RUN?=base
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
-	echo '$(TRAIN_JOB)-$(RUN)' >> $(_TRAIN_JOB_FILE) && echo "Job name '$(TRAIN_JOB)-$(RUN)' saved to file '$(_TRAIN_JOB_FILE)'"
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
+		--description "$(PROJECT_ID):train" \
 		--preset $(PRESET) \
 		$(_TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -314,11 +315,9 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
 
 .PHONY: kill-train-all
-kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
-ifneq ($(wildcard $(_TRAIN_JOB_FILE)),)
-	$(NEURO) kill $$(cat $(_TRAIN_JOB_FILE) | uniq -u)
-	@echo -e "Please check that jobs listed in '$(_TRAIN_JOB_FILE)' are actually deleted.\nUse 'neuro ps' to verify."
-endif
+kill-train-all:  ### Terminate all training jobs you have submitted
+	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train") && \
+	$(NEURO) kill $${jobs:-placeholder}
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
@@ -328,6 +327,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run \
 		--name $(JUPYTER_JOB) \
+		--description "$(PROJECT_ID):jupyter" \
 		--preset $(PRESET) \
 		--http 8888 \
 		$(HTTP_AUTH) \
@@ -361,6 +361,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 	$(NEURO) run \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
+		--description "$(PROJECT_ID):tensorboard" \
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
@@ -377,6 +378,7 @@ kill-tensorboard:  ### Terminate the job with TensorBoard
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
 	$(NEURO) run \
 		--name $(FILEBROWSER_JOB) \
+		--description "$(PROJECT_ID):filebrowser" \
 		--preset cpu-small \
 		--http 80 \
 		$(HTTP_AUTH) \
