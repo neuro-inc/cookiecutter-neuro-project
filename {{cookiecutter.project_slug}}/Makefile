@@ -167,6 +167,10 @@ _check_setup:
 upload-code: _check_setup  ### Upload code directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
+.PHONY: download-code
+download-code: _check_setup  ### Download code directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
+
 .PHONY: clean-code
 clean-code: _check_setup  ### Delete code directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/*
@@ -175,6 +179,10 @@ clean-code: _check_setup  ### Delete code directory from the platform storage
 upload-data: _check_setup  ### Upload data directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
 
+.PHONY: download-data
+download-data: _check_setup  ### Download data directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR_STORAGE) $(DATA_DIR)
+
 .PHONY: clean-data
 clean-data: _check_setup  ### Delete data directory from the platform storage
 	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
@@ -182,6 +190,10 @@ clean-data: _check_setup  ### Delete data directory from the platform storage
 .PHONY: upload-config
 upload-config: _check_setup  ### Upload config directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+
+.PHONY: download-config
+download-config: _check_setup  ### Download config directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
 
 .PHONY: clean-config
 clean-config: _check_setup  ### Delete config directory from the platform storage
@@ -212,13 +224,13 @@ clean-results: _check_setup  ### Delete results directory from the platform stor
 	$(NEURO) rm --recursive $(RESULTS_DIR_STORAGE)/*
 
 .PHONY: upload-all
-upload-all: upload-code upload-data upload-notebooks upload-results  ### Upload code, data, notebooks and results directories to the platform storage
+upload-all: upload-code upload-data upload-config upload-notebooks upload-results  ### Upload code, data, config, notebooks, and results directories to the platform storage
 
 .PHONY: download-all
-download-all: download-data download-notebooks download-results  ### Download data, notebooks and results directories from the platform storage
+download-all: download-code download-data download-config download-notebooks download-results  ### Download code, data, config, notebooks, and results directories from the platform storage
 
 .PHONY: clean-all
-clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ### Delete code, data, config and notebooks directories from the platform storage
+clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ### Delete code, data, config, notebooks, and results directories from the platform storage
 
 ##### Google Cloud Integration #####
 
