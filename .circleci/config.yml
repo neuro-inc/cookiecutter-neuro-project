@@ -49,6 +49,7 @@ jobs:
             . venv/bin/activate
             make test_unit
       - run:
+          no_output_timeout: 20m
           name: run e2e tests
           command: |
             . venv/bin/activate
@@ -81,6 +82,7 @@ jobs:
       - run: *step_unit_tests
       - run:
           name: run e2e tests
+          no_output_timeout: 20m
           command: |
             . venv/bin/activate
             make test_e2e_staging

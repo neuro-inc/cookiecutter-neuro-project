@@ -543,7 +543,11 @@ def test_make_train_invalid_name(
     with finalize(f"neuro kill {job_valid}"):
         cmd_valid = cmd_prtn.format(run=exp_valid)
         with measure_time(cmd_valid, TIMEOUT_NEURO_RUN_CPU):
-            run(cmd_valid, expect_patterns=[_get_pattern_status_running()])
+            run(
+                cmd_valid,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
+            )
 
         cmd_invalid = cmd_prtn.format(run=exp_invalid)
         with measure_time(cmd_invalid, TIMEOUT_NEURO_RUN_CPU):
