@@ -2,7 +2,6 @@
 /data/**/*
 /config/**/*
 /.setup_done
-/.train_jobs
 
 # IntelliJ IDEA project
 /.idea/
