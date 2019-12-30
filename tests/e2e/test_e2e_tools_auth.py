@@ -115,14 +115,14 @@ def _test_make_run_job_connect_aws(run_job_cmd: str, kill_job_cmd: str) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_develop_connect_wandb(
-    generate_wandb_key: None, env_var_preset_cpu_small: None
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_wandb("make develop", f"neuro kill {MK_DEVELOP_JOB}")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_connect_wandb(
-    generate_wandb_key: None, env_var_preset_cpu_small: None
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_wandb(
         "make train TRAIN_CMD='sleep 1h'", f"neuro kill {mk_train_job()}"
@@ -131,7 +131,7 @@ def test_make_train_connect_wandb(
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_jupyter_connect_wandb(
-    generate_wandb_key: None, env_var_preset_cpu_small: None
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None
 ) -> None:
     _test_make_run_job_connect_wandb("make jupyter", f"neuro kill {MK_JUPYTER_JOB}")
 

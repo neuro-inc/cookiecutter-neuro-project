@@ -186,7 +186,7 @@ def test_make_wandb_check_auth_failure() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_wandb_check_auth_success(generate_wandb_key: None) -> None:
+def test_make_wandb_check_auth_success(decrypt_wandb_key: None) -> None:
     key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
@@ -357,7 +357,7 @@ def test_make_upload_data() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_config(
-    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+    decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
@@ -611,12 +611,16 @@ def test_make_train_invalid_name(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_hyper_train(
+def test_make_hypertrain(
     monkeypatch: Any,
+    decrypt_wandb_key: None,
     env_var_preset_cpu_small: None,
     neuro_project_id: str,
-    generate_wandb_key: None,
 ) -> None:
+    run(
+        "make wandb-check-auth",
+        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
+    )
     run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
 
     n = 2
@@ -627,6 +631,7 @@ def test_make_hyper_train(
         run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
             expect_patterns=[fr"Started {n} hyper-parameter search training jobs"],
+            error_patterns=["recipe for target 'hypertrain' failed"],
             assert_exit_code=True,
         )
 
@@ -856,7 +861,7 @@ def test_make_clean_code() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_config(
-    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+    decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT

@@ -342,5 +342,5 @@ def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
 
 
 @pytest.fixture()
-def generate_wandb_key() -> t.Iterator[None]:
+def decrypt_wandb_key() -> t.Iterator[None]:
     yield from _decrypt_key(WANDB_KEY_FILE)
