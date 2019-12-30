@@ -91,9 +91,9 @@ NEURO?=neuro
 
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
-	_TRAIN_WAIT_START_OPTION=--wait-start
+	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
-	_TRAIN_WAIT_START_OPTION=--no-wait-start --detach
+	TRAIN_WAIT_START_OPTION=
 endif
 
 # Check if GCP authentication file exists, then set up variables
@@ -113,7 +113,6 @@ ifneq ($(wildcard ${AWS_SECRET_PATH_LOCAL}),)
 else
 	OPTION_AWS_CREDENTIALS=
 endif
-
 
 # Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
@@ -315,7 +314,8 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--name $(TRAIN_JOB)-$(RUN) \
 		--description "$(PROJECT_ID):train$(_SWEEP_DESCRIPTION_POSTFIX)" \
 		--preset $(PRESET) \
-		$(_TRAIN_WAIT_START_OPTION) \
+		--detach \
+		$(TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
@@ -326,6 +326,10 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
+ifeq (${TRAIN_STREAM_LOGS}, yes)
+	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
+	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
+endif
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)

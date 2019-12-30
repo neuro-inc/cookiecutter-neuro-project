@@ -4,7 +4,6 @@
 /config/*.conf
 /config/*.json
 /.setup_done
-/.train_jobs
 /.wandb_sweeps
 
 !/**/.gitkeep
