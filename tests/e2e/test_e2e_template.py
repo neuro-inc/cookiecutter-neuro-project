@@ -619,11 +619,12 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
                 detect_new_jobs=True,
                 expect_patterns=[
                     _get_pattern_status_running(),
+                    r"Streaming logs of the job",
                     r"3%.+300/10000",
                     r"30%.+3000/10000",
+                    r"Stopped streaming logs",
                 ],
                 error_patterns=["[Ee]rror"],
-                assert_exit_code=False,  # do not wait till the end
             )
 
         run("make kill-train", detect_new_jobs=False)

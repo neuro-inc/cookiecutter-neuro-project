@@ -323,7 +323,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
-	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || true
+	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
 endif
 
 .PHONY: kill-train
