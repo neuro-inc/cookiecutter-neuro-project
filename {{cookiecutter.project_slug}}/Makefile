@@ -315,8 +315,8 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
 
 .PHONY: kill-train-all
-kill-train-all:  ### Terminate all training jobs you have submitted (set up env var 'RUN' to specify the training job)
-	jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train") && \
+kill-train-all:  ### Terminate all training jobs you have submitted
+	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train") && \
 	$(NEURO) kill $${jobs:-placeholder}
 
 .PHONY: connect-train
