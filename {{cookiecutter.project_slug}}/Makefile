@@ -351,10 +351,10 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 		[ -f "${WANDB_SWEEP_CONFIG_PATH}" ] \
 			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
 			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
-		} && \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $NF }' >> ${WANDB_SWEEPS_FILE} ; \
+		}; \
+		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
-    @[ "${SWEEP_REAL}" ] || { echo "Error while parsing sweep ID"; false; }
+	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
 	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
 	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
