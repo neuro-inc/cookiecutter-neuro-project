@@ -385,15 +385,16 @@ def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
 
 def wait_job_change_status_to(
     job_id: str,
-    target_status: str,
+    *target_statuses: str,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
+    verbose: bool = False,
 ) -> None:
-    log_msg(f"Waiting for job {job_id} to get status {target_status}...")
+    log_msg(f"Waiting for job {job_id} to get status(es): {target_statuses}...")
     with timeout(timeout_s):
         while True:
-            status = get_job_status(job_id)
-            if status == target_status:
+            status = get_job_status(job_id, verbose=verbose)
+            if status in target_statuses:
                 log_msg("Done.")
                 return
             if status in JOB_STATUSES_TERMINATED:
@@ -403,11 +404,11 @@ def wait_job_change_status_to(
             time.sleep(delay_s)
 
 
-def get_job_status(job_id: str) -> str:
+def get_job_status(job_id: str, verbose: bool = False) -> str:
     out = run(
         f"neuro status {job_id}",
         timeout_s=TIMEOUT_NEURO_STATUS,
-        verbose=False,
+        verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     search = re.search(r"Status: (\w+)", out)

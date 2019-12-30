@@ -8,6 +8,8 @@ from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
+    JOB_STATUS_RUNNING,
+    JOB_STATUS_SUCCEEDED,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
@@ -609,6 +611,51 @@ def test_make_train_invalid_name(
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_make_hyper_train(
+    monkeypatch: Any,
+    env_var_preset_cpu_small: None,
+    neuro_project_id: str,
+    generate_wandb_key: None,
+) -> None:
+    run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
+
+    n = 2
+    jobs = [mk_train_job(f"hyper-{i}") for i in range(1, n + 1)]
+    finalize_cmd_list = [f"neuro kill {job}" for job in jobs]
+
+    with finalize(*finalize_cmd_list):
+        run(
+            f"make hypertrain N_HYPERPARAM_JOBS={n}",
+            expect_patterns=[fr"Started {n} hyper-parameter search training jobs"],
+            assert_exit_code=True,
+        )
+
+        for job in jobs:
+            wait_job_change_status_to(job, JOB_STATUS_RUNNING, JOB_STATUS_SUCCEEDED)
+            run(
+                f"neuro logs {job}",
+                expect_patterns=[
+                    r"Successfully logged in to Weights & Biases!",
+                    r"wandb: Starting wandb agent",
+                    r"Running runs:",
+                    r"Agent received command: run",
+                    r"Agent starting run with config:",
+                    r"Your training script here",
+                ],
+                error_patterns=[r"ERROR", r"Error while calling W&B API"],
+                assert_exit_code=False,
+            )
+
+        # just check exit-code:
+        run("make kill-hypertrain", detect_new_jobs=False)
+        run("make kill-train-all", detect_new_jobs=False)
+
+    # Check results of hyper-parameter search on storage
+    results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert any(name.startswith("sweep-") for name in results), f"actual: {results}"
+
+
+@pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter_notebook(
     env_neuro_run_timeout: int, env_var_no_http_auth: None
 ) -> None:
@@ -669,7 +716,7 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
-    wait_job_change_status_to(job_id, "succeeded")
+    wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -861,7 +908,7 @@ def test_make_clean_notebooks() -> None:
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_results() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):

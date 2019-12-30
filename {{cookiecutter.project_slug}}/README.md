@@ -248,3 +248,12 @@ Please, don't forget to kill the jobs you started:
 - `make kill-jupyter` to kill the job started via `make jupyter`,
 - ...
 - `make kill-all` to kill all jobs started in current project.
+
+### Multi-threaded hyper-parameter search
+
+Neuro Platform supports hyper-parameter search via [Weights & Biases](https://www.wandb.com/articles/running-hyperparameter-sweeps-to-pick-the-best-model-using-w-b).
+In contrast to `make train`, you can run `make hypertrain`, which submits `N_HYPERPARAMETER_JOBS` (`3` by default) jobs on Neuro Platform (number of jobs can be modified in `Makefile` or as corresponding environment variable).
+Additional parameters of search can be set in `{{ cookiecutter.code_directory }}/wandb-sweep.yaml` file, see [W&B documentation page](https://docs.wandb.com/library/sweeps) for more details (the name of the sweep file can be modified in `Makefile` or as environment variable `WANDB_SWEEP_FILE`).
+
+To terminate all jobs of the latest hyper-parameter search sweep, run `make kill-hypertrain` or specify the sweep manually: `make kill-hypertrain SWEEP=sweep-id`.
+All sweeps you ran are stored in the local file `.wandb_sweeps`.

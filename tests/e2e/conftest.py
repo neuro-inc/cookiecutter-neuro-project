@@ -303,7 +303,7 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
     try:
         if not key.exists():
             key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
-            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / key_enc_name
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / MK_CONFIG_DIR / key_enc_name
             _decrypt_file(key_enc, key)
         yield
     finally:

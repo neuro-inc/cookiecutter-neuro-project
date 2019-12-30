@@ -76,9 +76,12 @@ AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
+WANDB_SWEEP_FILE?=wandb-sweep.yaml
 
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
 WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+WANDB_SWEEP_PATH=${CODE_DIR}/${WANDB_SWEEP_FILE}
+WANDB_SWEEPS=.wandb_sweeps
 
 ##### COMMANDS #####
 
@@ -302,13 +305,15 @@ port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB)
 
+
 RUN?=base
+_SWEEP_DESCRIPTION_POSTFIX?=
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
-		--description "$(PROJECT_ID):train" \
+		--description "$(PROJECT_ID):train$(_SWEEP_DESCRIPTION_POSTFIX)" \
 		--preset $(PRESET) \
 		$(_TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -325,6 +330,51 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
+
+
+# Number of hyper-parameter search jobs
+N_HYPERPARAM_JOBS?=3
+
+# Sweep ID (if empty, will be created during 'make hypertrain')
+SWEEP?=
+SWEEP_REAL:=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 ${WANDB_SWEEPS_FILE})
+
+.PHONY: hypertrain
+hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search using W&B
+	@[ "${SWEEP}" ] || { \
+		echo "Creating W&B Sweep..." && \
+		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
+		[ -f "${WANDB_SWEEP_CONFIG_PATH}" ] \
+			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
+			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false \
+		;} && \
+		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -oP 'Created sweep with ID: \K\w+' >> ${WANDB_SWEEPS_FILE} \
+    ;}
+	@echo "Using Sweep ID: ${SWEEP_REAL}"
+	@echo "Running ${N_HYPERPARAM_JOBS} jobs..."
+	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
+	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
+		echo -e "\nStarting job hyper-$${i}, sweep=$(SWEEP_REAL)..." ; \
+		make train \
+			TRAIN_CMD="wandb agent ${SWEEP_REAL}" \
+			RUN=hyper-$${i} \
+			RESULTS_DIR_STORAGE=$(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL} \
+			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
+			TRAIN_STREAM_LOGS=no ; \
+	done
+	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search training jobs.\nUse 'neuro ps' and 'neuro status <job>' to check."
+
+.PHONY: kill-hypertrain
+kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
+	jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP)") && \
+	$(NEURO) kill $${jobs:-placeholder}
+
+.PHONY: kill-hypertrain-all
+kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
+	for sweep in $$(cat ${WANDB_SWEEPS_FILE} | rev); do \
+		jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
+		$(NEURO) kill $${jobs:-placeholder} ; \
+	done
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
@@ -405,7 +455,7 @@ kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB)
 
 .PHONY: kill-all
-kill-all: kill-develop kill-train-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
+kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
 
 ##### LOCAL #####
 
