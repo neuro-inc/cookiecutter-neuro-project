@@ -503,10 +503,7 @@ def test_make_download_all() -> None:
 def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
     _run_make_train(
         env_neuro_run_timeout,
-        expect_patterns=[
-            _get_pattern_status_succeeded_or_running(),
-            "Your training script here",
-        ],
+        expect_patterns=[_get_pattern_status_succeeded_or_running()],
     )
 
 
@@ -516,7 +513,7 @@ def test_make_train_custom_command(
 ) -> None:
     cmd = env_py_command_check_gpu
     cmd = cmd.replace('"', r"\"")
-    cmd = f"'python -W ignore -c \"{cmd}\"'"
+    cmd = f"bash -c 'sleep 5 && python -W ignore -c \"{cmd}\"'"
     monkeypatch.setenv("TRAINING_COMMAND", cmd)
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
@@ -581,10 +578,10 @@ def test_make_train_invalid_name(
     exp_invalid = "InVaLiD-NaMe"
     job_valid = mk_train_job(exp_valid)
     job_invalid = mk_train_job(exp_invalid)  # noqa
-    cmd_prtn = "make train TRAIN_CMD='sleep 1h' RUN={run}"
+    cmd_pattern = "make train TRAIN_CMD='sleep 1h' RUN={run}"
 
     with finalize(f"neuro kill {job_valid}"):
-        cmd_valid = cmd_prtn.format(run=exp_valid)
+        cmd_valid = cmd_pattern.format(run=exp_valid)
         with measure_time(cmd_valid, TIMEOUT_NEURO_RUN_CPU):
             run(
                 cmd_valid,
@@ -592,7 +589,7 @@ def test_make_train_invalid_name(
                 assert_exit_code=False,
             )
 
-        cmd_invalid = cmd_prtn.format(run=exp_invalid)
+        cmd_invalid = cmd_pattern.format(run=exp_invalid)
         with measure_time(cmd_invalid, TIMEOUT_NEURO_RUN_CPU):
             run(
                 cmd_invalid,
@@ -606,6 +603,31 @@ def test_make_train_invalid_name(
     )
     jobs_left = out.strip().split()
     assert not jobs_left
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
+    with finalize(f"neuro kill {mk_train_job()}"):
+        tqdm_cmd = f"[time.sleep(0.01) for _ in tqdm.tqdm(range(10000))]"
+        py_cmd = f"import time, tqdm; {tqdm_cmd}"
+        bash_cmd = f'python -c "{py_cmd}"'
+        cmd = f"make train TRAIN_CMD='{bash_cmd}'"
+        with measure_time(cmd):
+            run(
+                cmd,
+                verbose=True,
+                detect_new_jobs=True,
+                expect_patterns=[
+                    _get_pattern_status_running(),
+                    r"Streaming logs of the job",
+                    r"3%.+300/10000",
+                    r"30%.+3000/10000",
+                    r"Stopped streaming logs",
+                ],
+                error_patterns=["[Ee]rror"],
+            )
+
+        run("make kill-train", detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_RUN)
