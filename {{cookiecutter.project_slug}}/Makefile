@@ -352,7 +352,7 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
 			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
 		}; \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
+		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
 	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
@@ -370,13 +370,15 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 
 .PHONY: kill-hypertrain
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
-	jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP)") && \
+	jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+	echo "Killing jobs of the sweep $${SWEEP_REAL}..." && \
 	$(NEURO) kill $${jobs:-placeholder}
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	for sweep in $$(cat ${WANDB_SWEEPS_FILE} | rev); do \
-		jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
+	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
+		jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+		echo "Killing jobs of the sweep $${sweep}..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
 	done
 
