@@ -649,7 +649,7 @@ def test_make_hypertrain(
     with finalize(*finalize_cmd_list):
         run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
-            expect_patterns=[fr"Started {n} hyper-parameter search training jobs"],
+            expect_patterns=[fr"Started {n} hyper-parameter search jobs"],
             error_patterns=["recipe for target 'hypertrain' failed"],
             assert_exit_code=True,
         )

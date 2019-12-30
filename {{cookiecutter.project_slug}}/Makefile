@@ -354,19 +354,18 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 		} && \
 		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep -E 'Created sweep with ID: \w+' | awk 'NF{ print $NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
-	@echo "Using Sweep ID: ${SWEEP_REAL}"
-	@echo "Running ${N_HYPERPARAM_JOBS} jobs..."
+	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
 	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
 	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
-		echo -e "\nStarting job hyper-$${i}, sweep=$(SWEEP_REAL)..." ; \
+		echo -e "\nStarting job $${i}..." ; \
 		make train \
 			TRAIN_CMD="wandb agent ${SWEEP_REAL}" \
-			RUN=hyper-$${i} \
+			RUN=${SWEEP_REAL}-$${i} \
 			RESULTS_DIR_STORAGE=$(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL} \
 			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
 			TRAIN_STREAM_LOGS=no ; \
 	done
-	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search training jobs.\nUse 'neuro ps' and 'neuro status <job>' to check."
+	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search jobs of sweep ${SWEEP_REAL}.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
 .PHONY: kill-hypertrain
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
