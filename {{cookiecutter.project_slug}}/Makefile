@@ -370,14 +370,14 @@ hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search 
 
 .PHONY: kill-hypertrain
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
-	jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 	echo "Killing jobs of the sweep $${SWEEP_REAL}..." && \
 	$(NEURO) kill $${jobs:-placeholder}
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
 	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
-		jobs=$$($(NEURO) --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 		echo "Killing jobs of the sweep $${sweep}..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
 	done
