@@ -279,7 +279,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_LIFETIME=1d \
+		--env JOB_TIMEOUT=1d \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		sleep infinity
