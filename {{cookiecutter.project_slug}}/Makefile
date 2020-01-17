@@ -149,12 +149,12 @@ setup: ### Setup remote environment
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
-	$(NEURO) kill $(SETUP_JOB)
+	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done
 
 .PHONY: kill-setup
 kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` itself)
-	$(NEURO) kill $(SETUP_JOB)
+	$(NEURO) kill $(SETUP_JOB) || :
 
 .PHONY: _check_setup
 _check_setup:
@@ -299,7 +299,7 @@ port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 
 .PHONY: kill-develop
 kill-develop:  ### Terminate the development job
-	$(NEURO) kill $(DEVELOP_JOB)
+	$(NEURO) kill $(DEVELOP_JOB) || :
 
 RUN?=base
 
@@ -328,12 +328,12 @@ endif
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
-	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
+	$(NEURO) kill $(TRAIN_JOB)-$(RUN) || :
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
 	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train") && \
-	$(NEURO) kill $${jobs:-placeholder}
+	$(NEURO) kill $${jobs:-placeholder} || :
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
@@ -362,7 +362,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
-	$(NEURO) kill $(JUPYTER_JOB)
+	$(NEURO) kill $(JUPYTER_JOB) || :
 
 .PHONY: jupyterlab
 jupyterlab:  ### Run a job with JupyterLab and open UI in the default browser
@@ -388,7 +388,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
-	$(NEURO) kill $(TENSORBOARD_JOB)
+	$(NEURO) kill $(TENSORBOARD_JOB) || :
 
 .PHONY: filebrowser
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
@@ -406,7 +406,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser
-	$(NEURO) kill $(FILEBROWSER_JOB)
+	$(NEURO) kill $(FILEBROWSER_JOB) || :
 
 .PHONY: kill-all
 kill-all: kill-develop kill-train-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
