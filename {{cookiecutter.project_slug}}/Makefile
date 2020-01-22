@@ -1,6 +1,7 @@
 ##### PATHS #####
 
 VERSION=v1.3
+BASE_ENV_VERSION=v1.3
 PROJECT_ID=placeholder
 
 DATA_DIR?=data
@@ -28,7 +29,7 @@ FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
 
 ##### ENVIRONMENTS #####
 
-BASE_ENV_NAME?=neuromation/base:latest
+BASE_ENV_NAME?=neuromation/base:$(BASE_ENV_VERSION)
 CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX):$(VERSION)
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
