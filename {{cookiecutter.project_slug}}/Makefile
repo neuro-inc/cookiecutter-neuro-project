@@ -76,10 +76,9 @@ AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
-WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
-
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
 WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
@@ -88,7 +87,6 @@ WANDB_SWEEPS_FILE=.wandb_sweeps
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
-
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
@@ -304,7 +302,6 @@ port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB)
 
-
 RUN?=base
 _SWEEP_DESCRIPTION_POSTFIX?=
 
@@ -335,7 +332,6 @@ endif
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN)
 
-
 # Number of hyper-parameter search jobs
 N_HYPERPARAM_JOBS?=3
 
@@ -344,7 +340,8 @@ SWEEP?=
 SWEEP_REAL:=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 ${WANDB_SWEEPS_FILE})
 
 .PHONY: hypertrain
-hypertrain: _check_setup    ### Run jobs in parallel for hyperparameters search using W&B
+hypertrain: _check_setup setup-local   ### Run jobs in parallel for hyperparameters tuning using W&B
+	wandb login "$(shell cat ${WANDB_SECRET_PATH_LOCAL})"
 	@[ "${SWEEP}" ] || { \
 		echo "Creating W&B Sweep..." && \
 		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
