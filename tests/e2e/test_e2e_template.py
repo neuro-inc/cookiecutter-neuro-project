@@ -641,7 +641,7 @@ def test_make_hypertrain(
         "make wandb-check-auth",
         expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
     )
-    run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
+    # run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
 
     n = 2
     with finalize("make kill-hypertrain-all"):
