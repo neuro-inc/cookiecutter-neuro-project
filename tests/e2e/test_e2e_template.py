@@ -8,7 +8,6 @@ from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
-    JOB_STATUS_RUNNING,
     JOB_STATUS_SUCCEEDED,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
@@ -654,7 +653,6 @@ def test_make_hypertrain(
 
         with finalize(*(f"neuro kill {job}" for job in jobs)):
             for job in jobs:
-                wait_job_change_status_to(job, JOB_STATUS_RUNNING, JOB_STATUS_SUCCEEDED)
                 run(
                     f"neuro logs {job}",
                     expect_patterns=[
@@ -668,6 +666,7 @@ def test_make_hypertrain(
                     error_patterns=[r"ERROR", r"Error while calling W&B API"],
                     assert_exit_code=False,
                 )
+                wait_job_change_status_to(job, JOB_STATUS_SUCCEEDED)
 
             # just check exit-code:
             run("make kill-hypertrain", detect_new_jobs=False)
