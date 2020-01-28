@@ -369,15 +369,16 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
 	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 	echo "Killing jobs of the sweep $${SWEEP_REAL}..." && \
-	$(NEURO) kill $${jobs:-placeholder}
+	$(NEURO) kill $${jobs:-placeholder} || :
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
+	@[ ! -f ${WANDB_SWEEPS_FILE} ] || \
 	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
 		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 		echo "Killing jobs of the sweep $${sweep}..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
-	done
+	done || :
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
