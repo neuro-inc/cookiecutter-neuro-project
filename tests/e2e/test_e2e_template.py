@@ -641,9 +641,8 @@ def test_make_hypertrain(
         "make wandb-check-auth",
         expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
     )
-    # run(f"bash -c 'wandb login `cat {MK_CONFIG_DIR}/{WANDB_KEY_FILE}`'")
 
-    n = 2
+    n = 3
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
@@ -653,26 +652,26 @@ def test_make_hypertrain(
         )
         jobs = parse_jobs_ids(out, expect_num=n)
 
-    with finalize(*(f"neuro kill {job}" for job in jobs)):
-        for job in jobs:
-            wait_job_change_status_to(job, JOB_STATUS_RUNNING, JOB_STATUS_SUCCEEDED)
-            run(
-                f"neuro logs {job}",
-                expect_patterns=[
-                    r"Successfully logged in to Weights & Biases!",
-                    r"wandb: Starting wandb agent",
-                    r"Running runs:",
-                    r"Agent received command: run",
-                    r"Agent starting run with config:",
-                    r"Your training script here",
-                ],
-                error_patterns=[r"ERROR", r"Error while calling W&B API"],
-                assert_exit_code=False,
-            )
+        with finalize(*(f"neuro kill {job}" for job in jobs)):
+            for job in jobs:
+                wait_job_change_status_to(job, JOB_STATUS_RUNNING, JOB_STATUS_SUCCEEDED)
+                run(
+                    f"neuro logs {job}",
+                    expect_patterns=[
+                        r"Successfully logged in to Weights & Biases!",
+                        r"wandb: Starting wandb agent",
+                        r"Running runs:",
+                        r"Agent received command: run",
+                        r"Agent starting run with config:",
+                        r"Your training script here",
+                    ],
+                    error_patterns=[r"ERROR", r"Error while calling W&B API"],
+                    assert_exit_code=False,
+                )
 
-        # just check exit-code:
-        run("make kill-hypertrain", detect_new_jobs=False)
-        run("make kill-train-all", detect_new_jobs=False)
+            # just check exit-code:
+            run("make kill-hypertrain", detect_new_jobs=False)
+            run("make kill-train-all", detect_new_jobs=False)
 
     # Check results of hyper-parameter search on storage
     results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
