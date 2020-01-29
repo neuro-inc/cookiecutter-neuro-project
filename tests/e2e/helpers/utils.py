@@ -105,14 +105,16 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
         if 0 < timeout < elapsed:
             log_msg(msg, logger=LOGGER.error)
 
-            details = f"{elapsed:.2f} sec / {timeout:.2f} sec"
+            # HACK (see issue #333)
+            det = f"{elapsed:.2f} sec / {timeout:.2f} sec"
             log_msg(
-                (f"WARNING: Temporarily ignoring timeout error ({details}),"
-                " see issue #333"),
+                f"WARNING: Temporarily ignoring timeout error ({det}), see issue #333",
                 logger=LOGGER.warning,
             )
+            # -- end of hack
             # TODO (ayushkovskiy) Once issue #333 is resolved, raise TimeoutError again
             # raise TimeoutError(msg)
+
         log_msg(msg)
         log_msg("-" * len(msg))
 
