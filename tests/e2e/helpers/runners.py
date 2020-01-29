@@ -138,9 +138,11 @@ def _expects_default_errors(expect_patterns: t.Sequence[str] = ()) -> bool:
     True
     >>> _expects_default_errors(["Error: bla-bla"]) #, [r"Error: .+",])
     True
+    >>> _expects_default_errors([r"Makefile:.+ recipe for target '_check_setup' failed"])
+    True
     >>> _expects_default_errors(["Not an error"]) #, [r"Error: .+",])
     False
-    """
+    """  # noqa
     return any(
         re.search(error_pattern, success_pattern)
         for error_pattern in DEFAULT_ERROR_PATTERNS

@@ -108,7 +108,10 @@ def test_make_help_works() -> None:
 def test_make_setup_required() -> None:
     run(
         "make jupyter",
-        expect_patterns=["Please run 'make setup' first", "Error 1"],
+        expect_patterns=[
+            "Please run 'make setup' first",
+            r"Makefile:.+ recipe for target '_check_setup' failed",
+        ],
         assert_exit_code=False,
     )
 
