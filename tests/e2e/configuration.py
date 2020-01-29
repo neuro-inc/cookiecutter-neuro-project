@@ -170,6 +170,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
+DEFAULT_ERROR_SUBSTRINGS_JOB_RUN = ["stale NFS file handle"]
 
 
 def mk_train_job(run: str = MK_RUN_DEFAULT) -> str:

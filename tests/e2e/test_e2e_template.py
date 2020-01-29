@@ -5,6 +5,7 @@ import pytest
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
+    DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
@@ -113,6 +114,8 @@ def test_make_setup_required() -> None:
             "Please run 'make setup' first",
             r"Makefile:.+ recipe for target '_check_setup' failed",
         ],
+        attempts=3,
+        attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
         assert_exit_code=False,
     )
 
@@ -251,7 +254,13 @@ def _run_make_setup_test() -> None:
 
     make_cmd = "make setup"
     with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
-        run(make_cmd, verbose=True, expect_patterns=expected_patterns)
+        run(
+            make_cmd,
+            verbose=True,
+            expect_patterns=expected_patterns,
+            attempts=3,
+            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+        )
 
     assert ".setup_done" in ls_files(".")
 
@@ -291,6 +300,8 @@ def test_import_code_in_notebooks(
                     "CellExecutionError",
                     "ModuleNotFoundError",
                 ],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
 
@@ -548,6 +559,8 @@ def _run_make_train(
             cmd,
             expect_patterns=expect_patterns,
             error_patterns=error_patterns,
+            attempts=3,
+            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
             verbose=True,
             detect_new_jobs=True,
             check_default_errors=check_default_errors,
@@ -570,6 +583,8 @@ def test_make_train_multiple_experiments(
                 out = run(
                     cmd,
                     expect_patterns=[_get_pattern_status_running()],
+                    attempts=3,
+                    attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                     assert_exit_code=False,
                 )
             job_ids.append(parse_job_id(out))
@@ -598,6 +613,8 @@ def test_make_train_invalid_name(
             run(
                 cmd_valid,
                 expect_patterns=[_get_pattern_status_running()],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
 
@@ -638,6 +655,8 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
                     r"Stopped streaming logs",
                 ],
                 error_patterns=["[Ee]rror"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
             )
 
         run("make kill-train", detect_new_jobs=False)
@@ -681,6 +700,8 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
             make_cmd,
             verbose=True,
             expect_patterns=[_get_pattern_status_running()],
+            attempts=3,
+            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
             assert_exit_code=False,
         )
     job_id = parse_job_id(out)
@@ -718,6 +739,8 @@ def test_gpu_available(environment: str) -> None:
                 cmd,
                 verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 timeout_s=TIMEOUT_NEURO_RUN_GPU,
             )
 
@@ -750,6 +773,8 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 cmd,
                 verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 timeout_s=env_neuro_run_timeout,
             )
 
