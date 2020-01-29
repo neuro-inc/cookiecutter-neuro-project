@@ -6,8 +6,8 @@ from collections import namedtuple
 from pathlib import Path
 
 import pytest
-
 from cryptography.fernet import Fernet
+
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
