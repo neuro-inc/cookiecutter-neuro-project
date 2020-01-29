@@ -342,7 +342,6 @@ SWEEP_REAL:=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 ${WANDB_SWEEPS_FILE}
 
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
-	wandb login "$(shell cat ${WANDB_SECRET_PATH_LOCAL})"
 	@[ "${SWEEP}" ] || { \
 		echo "Creating W&B Sweep..." && \
 		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
