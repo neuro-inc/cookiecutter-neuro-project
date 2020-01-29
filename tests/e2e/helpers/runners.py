@@ -7,6 +7,7 @@ from pathlib import Path
 import pexpect
 
 from tests.e2e.configuration import (
+    CI,
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
@@ -43,32 +44,52 @@ def run(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = (),
+    attempt_substrings: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    skip_error_patterns_check: bool = False,
+    check_default_errors: bool = True,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
     it so that overall the command `cmd` is executed not more than `attempts` times.
+    >>> run("foo", attempts=0, verbose=False)
+    Traceback (most recent call last):
+        ...
+    AssertionError: Invalid attempts number
     >>> try:
-    ...     run("foo", attempts=1)
+    ...     run("foo", attempts=1, verbose=False)
     ...     assert False, "should not be here"
     ... except RuntimeError as e:
-    ...     print(e)
-    ...
-    Failed to run command `foo`: ExceptionPexpect('The command was not found or was not executable: foo.')
+    ...     assert str(e) == "Failed to run command `foo` in 1 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')", str(e)
     >>> try:
-    ...     run("foo", attempts=3)
+    ...     run("foo", attempts=3, verbose=False)
     ...     assert False, "should not be here"
     ... except RuntimeError as e:
-    ...     print(e)
-    ...
-    Failed to run command `foo` in 3 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')
+    ...     assert str(e) == "Failed to run command `foo` in 3 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')", str(e)
+    >>> try:
+    ...     run("false", attempts=3, attempt_substrings=["Non-zero exit code: 1"], verbose=False)
+    ...     assert False, "should not be here"
+    ... except RuntimeError as e:
+    ...     assert str(e) == "Failed to run command `false` in 3 attempts: ExitCodeException(1)", str(e)
+    >>> # Do not repeat if not match attempt substrings:
+    >>> try:
+    ...     run("false", attempts=3, attempt_substrings=["not a substr"], verbose=False)
+    ...     assert False, "should not be here"
+    ... except RuntimeError as e:
+    ...     assert str(e) == "Failed to run command `false` in 1 attempts: ExitCodeException(1)", str(e)
     """  # noqa
+    assert attempts > 0, "Invalid attempts number"
     errors: t.List[Exception] = []
+    current_attempt = 1
     while True:
         try:
+            details = (
+                f" (will re-run for any of: {repr(attempt_substrings)})"
+                if attempt_substrings
+                else " (will re-run on any error)"
+            )
+            log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,
                 expect_patterns=expect_patterns,
@@ -77,20 +98,32 @@ def run(
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
                 assert_exit_code=assert_exit_code,
-                skip_error_patterns_check=skip_error_patterns_check,
+                check_default_errors=check_default_errors,
             )
         except Exception as exc:
             errors.append(exc)
-            num_retries = len(errors)
-            if verbose and num_retries < attempts:
-                log_msg(f"Retry {num_retries}...")
-                continue
+            if current_attempt < attempts:
+                err = str(exc)
+                log_msg(f"Attempt to run `{cmd}` failed: {err}")
 
+                found = False
+                if not attempt_substrings:
+                    found = True
+                else:
+                    for substr in attempt_substrings:
+                        if substr in err:
+                            log_msg(f"Found substring '{substr}' in error '{err}'")
+                            found = True
+                            break
+                if found:
+                    current_attempt += 1
+                    log_msg("Retrying...")
+                    continue
             err_det = ", ".join(merge_similars(repr(e) for e in errors))
-            err_msg = f"Failed to run command `{_hide_secret_cmd(cmd)}`"
-            if attempts > 1:
-                err_msg += f" in {attempts} attempts"
-            err_msg += f": {err_det}"
+            err_msg = (
+                f"Failed to run command `{_hide_secret_cmd(cmd)}`"
+                f" in {current_attempt} attempts: {err_det}"
+            )
             raise RuntimeError(err_msg)
 
 
@@ -103,34 +136,57 @@ def _run(
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
-    skip_error_patterns_check: bool = False,
+    check_default_errors: bool = True,
 ) -> str:
     """
-    This method wraps method `run_once` and accepts all its named arguments.
+    This method wraps method `_run_once` and accepts all its named arguments.
     Once the command `cmd` is finished to be executed, the output is tested
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
+    if _expects_default_errors(expect_patterns):
+        check_default_errors = False
+
     with timeout(timeout_s):
         out = _run_once(
             cmd,
-            expect_patterns,
+            expect_patterns=expect_patterns,
             verbose=verbose,
             detect_new_jobs=detect_new_jobs,
             assert_exit_code=assert_exit_code,
         )
-    if skip_error_patterns_check:
-        all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
-        errors = detect_errors(out, all_error_patterns, verbose=verbose)
-        if errors:
-            raise RuntimeError(f"Detected errors in output: {errors}")
+    all_error_patterns = list(error_patterns)
+    if check_default_errors:
+        all_error_patterns += list(DEFAULT_ERROR_PATTERNS)
+
+    errors = detect_errors(out, all_error_patterns, verbose=verbose)
+    if errors:
+        raise RuntimeError(f"Detected errors in output: {errors}")
     return out
+
+
+def _expects_default_errors(expect_patterns: t.Sequence[str] = ()) -> bool:
+    """
+    >>> _expects_default_errors(["ERROR: bla-bla"]) #, [r"ERROR[^:]*: .+"])
+    True
+    >>> _expects_default_errors(["Error: bla-bla"]) #, [r"Error: .+",])
+    True
+    >>> _expects_default_errors([r"Makefile:.+ recipe for target '_check_setup' failed"])
+    True
+    >>> _expects_default_errors(["Not an error"]) #, [r"Error: .+",])
+    False
+    """  # noqa
+    return any(
+        re.search(error_pattern, success_pattern)
+        for error_pattern in DEFAULT_ERROR_PATTERNS
+        for success_pattern in expect_patterns
+    )
 
 
 def _run_once(
     cmd: str,
-    expect_patterns: t.Sequence[str] = (),
     *,
+    expect_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
@@ -151,7 +207,7 @@ def _run_once(
     '1 2 3'
     >>> # Abort once all the patterns have matched:
     >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'",
-    ...     expect_patterns=['1', '2'], verbose=False)
+    ...     expect_patterns=['1', '2'], assert_exit_code=False, verbose=False)
     '1 2'
     >>> # Empty pattern list: read until the process returns:
     >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False)
@@ -169,16 +225,22 @@ def _run_once(
     ... except RuntimeError as e:
     ...     assert str(e) == "NOT Found expected pattern: '4'", repr(str(e))
     >>> # Exit code:
+    >>> _run_once('false', verbose=False, assert_exit_code=False)
+    ''
     >>> try:
     ...     _run_once('false', verbose=False)
     ...     assert False, "must be unreachable"
     ... except ExitCodeException as e:
-    ...     assert e.exit_code == 1
+    ...     assert e.exit_code == 1, e.exit_code
     >>> # Suppress exit code check:
     >>> _run_once('false', verbose=False, assert_exit_code=False)
+    ''
     """
+    # HACK: always dump output on CI
+    if CI:
+        verbose = True
 
-    if verbose and _is_command_secret(cmd):
+    if verbose and not _is_command_secret(cmd):
         log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(
@@ -195,18 +257,16 @@ def _run_once(
         # work until the process returns
         expect_patterns = [pexpect.EOF]
     else:
-        if verbose:
-            log_msg(f"Search patterns: {repr(expect_patterns)}")
+        log_msg(f"Search patterns: {repr(expect_patterns)}")
     try:
         for expected in expect_patterns:
             try:
                 child.expect(expected)
-                if verbose:
-                    log_msg(
-                        "OK"
-                        if expected is pexpect.EOF
-                        else f"Found expected pattern: {repr(expected)}"
-                    )
+                log_msg(
+                    "OK"
+                    if expected is pexpect.EOF
+                    else f"Found expected pattern: {repr(expected)}"
+                )
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -215,8 +275,7 @@ def _run_once(
                     err = f"Timeout exceeded for command: {cmd}"
                 else:
                     err = f"Pexpect error: {e}"
-                if verbose:
-                    log_msg(err, logger=LOGGER.error)
+                log_msg(err, logger=LOGGER.error)
                 raise RuntimeError(err)
             finally:
                 chunk = _get_chunk(child)
@@ -230,14 +289,18 @@ def _run_once(
                 child.wait()
             child.close(force=True)
             if child.status:
+                assert child.exitstatus != 0, "Here exit status should be non-zero!"
                 need_dump = True
                 if child.signalstatus is not None:
-                    log_msg(f"{cmd} was killed via signal", logger=LOGGER.warning)
-                raise ExitCodeException(child.status)
+                    log_msg(
+                        f"{cmd} was killed via signal {child.signalstatus}",
+                        logger=LOGGER.warning,
+                    )
+                raise ExitCodeException(child.exitstatus)
     finally:
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
-        if verbose and need_dump:
+        if need_dump:
             log_msg(f"DUMP: {repr(output)}")
     return output
 
@@ -262,7 +325,7 @@ def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
 
 
 def detect_errors(
-    output: str, error_patterns: t.Sequence[str] = (), *, verbose: bool = True
+    output: str, error_patterns: t.Sequence[str], *, verbose: bool = True
 ) -> t.Set[str]:
     r"""
     >>> output = r"1\r\n2\r\n3\r\n"
@@ -281,9 +344,8 @@ def detect_errors(
         for err in re.findall(p, output):
             if err:
                 found.add(err)
-                if verbose:
-                    log_msg(f"Detected error matching {repr(p)}: {repr(err)}")
-    if verbose and found:
+                log_msg(f"Detected error matching {repr(p)}: {repr(err)}")
+    if found:
         log_msg(f"Overall {len(found)} patterns matched")
         log_msg(f"DUMP: {repr(output)}")
     return found
@@ -315,7 +377,7 @@ def repeat_until_success(
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:
-    if not any(verb in cmd for verb in VERBS_SECRET):
+    if not _is_command_secret(cmd):
         log_msg(f"Running command until success: `{cmd}`")
     with timeout(timeout_total_s):
         while True:
@@ -339,14 +401,14 @@ def finalize(*finally_commands: str):  # type: ignore
     try:
         yield
     except Exception as e:
-        log_msg("-" * 100, logger=LOGGER.error)
+        log_msg("=" * 100, logger=LOGGER.error)
         log_msg(f"Error: {e.__class__}: {e}", logger=LOGGER.error)
-        log_msg("-" * 100, logger=LOGGER.error)
+        log_msg("=" * 100, logger=LOGGER.error)
         raise
     finally:
         for cmd in finally_commands:
             log_msg(f"Running finalization command '{_hide_secret_cmd(cmd)}'...")
-            run(cmd, verbose=True, assert_exit_code=False)
+            run(cmd, assert_exit_code=False)
 
 
 # == neuro helpers ==

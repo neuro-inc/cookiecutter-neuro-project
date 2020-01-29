@@ -2,6 +2,7 @@ import pytest
 
 import tests.e2e.helpers.runners
 from tests.e2e.configuration import (
+    DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
     MK_DEVELOP_JOB,
     MK_JUPYTER_JOB,
     TIMEOUT_NEURO_EXEC,
@@ -44,6 +45,8 @@ def _test_make_run_job_connect_gsutil(run_job_cmd: str, kill_job_cmd: str) -> No
                 run_job_cmd,
                 verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
             job_id = tests.e2e.helpers.runners.parse_job_id(out)
@@ -103,6 +106,8 @@ def _test_make_run_job_connect_aws(run_job_cmd: str, kill_job_cmd: str) -> None:
                 run_job_cmd,
                 verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
             job_id = tests.e2e.helpers.runners.parse_job_id(out)
@@ -143,6 +148,8 @@ def _test_make_run_job_connect_wandb(run_job_cmd: str, kill_job_cmd: str) -> Non
                 run_job_cmd,
                 verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
+                attempts=3,
+                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
             job_id = tests.e2e.helpers.runners.parse_job_id(out)
