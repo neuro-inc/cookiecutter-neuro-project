@@ -47,6 +47,7 @@ jobs:
           name: run unit tests
           command: |
             . venv/bin/activate
+            make test_doctest
             make test_unit
       - run:
           no_output_timeout: 20m

@@ -26,18 +26,20 @@ format:
 	isort -rc $(LINTER_DIRS)
 	black $(LINTER_DIRS)
 
+
+.PHONY: test_doctest
+test_doctest:
+	python -m doctest tests/e2e/conftest.py
+	python -m doctest tests/e2e/helpers/runners.py
+	python -m doctest tests/e2e/helpers/utils.py
+	@echo -e "OK\n"
+
 .PHONY: test_unit
 test_unit:
 	pytest -v -s tests/unit
 	@echo -e "OK\n"
-	# Test cookiecutter manually:
 	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
 	stat $(TMP_DIR)/test-project
-	@echo -e "OK\n"
-	# Run doctests:
-	python -m doctest tests/e2e/conftest.py
-	python -m doctest tests/e2e/helpers/runners.py
-	python -m doctest tests/e2e/helpers/utils.py
 	@echo -e "OK\n"
 
 .PHONY: test_e2e_dev

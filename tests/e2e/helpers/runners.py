@@ -151,7 +151,7 @@ def _run_once(
     '1 2 3'
     >>> # Abort once all the patterns have matched:
     >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'",
-    ...     expect_patterns=['1', '2'], verbose=False)
+    ...     expect_patterns=['1', '2'], assert_exit_code=False, verbose=False)
     '1 2'
     >>> # Empty pattern list: read until the process returns:
     >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False)
@@ -173,9 +173,10 @@ def _run_once(
     ...     _run_once('false', verbose=False)
     ...     assert False, "must be unreachable"
     ... except ExitCodeException as e:
-    ...     assert e.exit_code == 1
+    ...     assert e.exit_code == 1, e.exit_code
     >>> # Suppress exit code check:
     >>> _run_once('false', verbose=False, assert_exit_code=False)
+    ''
     """
 
     if verbose and _is_command_secret(cmd):
@@ -230,10 +231,11 @@ def _run_once(
                 child.wait()
             child.close(force=True)
             if child.status:
+                assert child.exitstatus != 0, "Here exit status should be non-zero!"
                 need_dump = True
                 if child.signalstatus is not None:
                     log_msg(f"{cmd} was killed via signal", logger=LOGGER.warning)
-                raise ExitCodeException(child.status)
+                raise ExitCodeException(child.exitstatus)
     finally:
         if detect_new_jobs:
             _dump_submitted_job_ids(_detect_job_ids(output))
