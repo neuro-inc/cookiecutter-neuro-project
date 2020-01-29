@@ -46,7 +46,7 @@ def run(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    skip_error_patterns_check: bool = False,
+    check_default_errors: bool = True,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -77,7 +77,7 @@ def run(
                 detect_new_jobs=detect_new_jobs,
                 timeout_s=timeout_s,
                 assert_exit_code=assert_exit_code,
-                skip_error_patterns_check=skip_error_patterns_check,
+                check_default_errors=check_default_errors,
             )
         except Exception as exc:
             errors.append(exc)
@@ -103,7 +103,7 @@ def _run(
     detect_new_jobs: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
-    skip_error_patterns_check: bool = False,
+    check_default_errors: bool = True,
 ) -> str:
     """
     This method wraps method `run_once` and accepts all its named arguments.
@@ -111,6 +111,9 @@ def _run(
     against the set of error patterns `error_patterns`, and if any of them
     was found, a `RuntimeError` will be raised.
     """
+    if _expects_default_errors(expect_patterns):
+        check_default_errors = False
+
     with timeout(timeout_s):
         out = _run_once(
             cmd,
@@ -119,12 +122,30 @@ def _run(
             detect_new_jobs=detect_new_jobs,
             assert_exit_code=assert_exit_code,
         )
-    if not skip_error_patterns_check:
-        all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
-        errors = detect_errors(out, all_error_patterns, verbose=verbose)
-        if errors:
-            raise RuntimeError(f"Detected errors in output: {errors}")
+    all_error_patterns = list(error_patterns)
+    if not check_default_errors:
+        all_error_patterns += list(DEFAULT_ERROR_PATTERNS)
+
+    errors = detect_errors(out, all_error_patterns, verbose=verbose)
+    if errors:
+        raise RuntimeError(f"Detected errors in output: {errors}")
     return out
+
+
+def _expects_default_errors(expect_patterns: t.Sequence[str] = ()) -> bool:
+    """
+    >>> _expects_default_errors(["ERROR: bla-bla"]) #, [r"ERROR[^:]*: .+"])
+    True
+    >>> _expects_default_errors(["Error: bla-bla"]) #, [r"Error: .+",])
+    True
+    >>> _expects_default_errors(["Not an error"]) #, [r"Error: .+",])
+    False
+    """
+    return any(
+        re.search(error_pattern, success_pattern)
+        for error_pattern in DEFAULT_ERROR_PATTERNS
+        for success_pattern in expect_patterns
+    )
 
 
 def _run_once(
@@ -179,7 +200,7 @@ def _run_once(
     ''
     """
 
-    if verbose and _is_command_secret(cmd):
+    if verbose and not _is_command_secret(cmd):
         log_msg(f"<<< {cmd}")
 
     child = pexpect.spawn(

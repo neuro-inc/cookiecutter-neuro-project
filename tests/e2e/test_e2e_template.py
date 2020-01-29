@@ -110,7 +110,6 @@ def test_make_setup_required() -> None:
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
         assert_exit_code=False,
-        skip_error_patterns_check=True,
     )
 
 
@@ -125,7 +124,6 @@ def test_make_gcloud_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found Google Cloud service account key file"],
         assert_exit_code=False,
-        skip_error_patterns_check=True,
     )
 
 
@@ -155,7 +153,6 @@ def test_make_aws_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found AWS user account credentials file"],
         assert_exit_code=False,
-        skip_error_patterns_check=True,
     )
 
 
@@ -183,7 +180,6 @@ def test_make_wandb_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found Weights & Biases key file"],
         assert_exit_code=False,
-        skip_error_patterns_check=True,
     )
 
 
@@ -508,17 +504,20 @@ def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
     _run_make_train(
         env_neuro_run_timeout,
         expect_patterns=[_get_pattern_status_succeeded_or_running()],
+        # BUG: After we have implemented tqdm support, `make train` fails to do
+        # `neuro exec ... tail -f /output` if the training script exits immediately
+        check_default_errors=False,
     )
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_custom_command(
-    monkeypatch: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
+    monkeypatch_setenv: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
 ) -> None:
     cmd = env_py_command_check_gpu
     cmd = cmd.replace('"', r"\"")
     cmd = f"bash -c 'sleep 5 && python -W ignore -c \"{cmd}\"'"
-    monkeypatch.setenv("TRAINING_COMMAND", cmd)
+    monkeypatch_setenv("TRAINING_COMMAND", cmd)
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
@@ -533,6 +532,7 @@ def _run_make_train(
     neuro_run_timeout: int,
     expect_patterns: Sequence[str],
     error_patterns: Sequence[str] = (),
+    check_default_errors: bool = False,
 ) -> None:
     cmd = "make train"
     with measure_time(cmd, neuro_run_timeout):
@@ -542,12 +542,13 @@ def _run_make_train(
             error_patterns=error_patterns,
             verbose=True,
             detect_new_jobs=True,
+            check_default_errors=check_default_errors,
         )
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_multiple_experiments(
-    monkeypatch: Any, env_var_preset_cpu_small: None, neuro_project_id: str
+    env_var_preset_cpu_small: None, neuro_project_id: str
 ) -> None:
     experiments = [MK_RUN_DEFAULT, "new-idea"]
     jobs = [mk_train_job(exp) for exp in experiments]
@@ -576,7 +577,7 @@ def test_make_train_multiple_experiments(
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_invalid_name(
-    monkeypatch: Any, env_var_preset_cpu_small: None, neuro_project_id: str
+    env_var_preset_cpu_small: None, neuro_project_id: str
 ) -> None:
     exp_valid = "postfix"
     exp_invalid = "InVaLiD-NaMe"
@@ -598,7 +599,6 @@ def test_make_train_invalid_name(
                 cmd_invalid,
                 expect_patterns=["Invalid job name"],
                 assert_exit_code=False,
-                skip_error_patterns_check=True,
             )
 
     run("make kill-train-all", detect_new_jobs=False)

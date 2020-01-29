@@ -248,7 +248,7 @@ def neuro_project_id() -> str:
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
-        run("pip install -U neuromation", verbose=False, skip_error_patterns_check=True)
+        run("pip install -U neuromation", verbose=False, check_default_errors=False)
     log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
@@ -269,23 +269,32 @@ def neuro_login(
 
 
 @pytest.fixture()
-def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("PRESET", "cpu-small")
+def monkeypatch_setenv(monkeypatch: t.Any) -> t.Callable[[str, str], None]:
+    def _f(key: str, val: str) -> None:
+        log_msg(f"Setting env var: {key}={val}")
+        monkeypatch.setenv("PRESET", "cpu-small")
+
+    return _f
 
 
 @pytest.fixture()
-def env_var_no_http_auth(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("HTTP_AUTH", "--no-http-auth")
+def env_var_preset_cpu_small(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("PRESET", "cpu-small")
 
 
 @pytest.fixture()
-def env_var_train_stream_logs(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("TRAIN_STREAM_LOGS", "yes")
+def env_var_no_http_auth(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("HTTP_AUTH", "--no-http-auth")
 
 
 @pytest.fixture()
-def env_var_train_no_stream_logs(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("TRAIN_STREAM_LOGS", "no")
+def env_var_train_stream_logs(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("TRAIN_STREAM_LOGS", "yes")
+
+
+@pytest.fixture()
+def env_var_train_no_stream_logs(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("TRAIN_STREAM_LOGS", "no")
 
 
 def _decrypt_file(file_enc: Path, output: Path) -> None:
@@ -317,8 +326,8 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
+def env_var_gcp_secret_file(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
 
 
 @pytest.fixture()
@@ -327,8 +336,8 @@ def decrypt_gcp_key() -> t.Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def env_var_aws_secret_file(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
+def env_var_aws_secret_file(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
 
 
 @pytest.fixture()
@@ -337,8 +346,8 @@ def decrypt_aws_key() -> t.Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
+def env_var_wandb_secret_file(monkeypatch_setenv: t.Any) -> None:
+    monkeypatch_setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
 
 
 @pytest.fixture()
