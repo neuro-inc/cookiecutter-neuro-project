@@ -161,7 +161,9 @@ def _run(
 
     errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
-        raise RuntimeError(f"Detected errors in output: {errors}")
+        # HACK: since `run()` that re-runs in failure depends on the output,
+        # error's message should include the output (this is due to bad design)
+        raise RuntimeError(f"Detected errors in output: {errors}. Output: '{out}'")
     return out
 
 
