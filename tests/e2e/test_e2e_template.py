@@ -607,6 +607,7 @@ def test_make_train_invalid_name(
                 cmd_invalid,
                 expect_patterns=["Invalid job name"],
                 assert_exit_code=False,
+                check_default_errors=False,
             )
 
     run("make kill-train-all", detect_new_jobs=False)
