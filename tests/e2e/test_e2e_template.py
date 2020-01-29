@@ -76,6 +76,7 @@ from tests.e2e.conftest import (
     STEP_SETUP,
     STEP_UPLOAD,
 )
+from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import (
     finalize,
     ls,
@@ -515,12 +516,16 @@ def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_custom_command(
-    monkeypatch_setenv: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
+    monkeypatch: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
 ) -> None:
     cmd = env_py_command_check_gpu
     cmd = cmd.replace('"', r"\"")
     cmd = f"bash -c 'sleep 5 && python -W ignore -c \"{cmd}\"'"
-    monkeypatch_setenv("TRAINING_COMMAND", cmd)
+
+    key, val = "TRAINING_COMMAND", cmd
+    log_msg(f"Setting env var: {key}={val}")
+    monkeypatch.setenv(key, val)
+
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
