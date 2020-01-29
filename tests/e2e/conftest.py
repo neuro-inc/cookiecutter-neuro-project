@@ -248,7 +248,7 @@ def neuro_project_id() -> str:
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
-        run("pip install -U neuromation", verbose=False)
+        run("pip install -U neuromation", verbose=False, skip_error_patterns_check=True)
     log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
