@@ -80,13 +80,16 @@ def run(
     ...     assert str(e) == "Failed to run command `false` in 1 attempts: ExitCodeException(1)", str(e)
     """  # noqa
     assert attempts > 0, "Invalid attempts number"
-    if attempt_substrings:
-        log_msg(f"Will re-run if found any substring of: {repr(attempt_substrings)}")
     errors: t.List[Exception] = []
     current_attempt = 1
     while True:
         try:
-            log_msg(f"Attempt {current_attempt}/{attempts}")
+            details = (
+                f" (will re-run for any of: {repr(attempt_substrings)})"
+                if attempt_substrings
+                else ""
+            )
+            log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,
                 expect_patterns=expect_patterns,
@@ -102,8 +105,14 @@ def run(
             if current_attempt < attempts:
                 err = str(exc)
                 log_msg(f"Attempt to run `{cmd}` failed: {err}")
-                if not attempt_substrings or any(s in err for s in attempt_substrings):
+                substr_found: t.Optional[str] = None
+                for substr in attempt_substrings:
+                    if substr in err:
+                        substr_found = substr
+                        break
+                if substr_found:
                     current_attempt += 1
+                    log_msg(f"Found substring '{substr_found}' in error '{err}'")
                     log_msg("Retrying...")
                     continue
             err_det = ", ".join(merge_similars(repr(e) for e in errors))
