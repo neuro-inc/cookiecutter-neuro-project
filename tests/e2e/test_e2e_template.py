@@ -110,6 +110,7 @@ def test_make_setup_required() -> None:
         "make jupyter",
         expect_patterns=["Please run 'make setup' first", "Error"],
         assert_exit_code=False,
+        skip_error_patterns_check=True,
     )
 
 
@@ -124,6 +125,7 @@ def test_make_gcloud_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found Google Cloud service account key file"],
         assert_exit_code=False,
+        skip_error_patterns_check=True,
     )
 
 
@@ -153,6 +155,7 @@ def test_make_aws_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found AWS user account credentials file"],
         assert_exit_code=False,
+        skip_error_patterns_check=True,
     )
 
 
@@ -180,6 +183,7 @@ def test_make_wandb_check_auth_failure() -> None:
         make_cmd,
         expect_patterns=["ERROR: Not found Weights & Biases key file"],
         assert_exit_code=False,
+        skip_error_patterns_check=True,
     )
 
 
