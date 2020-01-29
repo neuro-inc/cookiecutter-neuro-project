@@ -89,7 +89,8 @@ def run(
                 if attempt_substrings
                 else " (will re-run on any error)"
             )
-            log_msg(f"Attempt {current_attempt}/{attempts}{details}")
+            if attempts > 1:
+                log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,
                 expect_patterns=expect_patterns,
@@ -161,7 +162,7 @@ def _run(
 
     errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
-        # HACK: since `run()` that re-runs in failure depends on the output,
+        # DIRTY HACK: since `run()` that re-runs in failure depends on the output,
         # error's message should include the output (this is due to bad design)
         raise RuntimeError(f"Detected errors in output: {errors}. Output: '{out}'")
     return out
