@@ -119,7 +119,7 @@ def _run(
             detect_new_jobs=detect_new_jobs,
             assert_exit_code=assert_exit_code,
         )
-    if skip_error_patterns_check:
+    if not skip_error_patterns_check:
         all_error_patterns = list(error_patterns) + list(DEFAULT_ERROR_PATTERNS)
         errors = detect_errors(out, all_error_patterns, verbose=verbose)
         if errors:
