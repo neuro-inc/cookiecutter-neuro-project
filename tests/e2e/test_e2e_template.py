@@ -581,7 +581,6 @@ def test_make_train_invalid_name(
     exp_valid = "postfix"
     exp_invalid = "InVaLiD-NaMe"
     job_valid = mk_train_job(exp_valid)
-    job_invalid = mk_train_job(exp_invalid)  # noqa
     cmd_pattern = "make train TRAIN_CMD='sleep 1h' RUN={run}"
 
     with finalize(f"neuro kill {job_valid}"):
@@ -599,6 +598,7 @@ def test_make_train_invalid_name(
                 cmd_invalid,
                 expect_patterns=["Invalid job name"],
                 assert_exit_code=False,
+                skip_error_patterns_check=True,
             )
 
     run("make kill-train-all", detect_new_jobs=False)
