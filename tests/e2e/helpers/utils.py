@@ -89,7 +89,8 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
     >>> try:
     ...     with measure_time("sleep", timeout=0.01):
     ...         time.sleep(0.1)
-    ...     assert False, "should not be here"
+    ...     #assert False, "should not be here"
+    ...     # TODO (ayushkovskiy) Unignore the assert above once #333 is resolved
     ... except TimeoutError as e:
     ...     assert str(e) == "Time summary [sleep]: 0.10 sec (timeout: 0.01 sec)", e
     >>> elapsed = time.time() - t_0
@@ -104,7 +105,18 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
         msg = f"Time summary [{cmd}]: {elapsed:.2f} sec (timeout: {timeout:.2f} sec)"
         if 0 < timeout < elapsed:
             log_msg(msg, logger=LOGGER.error)
-            raise TimeoutError(msg)
+
+            # HACK (see issue #333)
+            det = f"{elapsed:.2f} sec / {timeout:.2f} sec"
+            log_msg(
+                f"WARNING: Temporarily ignoring timeout error ({det}), see issue #333",
+                logger=LOGGER.warning,
+            )
+            # -- end of hack
+            # TODO (ayushkovskiy) Once issue #333 is resolved, raise TimeoutError again.
+            #   Also, don't forget to unignore the doctest for this function.
+            # raise TimeoutError(msg)
+
         log_msg(msg)
         log_msg("-" * len(msg))
 

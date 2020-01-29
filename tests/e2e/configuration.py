@@ -90,8 +90,8 @@ MK_PROJECT_DIRS = {
 MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
-PACKAGES_APT_CUSTOM = ["expect", "figlet"]
-PACKAGES_PIP_CUSTOM = ["aiohttp==3.6", "aiohttp_security", "neuromation"]
+PACKAGES_APT_CUSTOM = ["figlet"]
+PACKAGES_PIP_CUSTOM = ["neuromation"]
 WANDB_SWEEP_FILE = "wandb-sweep.yaml"
 GCP_KEY_FILE = "gcp-key.json"
 AWS_KEY_FILE = "aws-credentials.txt"
@@ -171,6 +171,7 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
+DEFAULT_ERROR_SUBSTRINGS_JOB_RUN = ["stale NFS file handle"]
 
 
 def mk_train_job(run: str = MK_RUN_DEFAULT) -> str:

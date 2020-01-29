@@ -28,4 +28,5 @@ LOGGER = get_logger()
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
     logger(msg)
     if CI:
+        # do not duplicate messages when running locally
         PEXPECT_DEBUG_OUTPUT_LOGFILE.write(f"{_timestamp()}: " + msg + "\n")

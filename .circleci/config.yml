@@ -30,8 +30,6 @@ jobs:
             . venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade certifi
-            # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
-            pip install --upgrade cryptography
             pip install --upgrade wandb
             make init
       - save_cache: &step_save_cache
@@ -48,6 +46,7 @@ jobs:
           name: run unit tests
           command: |
             . venv/bin/activate
+            make test_doctest
             make test_unit
       - run:
           no_output_timeout: 20m
