@@ -87,7 +87,7 @@ def run(
             details = (
                 f" (will re-run for any of: {repr(attempt_substrings)})"
                 if attempt_substrings
-                else ""
+                else " (will re-run on any error)"
             )
             log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
@@ -105,14 +105,18 @@ def run(
             if current_attempt < attempts:
                 err = str(exc)
                 log_msg(f"Attempt to run `{cmd}` failed: {err}")
-                substr_found: t.Optional[str] = None
-                for substr in attempt_substrings:
-                    if substr in err:
-                        substr_found = substr
-                        break
-                if substr_found:
+
+                found = False
+                if not attempt_substrings:
+                    found = True
+                else:
+                    for substr in attempt_substrings:
+                        if substr in err:
+                            log_msg(f"Found substring '{substr}' in error '{err}'")
+                            found = True
+                            break
+                if found:
                     current_attempt += 1
-                    log_msg(f"Found substring '{substr_found}' in error '{err}'")
                     log_msg("Retrying...")
                     continue
             err_det = ", ".join(merge_similars(repr(e) for e in errors))
