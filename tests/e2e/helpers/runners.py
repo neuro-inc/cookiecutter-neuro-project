@@ -237,13 +237,7 @@ def _run_once(
     >>> _run_once('false', verbose=False, assert_exit_code=False)
     ''
     """
-    # HACK: always dump output on CI
-    if CI:
-        verbose = True
-
-    if verbose:
-        log_msg(f"<<< {_hide_secret_cmd(cmd)}")
-
+    log_msg(f"<<< {_hide_secret_cmd(cmd)}")
     child = pexpect.spawn(
         cmd,
         timeout=DEFAULT_TIMEOUT_LONG,
@@ -263,11 +257,12 @@ def _run_once(
         for expected in expect_patterns:
             try:
                 child.expect(expected)
-                log_msg(
-                    f"EOF found for command '{_hide_secret_cmd(cmd)}'"
-                    if expected is pexpect.EOF
-                    else f"Found expected pattern: {repr(expected)}"
-                )
+                if verbose:
+                    log_msg(
+                        f"EOF found for command '{_hide_secret_cmd(cmd)}'"
+                        if expected is pexpect.EOF
+                        else f"Found expected pattern: {repr(expected)}"
+                    )
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -465,7 +460,7 @@ def wait_job_change_status_to(
         while True:
             status = get_job_status(job_id, verbose=verbose)
             if status == target_status:
-                log_msg("Done.")
+                log_msg(f"Job {job_id} has reached status {target_status}")
                 return
             if status in JOB_STATUSES_TERMINATED:
                 raise RuntimeError(
