@@ -266,7 +266,7 @@ def _run_once(
             try:
                 child.expect(expected)
                 log_msg(
-                    f"Found EOF for command {_hide_secret_cmd(cmd)}"
+                    f"Found EOF for command '{_hide_secret_cmd(cmd)}'"
                     if expected is pexpect.EOF
                     else f"Found expected pattern: {repr(expected)}"
                 )
