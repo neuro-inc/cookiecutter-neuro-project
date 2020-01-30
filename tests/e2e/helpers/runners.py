@@ -7,7 +7,6 @@ from pathlib import Path
 import pexpect
 
 from tests.e2e.configuration import (
-    CI,
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
