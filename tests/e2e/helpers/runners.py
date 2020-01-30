@@ -243,8 +243,8 @@ def _run_once(
     if CI:
         verbose = True
 
-    if verbose and not _is_command_secret(cmd):
-        log_msg(f"<<< {cmd}")
+    if verbose:
+        log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
     child = pexpect.spawn(
         cmd,
@@ -266,7 +266,7 @@ def _run_once(
             try:
                 child.expect(expected)
                 log_msg(
-                    "OK"
+                    f"Found EOF for command {_hide_secret_cmd(cmd)}"
                     if expected is pexpect.EOF
                     else f"Found expected pattern: {repr(expected)}"
                 )
@@ -275,7 +275,7 @@ def _run_once(
                 if isinstance(e, pexpect.EOF):
                     err = f"NOT Found expected pattern: {repr(expected)}"
                 elif isinstance(e, pexpect.TIMEOUT):
-                    err = f"Timeout exceeded for command: {cmd}"
+                    err = f"Timeout exceeded for command: {_hide_secret_cmd(cmd)}"
                 else:
                     err = f"Pexpect error: {e}"
                 log_msg(err, logger=LOGGER.error)
