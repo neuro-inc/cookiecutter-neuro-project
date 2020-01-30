@@ -673,7 +673,8 @@ def test_make_hypertrain(
         expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
     )
 
-    n = 2
+    # NOTE: only 1 job in order to reduce flakiness
+    n = 1
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
