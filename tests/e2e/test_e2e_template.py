@@ -73,6 +73,7 @@ from tests.e2e.conftest import (
     STEP_LOCAL,
     STEP_POST_SETUP,
     STEP_POST_UPLOAD,
+    STEP_PRE_RUN,
     STEP_PRE_SETUP,
     STEP_RUN,
     STEP_SETUP,
@@ -282,7 +283,7 @@ def test_make_kill_setup() -> None:
         run(cmd, detect_new_jobs=False)
 
 
-@pytest.mark.run(order=STEP_POST_UPLOAD)
+@pytest.mark.run(order=STEP_PRE_RUN)
 def test_import_code_in_notebooks(
     env_var_preset_cpu_small: None, env_var_no_http_auth: None
 ) -> None:
