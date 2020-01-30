@@ -75,7 +75,17 @@ def timeout(time_s: int) -> t.Iterator[None]:
         yield
     except TimeoutError:
         log_msg(f"TIMEOUT ERROR: {time_s} sec", logger=LOGGER.error)
-        raise
+
+        # HACK (see issue #333)
+        log_msg(
+            f"WARNING: Temporarily ignoring timeout error, see issue #333",
+            logger=LOGGER.warning,
+        )
+        # -- end of hack
+        # TODO (ayushkovskiy) Once issue #333 is resolved, raise TimeoutError again.
+        #   Also, don't forget to unignore the doctest for this function.
+        # raise
+
     finally:
         # Unregister the signal so it won't be triggered
         # if the timeout is not reached.
