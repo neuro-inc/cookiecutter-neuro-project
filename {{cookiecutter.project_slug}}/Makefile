@@ -89,6 +89,8 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
 
+_EXTRA_VOLUME_OPTION?=
+
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
@@ -279,6 +281,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
@@ -318,6 +321,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -366,6 +370,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			RUN=${SWEEP_REAL}-$${i} \
 			RESULTS_DIR_STORAGE=$(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL} \
 			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
+			_EXTRA_VOLUME_OPTION="--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw" \
 			TRAIN_STREAM_LOGS=no ; \
 	done
 	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search jobs of sweep ${SWEEP_REAL}.\nUse 'neuro ps' and 'neuro status <job>' to check."
@@ -410,6 +415,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		${_EXTRA_VOLUME_OPTION} \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
