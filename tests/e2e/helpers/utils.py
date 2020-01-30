@@ -130,7 +130,7 @@ def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
     """
     prev: t.Optional[str] = None
     for el in collection:
-        assert el is not None, "expect all elements to be 'str', not None"
+        assert isinstance(el, str), f"expected 'str', got {type(el)}"
         if el != prev:
             yield el
         prev = el

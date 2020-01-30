@@ -89,7 +89,8 @@ def run(
                 if attempt_substrings
                 else " (will re-run on any error)"
             )
-            log_msg(f"Attempt {current_attempt}/{attempts}{details}")
+            if attempts > 1:
+                log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,
                 expect_patterns=expect_patterns,
@@ -161,7 +162,9 @@ def _run(
 
     errors = detect_errors(out, all_error_patterns, verbose=verbose)
     if errors:
-        raise RuntimeError(f"Detected errors in output: {errors}")
+        # DIRTY HACK: since `run()` that re-runs in failure depends on the output,
+        # error's message should include the output (this is due to bad design)
+        raise RuntimeError(f"Detected errors in output: {errors}. Output: '{out}'")
     return out
 
 
@@ -240,8 +243,8 @@ def _run_once(
     if CI:
         verbose = True
 
-    if verbose and not _is_command_secret(cmd):
-        log_msg(f"<<< {cmd}")
+    if verbose:
+        log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
     child = pexpect.spawn(
         cmd,
@@ -263,7 +266,7 @@ def _run_once(
             try:
                 child.expect(expected)
                 log_msg(
-                    "OK"
+                    f"Found EOF for command {_hide_secret_cmd(cmd)}"
                     if expected is pexpect.EOF
                     else f"Found expected pattern: {repr(expected)}"
                 )
@@ -272,7 +275,7 @@ def _run_once(
                 if isinstance(e, pexpect.EOF):
                     err = f"NOT Found expected pattern: {repr(expected)}"
                 elif isinstance(e, pexpect.TIMEOUT):
-                    err = f"Timeout exceeded for command: {cmd}"
+                    err = f"Timeout exceeded for command: {_hide_secret_cmd(cmd)}"
                 else:
                     err = f"Pexpect error: {e}"
                 log_msg(err, logger=LOGGER.error)
