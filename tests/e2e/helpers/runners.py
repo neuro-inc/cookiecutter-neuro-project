@@ -147,14 +147,14 @@ def _run(
     if _expects_default_errors(expect_patterns):
         check_default_errors = False
 
-    with timeout(timeout_s):
-        out = _run_once(
-            cmd,
-            expect_patterns=expect_patterns,
-            verbose=verbose,
-            detect_new_jobs=detect_new_jobs,
-            assert_exit_code=assert_exit_code,
-        )
+    out = _run_once(
+        cmd,
+        expect_patterns=expect_patterns,
+        verbose=verbose,
+        detect_new_jobs=detect_new_jobs,
+        assert_exit_code=assert_exit_code,
+        timeout_s=timeout_s,
+    )
     all_error_patterns = list(error_patterns)
     if check_default_errors:
         all_error_patterns += list(DEFAULT_ERROR_PATTERNS)
@@ -190,6 +190,7 @@ def _run_once(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -237,9 +238,13 @@ def _run_once(
     ''
     """
     log_msg(f"<<< {_hide_secret_cmd(cmd)}")
+
+    # TODO (ayushkovskiy) Disable timeout, see issue #333
+    timeout_s = DEFAULT_TIMEOUT_LONG
+
     child = pexpect.spawn(
         cmd,
-        timeout=DEFAULT_TIMEOUT_LONG,
+        timeout=timeout_s,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,

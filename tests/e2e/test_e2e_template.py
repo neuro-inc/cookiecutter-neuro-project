@@ -94,7 +94,7 @@ from tests.e2e.helpers.runners import (
     run,
     wait_job_change_status_to,
 )
-from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
+from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -761,15 +761,14 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
         out = run(cmd, verbose=True, detect_new_jobs=False)
     assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
 
-    with timeout(2 * 60):
-        repeat_until_success(
-            f"curl --fail {url}{path}",
-            job_id,
-            expect_patterns=[r"<[^>]*html.*>"],
-            error_patterns=["curl: .+"],
-            verbose=False,
-            assert_exit_code=False,
-        )
+    repeat_until_success(
+        f"curl --fail {url}{path}",
+        job_id,
+        expect_patterns=[r"<[^>]*html.*>"],
+        error_patterns=["curl: .+"],
+        verbose=False,
+        assert_exit_code=False,
+    )
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
