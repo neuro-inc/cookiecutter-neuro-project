@@ -266,7 +266,7 @@ def _run_once(
             try:
                 child.expect(expected)
                 log_msg(
-                    f"Found EOF for command {_hide_secret_cmd(cmd)}"
+                    f"Found EOF for command '{_hide_secret_cmd(cmd)}'"
                     if expected is pexpect.EOF
                     else f"Found expected pattern: {repr(expected)}"
                 )
@@ -288,7 +288,7 @@ def _run_once(
                 # flush process buffer
                 output += child.read()
                 # wait for child to exit
-                log_msg(f"Waiting for {cmd}", logger=LOGGER.info)
+                log_msg(f"Waiting for '{_hide_secret_cmd(cmd)}'", logger=LOGGER.info)
                 child.wait()
             child.close(force=True)
             if child.status:
@@ -296,7 +296,8 @@ def _run_once(
                 need_dump = True
                 if child.signalstatus is not None:
                     log_msg(
-                        f"{cmd} was killed via signal {child.signalstatus}",
+                        f"Command '{_hide_secret_cmd(cmd)}' was killed "
+                        f"via signal {child.signalstatus}",
                         logger=LOGGER.warning,
                     )
                 raise ExitCodeException(child.exitstatus)
