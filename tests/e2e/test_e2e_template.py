@@ -9,6 +9,7 @@ from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
+    JOB_STATUS_SUCCEEDED,
     MK_BASE_ENV_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
@@ -72,6 +73,7 @@ from tests.e2e.conftest import (
     STEP_LOCAL,
     STEP_POST_SETUP,
     STEP_POST_UPLOAD,
+    STEP_PRE_RUN,
     STEP_PRE_SETUP,
     STEP_RUN,
     STEP_SETUP,
@@ -87,11 +89,12 @@ from tests.e2e.helpers.runners import (
     neuro_rm_dir,
     parse_job_id,
     parse_job_url,
+    parse_jobs_ids,
     repeat_until_success,
     run,
     wait_job_change_status_to,
 )
-from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time, timeout
+from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -191,7 +194,7 @@ def test_make_wandb_check_auth_failure() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_wandb_check_auth_success(generate_wandb_key: None) -> None:
+def test_make_wandb_check_auth_success(decrypt_wandb_key: None) -> None:
     key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
     assert key.exists(), f"{key.absolute()} must exist"
 
@@ -280,7 +283,7 @@ def test_make_kill_setup() -> None:
         run(cmd, detect_new_jobs=False)
 
 
-@pytest.mark.run(order=STEP_POST_UPLOAD)
+@pytest.mark.run(order=STEP_PRE_RUN)
 def test_import_code_in_notebooks(
     env_var_preset_cpu_small: None, env_var_no_http_auth: None
 ) -> None:
@@ -370,7 +373,7 @@ def test_make_upload_data() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_config(
-    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+    decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
@@ -663,6 +666,52 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
+def test_make_hypertrain(
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None, neuro_project_id: str
+) -> None:
+    run(
+        "make wandb-check-auth",
+        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
+    )
+
+    # NOTE: only 1 job in order to reduce flakiness
+    n = 1
+    with finalize("make kill-hypertrain-all"):
+        out = run(
+            f"make hypertrain N_HYPERPARAM_JOBS={n}",
+            expect_patterns=[fr"Started {n} hyper-parameter search jobs"],
+            error_patterns=["recipe for target 'hypertrain' failed"],
+            assert_exit_code=True,
+        )
+        jobs = parse_jobs_ids(out, expect_num=n)
+
+        with finalize(*(f"neuro kill {job}" for job in jobs)):
+            for job in jobs:
+                run(
+                    f"neuro logs {job}",
+                    expect_patterns=[
+                        r"Successfully logged in to Weights & Biases!",
+                        r"wandb: Starting wandb agent",
+                        r"Running runs:",
+                        r"Agent received command: run",
+                        r"Agent starting run with config:",
+                        r"Your training script here",
+                    ],
+                    error_patterns=[r"ERROR", r"Error while calling W&B API"],
+                    assert_exit_code=False,
+                )
+                wait_job_change_status_to(job, JOB_STATUS_SUCCEEDED)
+
+            # just check exit-code:
+            run("make kill-hypertrain", detect_new_jobs=False)
+            run("make kill-train-all", detect_new_jobs=False)
+
+    # Check results of hyper-parameter search on storage
+    results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert any(name.startswith("sweep-") for name in results), f"actual: {results}"
+
+
+@pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter_notebook(
     env_neuro_run_timeout: int, env_var_no_http_auth: None
 ) -> None:
@@ -712,20 +761,19 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
         out = run(cmd, verbose=True, detect_new_jobs=False)
     assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
 
-    with timeout(2 * 60):
-        repeat_until_success(
-            f"curl --fail {url}{path}",
-            job_id,
-            expect_patterns=[r"<[^>]*html.*>"],
-            error_patterns=["curl: .+"],
-            verbose=False,
-            assert_exit_code=False,
-        )
+    repeat_until_success(
+        f"curl --fail {url}{path}",
+        job_id,
+        expect_patterns=[r"<[^>]*html.*>"],
+        error_patterns=["curl: .+"],
+        verbose=False,
+        assert_exit_code=False,
+    )
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
         run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
-    wait_job_change_status_to(job_id, "succeeded")
+    wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -869,7 +917,7 @@ def test_make_clean_code() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_config(
-    decrypt_gcp_key: None, decrypt_aws_key: None, generate_wandb_key: None
+    decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
@@ -921,7 +969,7 @@ def test_make_clean_notebooks() -> None:
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_results() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):

@@ -76,6 +76,7 @@ def timeout(time_s: int) -> t.Iterator[None]:
     except TimeoutError:
         log_msg(f"TIMEOUT ERROR: {time_s} sec", logger=LOGGER.error)
         raise
+
     finally:
         # Unregister the signal so it won't be triggered
         # if the timeout is not reached.
@@ -103,22 +104,18 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
     finally:
         elapsed = time.time() - start_time
         msg = f"Time summary [{cmd}]: {elapsed:.2f} sec (timeout: {timeout:.2f} sec)"
-        if 0 < timeout < elapsed:
-            log_msg(msg, logger=LOGGER.error)
+        exceeded = 0 < timeout < elapsed
+        logger = LOGGER.info if not exceeded else LOGGER.error
+        log_msg("-" * len(msg), logger=logger)
 
-            # HACK (see issue #333)
-            det = f"{elapsed:.2f} sec / {timeout:.2f} sec"
-            log_msg(
-                f"WARNING: Temporarily ignoring timeout error ({det}), see issue #333",
-                logger=LOGGER.warning,
-            )
-            # -- end of hack
+        if exceeded:
             # TODO (ayushkovskiy) Once issue #333 is resolved, raise TimeoutError again.
             #   Also, don't forget to unignore the doctest for this function.
             # raise TimeoutError(msg)
-
-        log_msg(msg)
-        log_msg("-" * len(msg))
+            log_msg(
+                f"WARNING: Temporarily ignoring timeout error, see issue #333",
+                logger=LOGGER.warning,
+            )
 
 
 def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
@@ -130,7 +127,7 @@ def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
     """
     prev: t.Optional[str] = None
     for el in collection:
-        assert el is not None, "expect all elements to be 'str', not None"
+        assert isinstance(el, str), f"expected 'str', got {type(el)}"
         if el != prev:
             yield el
         prev = el

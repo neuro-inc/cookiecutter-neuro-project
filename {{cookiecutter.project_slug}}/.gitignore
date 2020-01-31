@@ -1,7 +1,12 @@
 # Neuro Template:
 /data/**/*
-/config/**/*
+/config/*.txt
+/config/*.conf
+/config/*.json
 /.setup_done
+/.wandb_sweeps
+
+!/**/.gitkeep
 
 # IntelliJ IDEA project
 /.idea/

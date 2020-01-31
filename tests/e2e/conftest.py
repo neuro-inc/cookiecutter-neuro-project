@@ -52,6 +52,7 @@ STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
 STEP_POST_UPLOAD = 11
 STEP_DOWNLOAD = 20
+STEP_PRE_RUN = 27
 STEP_RUN = 30
 STEP_KILL = 90
 STEP_CLEANUP = 100
@@ -311,7 +312,7 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
     try:
         if not key.exists():
             key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
-            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / "config" / key_enc_name
+            key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / MK_CONFIG_DIR / key_enc_name
             _decrypt_file(key_enc, key)
         yield
     finally:
@@ -356,5 +357,5 @@ def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
 
 
 @pytest.fixture()
-def generate_wandb_key() -> t.Iterator[None]:
+def decrypt_wandb_key() -> t.Iterator[None]:
     yield from _decrypt_key(WANDB_KEY_FILE)

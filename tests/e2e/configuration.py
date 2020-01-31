@@ -92,15 +92,16 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["figlet"]
 PACKAGES_PIP_CUSTOM = ["neuromation"]
+WANDB_SWEEP_FILE = "wandb-sweep.yaml"
 GCP_KEY_FILE = "gcp-key.json"
 AWS_KEY_FILE = "aws-credentials.txt"
-WANDB_KEY_FILE = "wandb-fake-key.txt"
+WANDB_KEY_FILE = "wandb-token.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 # TODO(artem): hidden files is a hack, see issue #93
 PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
 
-PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py", WANDB_SWEEP_FILE}
 PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, AWS_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}
 PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
@@ -152,7 +153,7 @@ JOB_ID_DECLARATION_REGEX = re.compile(
 
 # == pexpect config ==
 
-PEXPECT_BUFFER_SIZE_BYTES = 100 * 1024
+PEXPECT_BUFFER_SIZE_BYTES = 10 * 1024 * 1024
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console

@@ -248,3 +248,37 @@ Please, don't forget to kill the jobs you started:
 - `make kill-jupyter` to kill the job started via `make jupyter`,
 - ...
 - `make kill-all` to kill all jobs started in current project.
+
+### Multi-threaded hyper-parameter tuning
+
+Neuro Platform supports hyper-parameter tuning via [Weights & Biases](https://www.wandb.com/articles/running-hyperparameter-sweeps-to-pick-the-best-model-using-w-b).
+
+To run hyper-parameter tuning for your model you need to define the list of hyper-parameters and send the metrics to WandB after each run. Your code may look as follows:
+
+```python
+import wandb
+
+def train() -> None:
+    hyperparameter_defaults = dict(
+        lr=0.1,
+        optimizer='sgd',
+        scheduler='const'
+    )
+    wandb.init(config=hyperparameter_defaults)
+    # your model training code here
+    metrics = {'accuracy': accuracy, 'loss': loss}
+    wandb.log(metrics)
+
+if __name__ == "__main__":
+    train()
+```   
+
+This list of hyper-parameters corresponds to the default configuration we provide in `{{ cookiecutter.code_directory }}/wandb-sweep.yaml` file. See [W&B documentation page](https://docs.wandb.com/library/sweeps) for more details. The name of the sweep file can be modified in `Makefile` or as environment variable `WANDB_SWEEP_FILE`.
+
+You also need to put your WandB token in `config/wandb-token.txt` file.
+
+After that you can run `make hypertrain`, which submits `N_HYPERPARAMETER_JOBS` (`3` by default) jobs on Neuro Platform (number of jobs can be modified in `Makefile` or as corresponding environment variable). To monitor the hyper-parameter tuning process follow the link which `wandb` provides at the beginning of the process.
+
+To terminate all jobs of the latest hyper-parameter tuning sweep, run `make kill-hypertrain` or specify the sweep manually: `make kill-hypertrain SWEEP=sweep-id`.
+
+All sweeps you ran are stored in the local file `.wandb_sweeps`.

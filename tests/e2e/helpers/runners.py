@@ -7,7 +7,6 @@ from pathlib import Path
 import pexpect
 
 from tests.e2e.configuration import (
-    CI,
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
@@ -89,7 +88,8 @@ def run(
                 if attempt_substrings
                 else " (will re-run on any error)"
             )
-            log_msg(f"Attempt {current_attempt}/{attempts}{details}")
+            if attempts > 1:
+                log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,
                 expect_patterns=expect_patterns,
@@ -147,14 +147,14 @@ def _run(
     if _expects_default_errors(expect_patterns):
         check_default_errors = False
 
-    with timeout(timeout_s):
-        out = _run_once(
-            cmd,
-            expect_patterns=expect_patterns,
-            verbose=verbose,
-            detect_new_jobs=detect_new_jobs,
-            assert_exit_code=assert_exit_code,
-        )
+    out = _run_once(
+        cmd,
+        expect_patterns=expect_patterns,
+        verbose=verbose,
+        detect_new_jobs=detect_new_jobs,
+        assert_exit_code=assert_exit_code,
+        timeout_s=timeout_s,
+    )
     all_error_patterns = list(error_patterns)
     if check_default_errors:
         all_error_patterns += list(DEFAULT_ERROR_PATTERNS)
@@ -190,6 +190,7 @@ def _run_once(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
+    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -236,16 +237,14 @@ def _run_once(
     >>> _run_once('false', verbose=False, assert_exit_code=False)
     ''
     """
-    # HACK: always dump output on CI
-    if CI:
-        verbose = True
+    log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
-    if verbose and not _is_command_secret(cmd):
-        log_msg(f"<<< {cmd}")
+    # TODO (ayushkovskiy) Disable timeout, see issue #333
+    timeout_s = DEFAULT_TIMEOUT_LONG
 
     child = pexpect.spawn(
         cmd,
-        timeout=DEFAULT_TIMEOUT_LONG,
+        timeout=timeout_s,
         logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
@@ -262,17 +261,18 @@ def _run_once(
         for expected in expect_patterns:
             try:
                 child.expect(expected)
-                log_msg(
-                    "OK"
-                    if expected is pexpect.EOF
-                    else f"Found expected pattern: {repr(expected)}"
-                )
+                if verbose:
+                    log_msg(
+                        f"EOF found for command '{_hide_secret_cmd(cmd)}'"
+                        if expected is pexpect.EOF
+                        else f"Found expected pattern: {repr(expected)}"
+                    )
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
                     err = f"NOT Found expected pattern: {repr(expected)}"
                 elif isinstance(e, pexpect.TIMEOUT):
-                    err = f"Timeout exceeded for command: {cmd}"
+                    err = f"Timeout exceeded for command: '{_hide_secret_cmd(cmd)}'"
                 else:
                     err = f"Pexpect error: {e}"
                 log_msg(err, logger=LOGGER.error)
@@ -285,7 +285,7 @@ def _run_once(
                 # flush process buffer
                 output += child.read()
                 # wait for child to exit
-                log_msg(f"Waiting for {cmd}", logger=LOGGER.info)
+                log_msg(f"Waiting for '{_hide_secret_cmd(cmd)}'", logger=LOGGER.info)
                 child.wait()
             child.close(force=True)
             if child.status:
@@ -293,7 +293,8 @@ def _run_once(
                 need_dump = True
                 if child.signalstatus is not None:
                     log_msg(
-                        f"{cmd} was killed via signal {child.signalstatus}",
+                        f"Command '{_hide_secret_cmd(cmd)}' was killed "
+                        f"via signal {child.signalstatus}",
                         logger=LOGGER.warning,
                     )
                 raise ExitCodeException(child.exitstatus)
@@ -420,6 +421,12 @@ def parse_job_id(out: str) -> str:
     return search.group(1)
 
 
+def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
+    jobs = re.findall(JOB_ID_DECLARATION_REGEX, out)
+    assert len(jobs) == expect_num, f"not found some job-IDs in output: `{out}`"
+    return jobs
+
+
 def parse_job_url(out: str) -> str:
     search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
     assert search, f"not found URL in output: `{out}`"
@@ -450,13 +457,14 @@ def wait_job_change_status_to(
     target_status: str,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
+    verbose: bool = False,
 ) -> None:
-    log_msg(f"Waiting for job {job_id} to get status {target_status}...")
+    log_msg(f"Waiting for job {job_id} to get status: {target_status}...")
     with timeout(timeout_s):
         while True:
-            status = get_job_status(job_id)
+            status = get_job_status(job_id, verbose=verbose)
             if status == target_status:
-                log_msg("Done.")
+                log_msg(f"Job {job_id} has reached status {target_status}")
                 return
             if status in JOB_STATUSES_TERMINATED:
                 raise RuntimeError(
@@ -465,11 +473,11 @@ def wait_job_change_status_to(
             time.sleep(delay_s)
 
 
-def get_job_status(job_id: str) -> str:
+def get_job_status(job_id: str, verbose: bool = False) -> str:
     out = run(
         f"neuro status {job_id}",
         timeout_s=TIMEOUT_NEURO_STATUS,
-        verbose=False,
+        verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     search = re.search(r"Status: (\w+)", out)
