@@ -87,7 +87,6 @@ WANDB_SWEEPS_FILE=.wandb_sweeps
 
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
-NEURO?=neuro
 
 _EXTRA_VOLUME_OPTION?=
 
@@ -134,13 +133,13 @@ help:
 
 .PHONY: setup
 setup: ### Setup remote environment
-	$(NEURO) mkdir --parents $(PROJECT_PATH_STORAGE) \
+	neuro mkdir --parents $(PROJECT_PATH_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) \
 		$(DATA_DIR_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
 		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
 		$(RESULTS_DIR_STORAGE)
-	$(NEURO) run \
+	neuro run \
 		--name $(SETUP_JOB) \
 		--description "$(PROJECT_ID):setup" \
 		--preset cpu-small \
@@ -149,16 +148,16 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
-	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
-	$(NEURO) kill $(SETUP_JOB) || :
+	for file in $(PROJECT_FILES); do neuro cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
+	neuro exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	neuro --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
+	neuro kill $(SETUP_JOB) || :
 	@touch .setup_done
 
 .PHONY: kill-setup
 kill-setup:  ### Terminate the setup job (if it was not killed by `make setup` itself)
-	$(NEURO) kill $(SETUP_JOB) || :
+	neuro kill $(SETUP_JOB) || :
 
 .PHONY: _check_setup
 _check_setup:
@@ -168,63 +167,63 @@ _check_setup:
 
 .PHONY: upload-code
 upload-code: _check_setup  ### Upload code directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	neuro cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: download-code
 download-code: _check_setup  ### Download code directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
+	neuro cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
 
 .PHONY: clean-code
 clean-code: _check_setup  ### Delete code directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/*
+	neuro rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/*
 
 .PHONY: upload-data
 upload-data: _check_setup  ### Upload data directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
+	neuro cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
 
 .PHONY: download-data
 download-data: _check_setup  ### Download data directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR_STORAGE) $(DATA_DIR)
+	neuro cp --recursive --update --no-target-directory $(DATA_DIR_STORAGE) $(DATA_DIR)
 
 .PHONY: clean-data
 clean-data: _check_setup  ### Delete data directory from the platform storage
-	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)/*
+	neuro rm --recursive $(DATA_DIR_STORAGE)/*
 
 .PHONY: upload-config
 upload-config: _check_setup  ### Upload config directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	neuro cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
 
 .PHONY: download-config
 download-config: _check_setup  ### Download config directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
+	neuro cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
 
 .PHONY: clean-config
 clean-config: _check_setup  ### Delete config directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/*
+	neuro rm --recursive $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/*
 
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
+	neuro cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
 download-notebooks: _check_setup  ### Download notebooks directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
+	neuro cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
-	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
+	neuro rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/*
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(RESULTS_DIR_STORAGE)
+	neuro cp --recursive --update --no-target-directory $(RESULTS_DIR) $(RESULTS_DIR_STORAGE)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR_STORAGE) $(RESULTS_DIR)
+	neuro cp --recursive --update --no-target-directory $(RESULTS_DIR_STORAGE) $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
-	$(NEURO) rm --recursive $(RESULTS_DIR_STORAGE)/*
+	neuro rm --recursive $(RESULTS_DIR_STORAGE)/*
 
 .PHONY: upload-all
 upload-all: upload-code upload-data upload-config upload-notebooks upload-results  ### Upload code, data, config, notebooks, and results directories to the platform storage
@@ -272,7 +271,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 
 .PHONY: develop
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
-	$(NEURO) run \
+	neuro run \
 		--name $(DEVELOP_JOB) \
 		--description "$(PROJECT_ID):develop" \
 		--preset $(PRESET) \
@@ -291,27 +290,27 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 
 .PHONY: connect-develop
 connect-develop:  ### Connect to the remote shell running on the development job
-	$(NEURO) exec --no-key-check $(DEVELOP_JOB) bash
+	neuro exec --no-key-check $(DEVELOP_JOB) bash
 
 .PHONY: logs-develop
 logs-develop:  ### Connect to the remote shell running on the development job
-	$(NEURO) logs $(DEVELOP_JOB)
+	neuro logs $(DEVELOP_JOB)
 
 .PHONY: port-forward-develop
 port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
-	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
+	neuro port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
 
 .PHONY: kill-develop
 kill-develop:  ### Terminate the development job
-	$(NEURO) kill $(DEVELOP_JOB) || :
+	neuro kill $(DEVELOP_JOB) || :
 
 RUN?=base
 _SWEEP_DESCRIPTION_POSTFIX?=
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
-	$(NEURO) run \
+	neuro run \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--description "$(PROJECT_ID):train$(_SWEEP_DESCRIPTION_POSTFIX)" \
 		--preset $(PRESET) \
@@ -330,12 +329,12 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
-	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
+	neuro exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
 endif
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
-	$(NEURO) kill $(TRAIN_JOB)-$(RUN) || :
+	neuro kill $(TRAIN_JOB)-$(RUN) || :
 
 # Number of hyper-parameter search jobs
 N_HYPERPARAM_JOBS?=3
@@ -358,10 +357,10 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
 	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
-	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
+	neuro mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
 	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
-	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
-	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
+	neuro mkdir -p $(PROJECT_PATH_STORAGE)/wandb
+	neuro cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
 	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
 		echo -e "\nStarting job $${i}..." ; \
@@ -379,7 +378,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
 	@jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 	echo "Killing jobs of the sweep ${SWEEP_REAL}..." && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	neuro kill $${jobs:-placeholder} || :
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
@@ -387,22 +386,22 @@ kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of 
 	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
 		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
 		echo "Killing jobs of the sweep $${sweep}..." && \
-		$(NEURO) kill $${jobs:-placeholder} ; \
+		neuro kill $${jobs:-placeholder} ; \
 	done ; \
 	echo "Please remove unused sweeps from the file ${WANDB_SWEEPS_FILE}" || :
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
 	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train") && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	neuro kill $${jobs:-placeholder} || :
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
-	$(NEURO) exec --no-key-check $(TRAIN_JOB)-$(RUN) bash
+	neuro exec --no-key-check $(TRAIN_JOB)-$(RUN) bash
 
 .PHONY: jupyter
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
-	$(NEURO) run \
+	neuro run \
 		--name $(JUPYTER_JOB) \
 		--description "$(PROJECT_ID):jupyter" \
 		--preset $(PRESET) \
@@ -424,7 +423,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
-	$(NEURO) kill $(JUPYTER_JOB) || :
+	neuro kill $(JUPYTER_JOB) || :
 
 .PHONY: jupyterlab
 jupyterlab:  ### Run a job with JupyterLab and open UI in the default browser
@@ -436,7 +435,7 @@ kill-jupyterlab:  ### Terminate the job with JupyterLab
 
 .PHONY: tensorboard
 tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
-	$(NEURO) run \
+	neuro run \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
 		--description "$(PROJECT_ID):tensorboard" \
@@ -450,11 +449,11 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
-	$(NEURO) kill $(TENSORBOARD_JOB) || :
+	neuro kill $(TENSORBOARD_JOB) || :
 
 .PHONY: filebrowser
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
-	$(NEURO) run \
+	neuro run \
 		--name $(FILEBROWSER_JOB) \
 		--description "$(PROJECT_ID):filebrowser" \
 		--preset cpu-small \
@@ -468,7 +467,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser
-	$(NEURO) kill $(FILEBROWSER_JOB) || :
+	neuro kill $(FILEBROWSER_JOB) || :
 
 .PHONY: kill-all
 kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
@@ -495,4 +494,4 @@ lint:  ### Run static code analysis locally
 
 .PHONY: ps
 ps:  ### List all running and pending jobs
-	$(NEURO) ps
+	neuro ps
