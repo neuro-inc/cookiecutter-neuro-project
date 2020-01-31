@@ -10,8 +10,6 @@ CODE_DIR?={{cookiecutter.code_directory}}
 NOTEBOOKS_DIR?=notebooks
 RESULTS_DIR?=results
 
-PROJECT_FILES=requirements.txt apt.txt setup.cfg
-
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
 PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
@@ -40,9 +38,6 @@ JUPYTER_MODE?=notebook
 # Location of your dataset on the platform storage. Example:
 # DATA_DIR_STORAGE?=storage:datasets/cifar10
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
-
-# Location of your results directory on the platform storage.
-RESULTS_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
 PRESET?=gpu-small
@@ -139,7 +134,10 @@ setup: ### Setup remote environment
 		$(DATA_DIR_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
 		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
-		$(RESULTS_DIR_STORAGE)
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp requirements.txt $(PROJECT_PATH_STORAGE)
+	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
+	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
 		--description "$(PROJECT_ID):setup" \
@@ -149,7 +147,6 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
@@ -216,15 +213,15 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(RESULTS_DIR_STORAGE)
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR_STORAGE) $(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
-	$(NEURO) rm --recursive $(RESULTS_DIR_STORAGE)/*
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
 
 .PHONY: upload-all
 upload-all: upload-code upload-data upload-config upload-notebooks upload-results  ### Upload code, data, config, notebooks, and results directories to the platform storage
@@ -280,7 +277,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
@@ -320,7 +317,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
@@ -358,7 +355,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
     }
 	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
-	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
+	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-${SWEEP_REAL}
 	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
@@ -368,7 +365,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 		make train \
 			TRAIN_CMD="wandb agent ${SWEEP_REAL}" \
 			RUN=${SWEEP_REAL}-$${i} \
-			RESULTS_DIR_STORAGE=$(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL} \
+			RESULTS_DIR_STORAGE=$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-${SWEEP_REAL} \
 			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
 			_EXTRA_VOLUME_OPTION="--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw" \
 			TRAIN_STREAM_LOGS=no ; \
@@ -414,7 +411,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
@@ -444,7 +441,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		$(HTTP_AUTH) \
 		--browse \
 		--env JOB_TIMEOUT=1d \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
