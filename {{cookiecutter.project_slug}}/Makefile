@@ -385,7 +385,7 @@ kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the late
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
 	@[ ! -f ${WANDB_SWEEPS_FILE} ] || \
 	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
-		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
 		echo "Killing jobs of the sweep $${sweep}..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
 	done ; \
