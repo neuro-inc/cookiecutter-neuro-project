@@ -83,11 +83,6 @@ WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
-##### COMMANDS #####
-
-APT?=apt-get -qq
-PIP?=pip install --progress-bar=off -U --no-cache-dir
-
 _EXTRA_VOLUME_OPTION?=
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
@@ -149,8 +144,8 @@ setup: ### Setup remote environment
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
 	for file in $(PROJECT_FILES); do neuro cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
-	neuro exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	neuro exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -qq update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % apt-get -qq install --no-install-recommends % && apt-get -qq clean && apt-get -qq autoremove && rm -rf /var/lib/apt/lists/*'"
+	neuro exec --no-key-check $(SETUP_JOB) "bash -c 'pip install --progress-bar=off -U --no-cache-dir -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	neuro --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	neuro kill $(SETUP_JOB) || :
 	@touch .setup_done
@@ -476,7 +471,7 @@ kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tens
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	$(PIP) -r requirements.txt
+	pip install -r requirements.txt
 
 .PHONY: format
 format:  ### Automatically format the code
