@@ -100,7 +100,7 @@ from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_project_structure() -> None:
     assert ls_dirs(".") == MK_PROJECT_DIRS
-    assert ls_files(".") == {"Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
+    assert ls_files(".") == {"HELP.md", "Makefile", "README.md", ".gitignore", *MK_PROJECT_FILES}
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
