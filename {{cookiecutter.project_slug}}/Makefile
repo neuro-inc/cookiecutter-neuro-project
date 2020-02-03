@@ -496,3 +496,19 @@ lint:  ### Run static code analysis locally
 .PHONY: ps
 ps:  ### List all running and pending jobs
 	$(NEURO) ps
+
+.PHONY: _upgrade
+_upgrade:
+	@if ! (git status | grep "nothing to commit"); then echo "Please commit or stash changes before upgrade."; exit 1; fi
+	@echo "Applying the latest Neuro Project Template to this project..."
+	cookiecutter \
+		--output-dir .. \
+		--no-input \
+		--overwrite-if-exists \
+		--checkout release \
+		gh:neuromation/cookiecutter-neuro-project \
+		project_slug=$(PROJECT_POSTFIX) \
+		code_directory=$(CODE_DIR)
+	git checkout -- $(DATA_DIR) $(CODE_DIR) $(CONFIG_DIR) $(NOTEBOOKS_DIR) $(RESULTS_DIR)
+	git checkout -- .gitignore requirements.txt apt.txt setup.cfg README.md
+	@echo "Some files are successfully changed. Please review the changes using git diff."
