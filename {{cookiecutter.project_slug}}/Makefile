@@ -14,7 +14,8 @@ PROJECT_FILES=requirements.txt apt.txt setup.cfg
 
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
-PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
+# Needs two slashes to work on Windows
+PROJECT_PATH_ENV?=//{{cookiecutter.project_slug}}
 
 ##### JOB NAMES #####
 
@@ -282,7 +283,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
-		--env PYTHONPATH=/$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -322,7 +323,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
-		--env PYTHONPATH=/$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -417,7 +418,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		${_EXTRA_VOLUME_OPTION} \
 		--env JOB_TIMEOUT=1d \
-		--env PYTHONPATH=/$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
 		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
