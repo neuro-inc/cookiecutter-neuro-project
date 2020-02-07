@@ -124,6 +124,12 @@ def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
         else:
             env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
+
+        if env_name_token not in os.environ:
+            # on Azure
+            env_name_token = "COOKIECUTTER_TEST_E2E_TOKEN"
+            env_name_url = "COOKIECUTTER_TEST_E2E_URL"
+
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -325,35 +331,14 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
                 )
 
 
-@pytest.fixture(autouse=True)
-def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "GCP_SECRET_FILE", GCP_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 @pytest.fixture()
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
 
 
-@pytest.fixture(autouse=True)
-def env_var_aws_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "AWS_SECRET_FILE", AWS_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 @pytest.fixture()
 def decrypt_aws_key() -> t.Iterator[None]:
     yield from _decrypt_key(AWS_KEY_FILE)
-
-
-@pytest.fixture(autouse=True)
-def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "WANDB_SECRET_FILE", WANDB_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
 
 
 @pytest.fixture()
