@@ -684,11 +684,10 @@ def test_make_hypertrain(
     run("wandb status")
 
     n = 2
-    n_run_ptrn = [_get_pattern_status_running()] * n
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
-            expect_patterns=n_run_ptrn
+            expect_patterns=[_get_pattern_status_running()] * n
             + [
                 r"Successfully logged in to Weights \& Biases!",
                 "Created sweep with ID:",
