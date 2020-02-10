@@ -332,31 +332,28 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 # Number of hyper-parameter search jobs
 N_HYPERPARAM_JOBS?=3
 
-# Sweep ID (if empty, will be created during 'make hypertrain')
-SWEEP?=
-
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
 	@echo "Initializing local wandb using config file './$(WANDB_SECRET_PATH_LOCAL)'"
 	@wandb login $$(cat "./$(WANDB_SECRET_PATH_LOCAL)")
-	@[ "$(SWEEP)" ] || { \
-		echo "Creating W&B Sweep..." && \
-		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
-		[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
-			&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
-			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false ; \
-		}; \
-		wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE) ; \
-		echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'" ; \
-    }
+	echo "Creating W&B Sweep..."
+	echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'"
+	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
+		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
+		|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
+	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
+	@echo "Updating code and config directories on Neuro Storage..."
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	@echo "Uploading wandb config file './wandb/settings' to Neuro Storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
-	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
-	sweep=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 $(WANDB_SWEEPS_FILE)) && \
+	sweep=$$(tail -1 $(WANDB_SWEEPS_FILE)) && \
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
 	echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep '$$sweep'..." && \
 	for index in $$(seq 1 $(N_HYPERPARAM_JOBS)) ; do \
-		echo -e "\nStarting job $${i}..." ; \
+		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
 			--description "$(PROJECT_ID):train:$$sweep" \
@@ -373,18 +370,19 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 			$(CUSTOM_ENV_NAME) \
 			bash -c "cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
-	done
-	@echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
+	done; \
+	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	@[ ! -f $(WANDB_SWEEPS_FILE) ] || \
-	for sweep in $$(tac $(WANDB_SWEEPS_FILE) || tail -r $(WANDB_SWEEPS_FILE)); do \
-		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep") && \
-		echo "Killing jobs of the sweep $$sweep..." && \
-		$(NEURO) kill $${jobs:-placeholder} ; \
-	done ; \
-	echo "\nPlease remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." || :
+	@[ ! -f "$(WANDB_SWEEPS_FILE)" ] && echo "File '$(WANDB_SWEEPS_FILE)' does not exist. Abort." || { \
+		for sweep in $$(tac $(WANDB_SWEEPS_FILE)); do \
+			jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep") && \
+			echo "Killing jobs of the sweep '$$sweep'..." && \
+			$(NEURO) kill $${jobs:-placeholder} ||: ; \
+		done; \
+		echo "Please remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." ; \
+	}
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
