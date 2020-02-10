@@ -3,7 +3,7 @@ import typing as t
 from datetime import datetime
 from math import floor
 
-from tests.e2e.configuration import CI, LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE
+from tests.e2e.configuration import LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE
 
 
 TIME_START = datetime.now()
@@ -26,7 +26,6 @@ LOGGER = get_logger()
 
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
+    # TODO: do it in logger only
     logger(msg)
-    if CI:
-        # do not duplicate messages when running locally
-        PEXPECT_DEBUG_OUTPUT_LOGFILE.write(f"{_timestamp()}: " + msg + "\n")
+    PEXPECT_DEBUG_OUTPUT_LOGFILE.write(f"{_timestamp()}: " + msg + "\n")

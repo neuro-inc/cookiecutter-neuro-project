@@ -12,7 +12,8 @@ RESULTS_DIR?=results
 
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
-PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
+# Needs two slashes to work on Windows
+PROJECT_PATH_ENV?=//{{cookiecutter.project_slug}}
 
 ##### JOB NAMES #####
 
@@ -145,8 +146,9 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
+	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | tr -d \"\r\\r\" | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done
@@ -386,7 +388,7 @@ kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of 
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train") && \
+	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train" | tr -d "\r\\r") && \
 	$(NEURO) kill $${jobs:-placeholder} || :
 
 .PHONY: connect-train

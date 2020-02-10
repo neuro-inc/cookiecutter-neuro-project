@@ -1,4 +1,6 @@
+import os
 import re
+import sys
 import time
 import typing as t
 from contextlib import contextmanager
@@ -21,7 +23,7 @@ from tests.e2e.configuration import (
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.utils import merge_similars, timeout
+from tests.e2e.helpers.utils import merge_similars
 
 
 class ExitCodeException(Exception):
@@ -34,6 +36,31 @@ class ExitCodeException(Exception):
     @property
     def exit_code(self) -> int:
         return self._exit_code
+
+
+_pexpect_spawn: t.Callable[..., t.Any]
+
+if sys.platform == "win32":
+    from pexpect.popen_spawn import PopenSpawn
+
+    _pexpect_spawn = PopenSpawn
+else:
+    _pexpect_spawn = pexpect.spawn
+
+
+def _pexpect_isalive(proc: t.Any) -> bool:
+    """ This method is a copy-paste of method `isalive()` somehow missing in Windows
+    implementation of `pexpect`.
+    Copy-paste from:
+    https://github.com/pexpect/pexpect/blob/9e73fa87f60a66f31bfe137a4860722014a4afab/pexpect/fdpexpect.py#L77-L87
+    """  # noqa
+    if proc.child_fd == -1:
+        return False
+    try:
+        os.fstat(proc.child_fd)
+        return True
+    except:  # noqa
+        return False
 
 
 def run(
@@ -204,15 +231,14 @@ def _run_once(
     exits with non-zero exit code. Passing assert_exit_code=False suppresses this
     behavior.
     >>> # Expect the first and the last output:
-    >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False)
+    >>> _run_once("echo 1 2 3", expect_patterns=[r'1 \d+', '3'], verbose=False).strip()
     '1 2 3'
     >>> # Abort once all the patterns have matched:
-    >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'",
-    ...     expect_patterns=['1', '2'], assert_exit_code=False, verbose=False)
+    >>> _run_once("bash -c 'echo 1 2 3 && sleep infinity'", expect_patterns=['1', '2'], assert_exit_code=False, verbose=False).strip()
     '1 2'
     >>> # Empty pattern list: read until the process returns:
-    >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False)
-    '1 2 3\r\n'
+    >>> _run_once('echo 1 2 3', expect_patterns=[], verbose=False).strip()
+    '1 2 3'
     >>> # Wrong order of patterns:
     >>> try:
     ...     _run_once('echo 1 2 3', expect_patterns=['3', '1'], verbose=False)
@@ -236,16 +262,16 @@ def _run_once(
     >>> # Suppress exit code check:
     >>> _run_once('false', verbose=False, assert_exit_code=False)
     ''
-    """
+    """  # noqa
     log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
-    child = pexpect.spawn(
+    child = _pexpect_spawn(
         cmd,
         timeout=timeout_s,
-        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE if verbose else None,
+        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
@@ -261,12 +287,8 @@ def _run_once(
         for expected in expect_patterns:
             try:
                 child.expect(expected)
-                if verbose:
-                    log_msg(
-                        f"EOF found for command '{_hide_secret_cmd(cmd)}'"
-                        if expected is pexpect.EOF
-                        else f"Found expected pattern: {repr(expected)}"
-                    )
+                if verbose and expected is not pexpect.EOF:
+                    log_msg(f"Found expected pattern: {repr(expected)}")
             except pexpect.ExceptionPexpect as e:
                 need_dump = True
                 if isinstance(e, pexpect.EOF):
@@ -278,16 +300,17 @@ def _run_once(
                 log_msg(err, logger=LOGGER.error)
                 raise RuntimeError(err)
             finally:
-                chunk = _get_chunk(child)
-                output += chunk
+                output += child.before
+                if isinstance(child.after, child.allowed_string_types):
+                    output += child.after
         if assert_exit_code:
-            if child.isalive():
+            if _pexpect_isalive(child):
                 # flush process buffer
                 output += child.read()
                 # wait for child to exit
                 log_msg(f"Waiting for '{_hide_secret_cmd(cmd)}'", logger=LOGGER.info)
                 child.wait()
-            child.close(force=True)
+            # child.close(force=True)
             if child.status:
                 assert child.exitstatus != 0, "Here exit status should be non-zero!"
                 need_dump = True
@@ -316,13 +339,6 @@ def _hide_secret_cmd(cmd: str) -> str:
     'neuro login-with-token secret.<hidden>'
     """
     return cmd if not _is_command_secret(cmd) else cmd[:30] + "<hidden>"
-
-
-def _get_chunk(child: pexpect.pty_spawn.spawn) -> str:
-    chunk = child.before
-    if isinstance(child.after, child.allowed_string_types):
-        chunk += child.after
-    return chunk
 
 
 def detect_errors(
@@ -378,20 +394,21 @@ def repeat_until_success(
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:
+    time_start = time.time()
     if not _is_command_secret(cmd):
         log_msg(f"Running command until success: `{cmd}`")
-    with timeout(timeout_total_s):
-        while True:
-            job_status = get_job_status(job_id)
-            if job_status in JOB_STATUSES_TERMINATED:
-                raise RuntimeError(
-                    f"Job {job_id} has terminated with status {job_status}"
-                )
-            try:
-                return run(cmd, **kwargs)
-            except RuntimeError:
-                pass
-            time.sleep(interval_s)
+    while True:
+        job_status = get_job_status(job_id)
+        if job_status in JOB_STATUSES_TERMINATED:
+            raise RuntimeError(f"Job {job_id} has terminated with status {job_status}")
+        try:
+            return run(cmd, **kwargs)
+        except RuntimeError:
+            pass
+        time_current = time.time()
+        if time_current - time_start > timeout_total_s:
+            raise RuntimeError(f"Timeout exceeded: {time_current}")
+        time.sleep(interval_s)
 
 
 # == execution helpers ==
@@ -408,8 +425,8 @@ def finalize(*finally_commands: str):  # type: ignore
         raise
     finally:
         for cmd in finally_commands:
-            log_msg(f"Running finalization command '{_hide_secret_cmd(cmd)}'...")
-            run(cmd, assert_exit_code=False)
+            log_msg(f"Running finalization command '{_hide_secret_cmd(cmd)}'")
+            run(cmd, verbose=False, assert_exit_code=False)
 
 
 # == neuro helpers ==
@@ -455,22 +472,25 @@ def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
 def wait_job_change_status_to(
     job_id: str,
     target_status: str,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
     verbose: bool = False,
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status: '{target_status}'...")
-    with timeout(timeout_s):
-        while True:
-            status = get_job_status(job_id, verbose=verbose)
-            if status == target_status:
-                log_msg(f"Job {job_id} reached status '{target_status}'")
-                return
-            if status in JOB_STATUSES_TERMINATED:
-                raise RuntimeError(
-                    f"Unexpected terminated job status: {job_id}, '{status}'"
-                )
-            time.sleep(delay_s)
+    time_start = time.time()
+    while True:
+        status = get_job_status(job_id, verbose=verbose)
+        if status == target_status:
+            log_msg(f"Job {job_id} reached status '{target_status}'")
+            return
+        if status in JOB_STATUSES_TERMINATED:
+            raise RuntimeError(
+                f"Unexpected terminated job status: {job_id}, '{status}'"
+            )
+        time_current = time.time()
+        if time_current - time_start > timeout_total_s:
+            raise RuntimeError(f"Timeout exceeded: {time_current}")
+        time.sleep(delay_s)
 
 
 def get_job_status(job_id: str, verbose: bool = False) -> str:
