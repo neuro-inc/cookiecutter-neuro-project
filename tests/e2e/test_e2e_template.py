@@ -689,7 +689,7 @@ def test_make_hypertrain(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
             expect_patterns=(
                 [_get_pattern_status_running()] * n
-                + ["Created sweep with ID:", f"Started {n} hyper-parameter search jobs"]
+                + [f"Started {n} hyper-parameter search jobs"]
             ),
         )
         jobs = parse_jobs_ids(out, expect_num=n)
