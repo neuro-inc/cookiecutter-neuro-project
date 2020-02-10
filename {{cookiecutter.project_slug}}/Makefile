@@ -84,8 +84,6 @@ APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
 
-_EXTRA_VOLUME_OPTION?=
-
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
@@ -278,7 +276,6 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
@@ -304,13 +301,12 @@ kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB) || :
 
 RUN?=base
-_SWEEP_DESCRIPTION_POSTFIX?=
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
-		--description "$(PROJECT_ID):train$(_SWEEP_DESCRIPTION_POSTFIX)" \
+		--description "$(PROJECT_ID):train" \
 		--preset $(PRESET) \
 		--detach \
 		$(TRAIN_WAIT_START_OPTION) \
@@ -318,7 +314,6 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -362,13 +357,22 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
 	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
 		echo -e "\nStarting job $${i}..." ; \
-		make train \
-			TRAIN_CMD="wandb agent ${SWEEP_REAL}" \
-			RUN=${SWEEP_REAL}-$${i} \
-			RESULTS_DIR_STORAGE=$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-${SWEEP_REAL} \
-			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
-			_EXTRA_VOLUME_OPTION="--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw" \
-			TRAIN_STREAM_LOGS=no ; \
+		$(NEURO) run \
+			--name $(TRAIN_JOB)-${SWEEP_REAL}-$${i} \
+			--description "$(PROJECT_ID):train:${SWEEP_REAL}" \
+			--preset $(PRESET) \
+			--detach \
+			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/sweep-${SWEEP_REAL}:$(PROJECT_PATH_ENV)/sweep-${SWEEP_REAL}:rw \
+			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
+			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+			--env EXPOSE_SSH=yes \
+			--env JOB_TIMEOUT=0 \
+			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+			$(CUSTOM_ENV_NAME) \
+			bash -c 'cd $(PROJECT_PATH_ENV) && wandb agent ${SWEEP_REAL}' ; \
 	done
 	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search jobs of sweep ${SWEEP_REAL}.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
@@ -412,7 +416,6 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
