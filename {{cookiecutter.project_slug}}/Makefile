@@ -73,7 +73,7 @@ AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
-WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
@@ -109,7 +109,7 @@ else
 endif
 
 # Check if Weights & Biases key file exists, then set up variables
-ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
+ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
 	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
 else
 	OPTION_WANDB_CREDENTIALS=
@@ -258,8 +258,8 @@ aws-check-auth:  ### Check if the file containing AWS user account credentials e
 wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
 	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
 	@test "${OPTION_WANDB_CREDENTIALS}" \
-		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
-		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
+		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'"; \
 			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
 			false; }
 
@@ -334,63 +334,57 @@ N_HYPERPARAM_JOBS?=3
 
 # Sweep ID (if empty, will be created during 'make hypertrain')
 SWEEP?=
-SWEEP_REAL:=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 ${WANDB_SWEEPS_FILE})
 
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
-	@echo "Initializing local wandb using config file './${WANDB_SECRET_PATH_LOCAL}'"
-	@wandb login $$(cat "./${WANDB_SECRET_PATH_LOCAL}")
-	@[ "${SWEEP}" ] || { \
+	@echo "Initializing local wandb using config file './$(WANDB_SECRET_PATH_LOCAL)'"
+	@wandb login $$(cat "./$(WANDB_SECRET_PATH_LOCAL)")
+	@[ "$(SWEEP)" ] || { \
 		echo "Creating W&B Sweep..." && \
 		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
-		[ -f "${WANDB_SWEEP_CONFIG_PATH}" ] \
-			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
-			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
+		[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
+			&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
+			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false ; \
 		}; \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
+		wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE) ; \
+		echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'" ; \
     }
-	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
-	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-${SWEEP_REAL}
-	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
+	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
-	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
-	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
+	sweep=$$(tail -1 $(WANDB_SWEEPS_FILE)) && \
+	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
+	echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep '$$sweep'..." && \
+	for index in $$(seq 1 $(N_HYPERPARAM_JOBS)) ; do \
 		echo -e "\nStarting job $${i}..." ; \
 		$(NEURO) run \
-			--name $(TRAIN_JOB)-${SWEEP_REAL}-$${i} \
-			--description "$(PROJECT_ID):train:${SWEEP_REAL}" \
+			--name $(TRAIN_JOB)-$$sweep-$$index \
+			--description "$(PROJECT_ID):train:$$sweep" \
 			--preset $(PRESET) \
 			--detach \
 			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 			--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-			--volume $(PROJECT_PATH_STORAGE)/sweep-${SWEEP_REAL}:$(PROJECT_PATH_ENV)/sweep-${SWEEP_REAL}:rw \
+			--volume $(PROJECT_PATH_STORAGE)/sweep-$$sweep:$(PROJECT_PATH_ENV)/sweep-$$sweep:rw \
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
 			--env JOB_TIMEOUT=0 \
 			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 			$(CUSTOM_ENV_NAME) \
-			bash -c 'cd $(PROJECT_PATH_ENV) && wandb agent ${SWEEP_REAL}' ; \
+			bash -c "cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done
-	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search jobs of sweep ${SWEEP_REAL}.\nUse 'neuro ps' and 'neuro status <job>' to check."
-
-.PHONY: kill-hypertrain
-kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
-	@jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
-	echo "Killing jobs of the sweep ${SWEEP_REAL}..." && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	@echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	@[ ! -f ${WANDB_SWEEPS_FILE} ] || \
-	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
-		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
-		echo "Killing jobs of the sweep $${sweep}..." && \
+	@[ ! -f $(WANDB_SWEEPS_FILE) ] || \
+	for sweep in $$(tac $(WANDB_SWEEPS_FILE) || tail -r $(WANDB_SWEEPS_FILE)); do \
+		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep") && \
+		echo "Killing jobs of the sweep $$sweep..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
 	done ; \
-	echo "Please remove unused sweeps from the file ${WANDB_SWEEPS_FILE}" || :
+	echo "\nPlease remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." || :
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted

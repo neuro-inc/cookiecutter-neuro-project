@@ -459,16 +459,16 @@ def wait_job_change_status_to(
     delay_s: int = 1,
     verbose: bool = False,
 ) -> None:
-    log_msg(f"Waiting for job {job_id} to get status: {target_status}...")
+    log_msg(f"Waiting for job {job_id} to get status: '{target_status}'...")
     with timeout(timeout_s):
         while True:
             status = get_job_status(job_id, verbose=verbose)
             if status == target_status:
-                log_msg(f"Job {job_id} has reached status {target_status}")
+                log_msg(f"Job {job_id} reached status '{target_status}'")
                 return
             if status in JOB_STATUSES_TERMINATED:
                 raise RuntimeError(
-                    f"Unexpected terminated job status: {job_id}, {status}"
+                    f"Unexpected terminated job status: {job_id}, '{status}'"
                 )
             time.sleep(delay_s)
 
