@@ -689,7 +689,7 @@ def test_make_hypertrain(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
             expect_patterns=[_get_pattern_status_running()] * n
             + [
-                r"Successfully logged in to Weights \& Biases!",
+                r"Successfully logged in to Weights & Biases!",
                 "Created sweep with ID:",
                 "Sweep created and saved to",
                 fr"Started {n} hyper-parameter search jobs",
