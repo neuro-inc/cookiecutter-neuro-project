@@ -217,7 +217,7 @@ def test_make_wandb_check_auth_success(decrypt_wandb_key: None) -> None:
     condition=EXISTING_PROJECT_SLUG is not None and len(EXISTING_PROJECT_SLUG) > 0,
     reason="Reusing existing project, no need to run setup",
 )
-def test_make_setup() -> None:
+def test_make_setup_full() -> None:
     try:
         _run_make_setup_test()
     except Exception:
@@ -673,21 +673,24 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_hypertrain(
-    decrypt_wandb_key: None, env_var_preset_cpu_small: None, neuro_project_id: str
+    decrypt_wandb_key: None, env_var_preset_cpu_small: None
 ) -> None:
     run(
         "make wandb-check-auth",
         expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
     )
 
-    # NOTE: only 1 job in order to reduce flakiness
-    n = 1
+    # Print wandb status for debugging reasons
+    run("wandb status")
+
+    n = 2
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
-            expect_patterns=[fr"Started {n} hyper-parameter search jobs"],
-            error_patterns=["recipe for target 'hypertrain' failed"],
-            assert_exit_code=True,
+            expect_patterns=(
+                [_get_pattern_status_running()] * n
+                + [f"Started {n} hyper-parameter search jobs"]
+            ),
         )
         jobs = parse_jobs_ids(out, expect_num=n)
 
@@ -704,12 +707,11 @@ def test_make_hypertrain(
                         r"Your training script here",
                     ],
                     error_patterns=[r"ERROR", r"Error while calling W&B API"],
-                    assert_exit_code=False,
+                    assert_exit_code=False,  # do not wait till end
                 )
-                wait_job_change_status_to(job, JOB_STATUS_SUCCEEDED)
 
             # just check exit-code:
-            run("make kill-hypertrain", detect_new_jobs=False)
+            run("make kill-hypertrain-all", detect_new_jobs=False)
             run("make kill-train-all", detect_new_jobs=False)
 
     # Check results of hyper-parameter search on storage

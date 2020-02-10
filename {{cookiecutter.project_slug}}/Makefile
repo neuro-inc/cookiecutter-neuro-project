@@ -10,8 +10,6 @@ CODE_DIR?={{cookiecutter.code_directory}}
 NOTEBOOKS_DIR?=notebooks
 RESULTS_DIR?=results
 
-PROJECT_FILES=requirements.txt apt.txt setup.cfg
-
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
 PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
@@ -40,9 +38,6 @@ JUPYTER_MODE?=notebook
 # Location of your dataset on the platform storage. Example:
 # DATA_DIR_STORAGE?=storage:datasets/cifar10
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
-
-# Location of your results directory on the platform storage.
-RESULTS_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
 PRESET?=gpu-small
@@ -78,7 +73,7 @@ AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
-WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${WANDB_SECRET_PATH_LOCAL}
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
@@ -88,8 +83,6 @@ WANDB_SWEEPS_FILE=.wandb_sweeps
 APT?=apt-get -qq
 PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
-
-_EXTRA_VOLUME_OPTION?=
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
@@ -116,7 +109,7 @@ else
 endif
 
 # Check if Weights & Biases key file exists, then set up variables
-ifneq ($(wildcard ${WANDB_SECRET_PATH_LOCAL}),)
+ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
 	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
 else
 	OPTION_WANDB_CREDENTIALS=
@@ -139,7 +132,10 @@ setup: ### Setup remote environment
 		$(DATA_DIR_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
 		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
-		$(RESULTS_DIR_STORAGE)
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp requirements.txt $(PROJECT_PATH_STORAGE)
+	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
+	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
 	$(NEURO) run \
 		--name $(SETUP_JOB) \
 		--description "$(PROJECT_ID):setup" \
@@ -149,7 +145,6 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
@@ -216,15 +211,15 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(RESULTS_DIR_STORAGE)
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR_STORAGE) $(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
-	$(NEURO) rm --recursive $(RESULTS_DIR_STORAGE)/*
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/*
 
 .PHONY: upload-all
 upload-all: upload-code upload-data upload-config upload-notebooks upload-results  ### Upload code, data, config, notebooks, and results directories to the platform storage
@@ -263,8 +258,8 @@ aws-check-auth:  ### Check if the file containing AWS user account credentials e
 wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
 	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
 	@test "${OPTION_WANDB_CREDENTIALS}" \
-		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'" \
-		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/${WANDB_SECRET_PATH_LOCAL}'"; \
+		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'"; \
 			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
 			false; }
 
@@ -280,8 +275,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
@@ -307,21 +301,19 @@ kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB) || :
 
 RUN?=base
-_SWEEP_DESCRIPTION_POSTFIX?=
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run \
 		--name $(TRAIN_JOB)-$(RUN) \
-		--description "$(PROJECT_ID):train$(_SWEEP_DESCRIPTION_POSTFIX)" \
+		--description "$(PROJECT_ID):train" \
 		--preset $(PRESET) \
 		--detach \
 		$(TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -340,56 +332,57 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 # Number of hyper-parameter search jobs
 N_HYPERPARAM_JOBS?=3
 
-# Sweep ID (if empty, will be created during 'make hypertrain')
-SWEEP?=
-SWEEP_REAL:=$$([ "${SWEEP}" ] && echo "${SWEEP}" || tail -1 ${WANDB_SWEEPS_FILE})
-
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
-	@echo "Initializing local wandb using config file './${WANDB_SECRET_PATH_LOCAL}'"
-	@wandb login $$(cat "./${WANDB_SECRET_PATH_LOCAL}")
-	@[ "${SWEEP}" ] || { \
-		echo "Creating W&B Sweep..." && \
-		echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'" && \
-		[ -f "${WANDB_SWEEP_CONFIG_PATH}" ] \
-			&& echo "Using W&B sweep file: ./${WANDB_SWEEP_CONFIG_PATH}" \
-			|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/${WANDB_SWEEP_CONFIG_PATH}'" >&2; false ; \
-		}; \
-		wandb sweep ${WANDB_SWEEP_CONFIG_PATH} 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> ${WANDB_SWEEPS_FILE} ; \
-    }
-	@[ "${SWEEP_REAL}" ] || { echo "Error while getting sweep ID, please set up env var 'SWEEP' manually." >&2; false; }
-	$(NEURO) mkdir -p $(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL}
-	@echo "Uploading wandb config file './wandb/settings' to Neuro storage..."
+	@echo "Initializing local wandb using config file './$(WANDB_SECRET_PATH_LOCAL)'"
+	@wandb login $$(cat "./$(WANDB_SECRET_PATH_LOCAL)")
+	echo "Creating W&B Sweep..."
+	echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'"
+	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
+		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
+		|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
+	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
+	@echo "Updating code and config directories on Neuro Storage..."
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	@echo "Uploading wandb config file './wandb/settings' to Neuro Storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
-	@echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep ${SWEEP_REAL}..."
-	for i in $$(seq 1 ${N_HYPERPARAM_JOBS}) ; do \
-		echo -e "\nStarting job $${i}..." ; \
-		make train \
-			TRAIN_CMD="wandb agent ${SWEEP_REAL}" \
-			RUN=${SWEEP_REAL}-$${i} \
-			RESULTS_DIR_STORAGE=$(RESULTS_DIR_STORAGE)/sweep-${SWEEP_REAL} \
-			_SWEEP_DESCRIPTION_POSTFIX=":${SWEEP_REAL}" \
-			_EXTRA_VOLUME_OPTION="--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw" \
-			TRAIN_STREAM_LOGS=no ; \
-	done
-	@echo -e "\nStarted ${N_HYPERPARAM_JOBS} hyper-parameter search jobs of sweep ${SWEEP_REAL}.\nUse 'neuro ps' and 'neuro status <job>' to check."
-
-.PHONY: kill-hypertrain
-kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep (set up env var 'SWEEP' to specify the sweep)
-	@jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
-	echo "Killing jobs of the sweep ${SWEEP_REAL}..." && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	sweep=$$(tail -1 $(WANDB_SWEEPS_FILE)) && \
+	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
+	echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep '$$sweep'..." && \
+	for index in $$(seq 1 $(N_HYPERPARAM_JOBS)) ; do \
+		echo -e "\nStarting job $$index..." ; \
+		$(NEURO) run \
+			--name $(TRAIN_JOB)-$$sweep-$$index \
+			--description "$(PROJECT_ID):train:$$sweep" \
+			--preset $(PRESET) \
+			--detach \
+			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/sweep-$$sweep:$(PROJECT_PATH_ENV)/sweep-$$sweep:rw \
+			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
+			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+			--env EXPOSE_SSH=yes \
+			--env JOB_TIMEOUT=0 \
+			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+			$(CUSTOM_ENV_NAME) \
+			bash -c "cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
+	done; \
+	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	@[ ! -f ${WANDB_SWEEPS_FILE} ] || \
-	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
-		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
-		echo "Killing jobs of the sweep $${sweep}..." && \
-		$(NEURO) kill $${jobs:-placeholder} ; \
-	done ; \
-	echo "Please remove unused sweeps from the file ${WANDB_SWEEPS_FILE}" || :
+	@[ ! -f "$(WANDB_SWEEPS_FILE)" ] && echo "File '$(WANDB_SWEEPS_FILE)' does not exist. Abort." || { \
+		for sweep in $$(tac $(WANDB_SWEEPS_FILE)); do \
+			jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep") && \
+			echo "Killing jobs of the sweep '$$sweep'..." && \
+			$(NEURO) kill $${jobs:-placeholder} ||: ; \
+		done; \
+		echo "Please remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." ; \
+	}
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
@@ -414,8 +407,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		${_EXTRA_VOLUME_OPTION} \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -444,7 +436,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		$(HTTP_AUTH) \
 		--browse \
 		--env JOB_TIMEOUT=1d \
-		--volume $(RESULTS_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
