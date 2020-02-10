@@ -711,7 +711,7 @@ def test_make_hypertrain(
                 )
 
             # just check exit-code:
-            run("make kill-hypertrain", detect_new_jobs=False)
+            run("make kill-hypertrain-all", detect_new_jobs=False)
             run("make kill-train-all", detect_new_jobs=False)
 
     # Check results of hyper-parameter search on storage
