@@ -382,7 +382,7 @@ kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the late
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
 	@[ ! -f ${WANDB_SWEEPS_FILE} ] || \
 	for sweep in $$(tac ${WANDB_SWEEPS_FILE} || tail -r ${WANDB_SWEEPS_FILE}); do \
-		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$(SWEEP_REAL)") && \
+		jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$${sweep}") && \
 		echo "Killing jobs of the sweep $${sweep}..." && \
 		$(NEURO) kill $${jobs:-placeholder} ; \
 	done ; \
@@ -493,3 +493,19 @@ lint:  ### Run static code analysis locally
 .PHONY: ps
 ps:  ### List all running and pending jobs
 	$(NEURO) ps
+
+.PHONY: _upgrade
+_upgrade:
+	@if ! (git status | grep "nothing to commit"); then echo "Please commit or stash changes before upgrade."; exit 1; fi
+	@echo "Applying the latest Neuro Project Template to this project..."
+	cookiecutter \
+		--output-dir .. \
+		--no-input \
+		--overwrite-if-exists \
+		--checkout release \
+		gh:neuromation/cookiecutter-neuro-project \
+		project_slug=$(PROJECT_POSTFIX) \
+		code_directory=$(CODE_DIR)
+	git checkout -- $(DATA_DIR) $(CODE_DIR) $(CONFIG_DIR) $(NOTEBOOKS_DIR) $(RESULTS_DIR)
+	git checkout -- .gitignore requirements.txt apt.txt setup.cfg README.md
+	@echo "Some files are successfully changed. Please review the changes using git diff."
