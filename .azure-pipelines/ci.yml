@@ -1,0 +1,31 @@
+# Somehow now, if 'trigger' is present, PR builds don't run at all
+#trigger:
+#  batch: true
+#  branches:
+#    include:
+#    - master
+#    - release
+
+pr:
+  autoCancel: false
+  branches:
+    include:
+    - master
+
+schedules:
+  - cron: "0 0 * * *"
+    displayName: "Daily midnight UTC build: master"
+    branches:
+      include:
+      - master
+    always: true
+  - cron: "*/4 * * * *"
+    displayName: "Every-4-hour build: release"
+    branches:
+      include:
+      - release
+    always: true
+
+stages:
+#- template: stage-unit.yml
+- template: stage-e2e.yml

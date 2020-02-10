@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 from pathlib import Path
 from uuid import uuid4
 
@@ -157,9 +156,7 @@ PEXPECT_BUFFER_SIZE_BYTES = 10 * 1024 * 1024
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
-PEXPECT_DEBUG_OUTPUT_LOGFILE = (
-    open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a") if CI else sys.stdout
-)
+PEXPECT_DEBUG_OUTPUT_LOGFILE = open(LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME, "a")
 # note: ERROR, being the most general error, should go the last
 DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",
@@ -186,8 +183,8 @@ def _pattern_copy_file_finished(file_name: str) -> str:
     return rf"'{file_name}' \d+B"
 
 
-def _pattern_upload_dir(project_slug: str, dir_name: str) -> str:
-    return rf"'(file|storage)://[^']*/{project_slug}/{dir_name}' DONE"
+def _get_pattern_connected_ssh() -> str:
+    return rf"root@{JOB_ID_PATTERN}"
 
 
 def _get_pattern_status_running() -> str:

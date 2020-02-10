@@ -1,0 +1,133 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2.1
+
+orbs:
+  slack: circleci/slack@3.4.1
+
+cache_key: &cache_key
+  v2-dependencies-3.7.3-{{ checksum "requirements-dev.txt" }}
+
+jobs:
+  test_dev:
+    docker:
+      - image: circleci/python:3.7.3
+    working_directory: ~/neuromation-template
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache: &step_restore_cache
+          keys:
+            - *cache_key
+      - run: &step_install_dependencies
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install --upgrade pip certifi
+            # on CI, pip succeeds to install 'fernet', but then fails to 'from cryptography.fernet import Fernet'
+            pip install --upgrade cryptography
+            make init
+      - save_cache: &step_save_cache
+          paths:
+            - ./venv
+          key: *cache_key
+
+      - run: &step_linter
+          name: run linter
+          command: |
+            . venv/bin/activate
+            make lint
+      - run: &step_unit_tests
+          name: run unit tests
+          command: |
+            . venv/bin/activate
+            make test_doctest
+            make test_unit
+      - run:
+          no_output_timeout: 20m
+          name: run e2e tests
+          command: |
+            . venv/bin/activate
+            make test_e2e_dev
+
+      - run: &step_cleanup_e2e
+          name: cleanup e2e
+          command: |
+            . venv/bin/activate
+            # sometimes installation of neuro from previous steps is lost:
+            pip install --upgrade neuromation
+            make cleanup_e2e
+          when: always
+
+      - store_artifacts: &step_store_artifacts
+          path: tests/e2e/output
+          destination: ouptut
+          when: always
+
+  test_staging:
+    docker:
+      - image: circleci/python:3.7.3
+    working_directory: ~/neuromation-template
+    steps:
+      - checkout
+      - restore_cache: *step_restore_cache
+      - run: *step_install_dependencies
+      - save_cache: *step_save_cache
+      - run: *step_linter
+      - run: *step_unit_tests
+      - run:
+          name: run e2e tests
+          no_output_timeout: 20m
+          command: |
+            . venv/bin/activate
+            make test_e2e_staging
+      - run: *step_cleanup_e2e
+      - store_artifacts: *step_store_artifacts
+      - slack/status:
+          channel: 'CQUBMRDHV'  # channel: template-nightly-testing
+          only_for_branches: "master,release"
+          success_message: ":tada: $CIRCLE_JOB on *$CIRCLE_BRANCH $(make version)* has succeeded!"
+          failure_message: ":red_circle: $CIRCLE_JOB on *$CIRCLE_BRANCH $(make version)* has failed!"
+
+
+workflows:
+  version: 2
+
+  main:
+    jobs:
+      - test_dev
+
+      - test_staging:
+          filters:
+            branches:
+              only:
+                - master
+                - release
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - test_staging
+
+  hourly:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only:
+                - release
+    jobs:
+      - test_staging
