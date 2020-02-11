@@ -491,8 +491,8 @@ def test_make_train_custom_command(
 ) -> None:
     py_cmd = env_py_command_check_gpu
     assert "'" not in py_cmd, f"py_cmd contains single quotes: `{py_cmd}`"
+    assert '"' not in py_cmd, f"py_cmd contains double quotes: `{py_cmd}`"
     cmd = f'bash -c "sleep 5 && python -W ignore -c \\"{py_cmd}\\" && echo \\"done!\\""'
-    assert '"' not in cmd, f"cmd contains double quotes: `{cmd}`"
     log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
     monkeypatch.setenv("TRAIN_CMD", cmd)
 
