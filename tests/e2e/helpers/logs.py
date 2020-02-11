@@ -3,7 +3,7 @@ import typing as t
 from datetime import datetime
 from math import floor
 
-from tests.e2e.configuration import LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE
+from tests.e2e.configuration import LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH
 
 
 TIME_START = datetime.now()
@@ -19,6 +19,11 @@ def _timestamp() -> str:
 
 def get_logger() -> logging.Logger:
     logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH, "w", "utf-8")
+    # formatter = logging.Formatter('%(name)s %(message)s')
+    # handler.setFormatter(formatter)
+    logger.addHandler(handler)
     return logger
 
 
@@ -26,6 +31,4 @@ LOGGER = get_logger()
 
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
-    # TODO: do it in logger only
     logger(msg)
-    PEXPECT_DEBUG_OUTPUT_LOGFILE.write(f"{_timestamp()}: " + msg + "\n")

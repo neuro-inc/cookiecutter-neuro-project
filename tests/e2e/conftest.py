@@ -1,4 +1,6 @@
+import locale
 import os
+import sys
 import tempfile
 import time
 import typing as t
@@ -105,6 +107,18 @@ def pytest_runtest_makereport(item: t.Any, call: t.Any) -> t.Iterator[None]:
     except Exception as e:
         details = f"item={item}, call={call}, rep={rep}"
         log_msg(f"Failed to log test error: {e}\n{details}", logger=LOGGER.error)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def print_system_encoding() -> None:
+    log_msg(f"System stdout encoding: {sys.stdout.encoding}")
+    log_msg(f"System stderr encoding: {sys.stderr.encoding}")
+    log_msg(f"File system encoding: {sys.getfilesystemencoding()}")
+    log_msg(f"Locale: {locale.getlocale()}")
+    log_msg(
+        f"Locale preferred encoding: {locale.getpreferredencoding(do_setlocale=False)}"
+    )  # noqa
+    # locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 
 @pytest.fixture(scope="session")
