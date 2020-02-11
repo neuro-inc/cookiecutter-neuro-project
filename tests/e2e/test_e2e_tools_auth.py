@@ -20,7 +20,7 @@ from tests.e2e.helpers.utils import measure_time
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_make_train_connect_gsutil_from_cli(
+def test_gsutil_auth_from_cli(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
@@ -47,49 +47,37 @@ def test_make_train_connect_gsutil_from_cli(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_make_train_connect_gsutil_from_python_api(
+def test_gsutil_auth_from_python_api(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
-    make_cmd = "make jupyter"
+    py_cmd = "; ".join(
+        [
+            "from google.cloud import storage",
+            'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
+            'text = bucket.get_blob("hello.txt").download_as_string()',
+            "print(text)",
+        ]
+    )
+    cmd = f"python -c '{py_cmd}'"
+    monkeypatch.setenv("TRAIN_CMD", cmd)
+    make_cmd = "make train"
 
-    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-
+    with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
-            out = run(
+            run(
                 make_cmd,
                 verbose=True,
-                expect_patterns=[r"Status:[^\n]+running"],
+                expect_patterns=[r"Status:[^\n]+running", "Hello world"],
                 attempts=2,
                 attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
-                assert_exit_code=False,
-            )
-        job_id = tests.e2e.helpers.runners.parse_job_id(out)
-
-        py_cmd = "; ".join(
-            [
-                "from google.cloud import storage",
-                'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
-                'text = bucket.get_blob("hello.txt").download_as_string()',
-                "print(text)",
-                'assert "Hello world" in text.decode()',
-            ]
-        ).replace('"', r"\"")
-        cmd = f"neuro exec -T --no-key-check {job_id} \"python -c '{py_cmd}'\""
-
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(
-                cmd,
-                verbose=True,
-                attempts=2,
-                expect_patterns=["Hello world!"],
-                error_patterns=["AssertionError"],
+                assert_exit_code=True,
             )
 
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_make_jupyter_connect_aws(
+def test_aws_auth(
     decrypt_aws_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
@@ -116,7 +104,7 @@ def test_make_jupyter_connect_aws(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_make_jupyter_connect_wandb_from_cli(
+def test_wandb_auth_from_cli(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
@@ -143,7 +131,7 @@ def test_make_jupyter_connect_wandb_from_cli(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_make_jupyter_connect_wandb_from_python_api(
+def test_wandb_auth_from_python_api(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)

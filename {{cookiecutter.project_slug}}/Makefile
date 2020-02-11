@@ -58,22 +58,32 @@ TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
 LOCAL_PORT?=2211
 
+# This is a workaround of the problem on Windows where some paths starting with
+# a single slash '/' are for some reason resolved to a local path 'C:\Users\...
+# So on Windows, some paths should start with two slashes: '//'
+_PLATFORM:=$(shell python -c "import sys; print('WINDOWS' if sys.platform in ['win32','cygwin'] else 'NON_WINDOWS')")
+ifeq ($(_PLATFORM),WIN)
+	_PROJECT_PATH_ENV_RESOLVED=/$(PROJECT_PATH_ENV)
+else
+	_PROJECT_PATH_ENV_RESOLVED=$(PROJECT_PATH_ENV)
+endif
+
 ##### SECRETS ######
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
-GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
+GCP_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/${GCP_SECRET_PATH_LOCAL}
 
 # AWS integration settings:
 AWS_SECRET_FILE?=aws-credentials.txt
 AWS_SECRET_PATH_LOCAL=${CONFIG_DIR}/${AWS_SECRET_FILE}
-AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
+AWS_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
-WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/$(WANDB_SECRET_PATH_LOCAL)
+WANDB_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
@@ -113,16 +123,6 @@ ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
 	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
 else
 	OPTION_WANDB_CREDENTIALS=
-endif
-
-# This is a workaround of the problem on Windows where some paths starting with
-# a single slash '/' are for some reason resolved to a local path 'C:\Users\...
-# So on Windows, some paths should start with two slashes: '//'
-_PLATFORM:=$(shell python -c "import sys; print('WINDOWS' if sys.platform in ['win32','cygwin'] else 'NON_WINDOWS')")
-ifeq ($(_PLATFORM),WIN)
-	_PROJECT_PATH_ENV_RESOLVED=/$(PROJECT_PATH_ENV)
-else
-	_PROJECT_PATH_ENV_RESOLVED=$(PROJECT_PATH_ENV)
 endif
 
 ##### HELP #####
@@ -449,7 +449,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
-		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
+		tensorboard --host=0.0.0.0 --logdir=$(_PROJECT_PATH_ENV_RESOLVED)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
