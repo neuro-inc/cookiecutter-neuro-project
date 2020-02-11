@@ -64,8 +64,10 @@ LOCAL_PORT?=2211
 _PLATFORM:=$(shell python -c "import sys; print('WINDOWS' if sys.platform in ['win32','cygwin'] else 'NON_WINDOWS')")
 ifeq ($(_PLATFORM),WIN)
 	_PROJECT_PATH_ENV_RESOLVED=/$(PROJECT_PATH_ENV)
+	_STDERR=$${TEMP}/$(PROJECT_ID)-stderr.txt
 else
 	_PROJECT_PATH_ENV_RESOLVED=$(PROJECT_PATH_ENV)
+	_STDERR=/dev/stderr
 endif
 
 ##### SECRETS ######
@@ -352,7 +354,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
 		|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
-	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /dev/stderr | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee $(_STDERR) | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)

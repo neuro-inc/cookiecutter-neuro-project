@@ -135,35 +135,30 @@ def test_wandb_auth_from_python_api(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-    run_job_cmd = "make jupyter"
-    kill_job_cmd = f"neuro kill {MK_JUPYTER_JOB}"
 
-    with finalize(kill_job_cmd):
+    py_cmd = "; ".join(
+        [
+            "import wandb",
+            "api = wandb.Api()",
+            'runs = api.runs("art-em/cookiecutter-neuro-project")',
+            "print(runs)",
+        ]
+    )
+    cmd = f"python -c '{py_cmd}'"
+    monkeypatch.setenv("TRAIN_CMD", cmd)
+
+    run_job_cmd = "make train"
+
+    with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
-            out = run(
+            run(
                 run_job_cmd,
                 verbose=True,
-                expect_patterns=[r"Status:[^\n]+running"],
+                expect_patterns=[
+                    r"Status:[^\n]+running",
+                    "<Runs art-em/cookiecutter-neuro-project",
+                ],
                 attempts=3,
                 attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
-                assert_exit_code=False,
-            )
-        job_id = tests.e2e.helpers.runners.parse_job_id(out)
-
-        py_cmd = "; ".join(
-            [
-                "import wandb",
-                "api = wandb.Api()",
-                'runs = api.runs("art-em/cookiecutter-neuro-project")',
-                "print(runs)",
-            ]
-        ).replace('"', r"\"")
-        cmd = f"neuro exec -T --no-key-check {job_id} \"python -c '{py_cmd}'\""
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(
-                cmd,
-                attempts=2,
-                verbose=True,
-                expect_patterns=["<Runs art-em/cookiecutter-neuro-project"],
                 error_patterns=["TypeError", "Permission denied"],
             )
