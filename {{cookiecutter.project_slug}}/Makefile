@@ -12,8 +12,7 @@ RESULTS_DIR?=results
 
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
-# Needs two slashes to work on Windows
-PROJECT_PATH_ENV?=//{{cookiecutter.project_slug}}
+PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
 
 ##### JOB NAMES #####
 
@@ -114,6 +113,16 @@ ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
 	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
 else
 	OPTION_WANDB_CREDENTIALS=
+endif
+
+# This is a workaround of the problem on Windows where some paths starting with
+# a single slash '/' are for some reason resolved to a local path 'C:\Users\...
+# So on Windows, some paths should start with two slashes: '//'
+_PLATFORM:=$(shell python -c "import sys; print('WINDOWS' if sys.platform in ['win32','cygwin'] else 'NON_WINDOWS')")
+ifeq ($(_PLATFORM),WIN)
+	_PROJECT_PATH_ENV_RESOLVED=/$(PROJECT_PATH_ENV)
+else
+	_PROJECT_PATH_ENV_RESOLVED=$(PROJECT_PATH_ENV)
 endif
 
 ##### HELP #####
@@ -278,7 +287,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -316,7 +325,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -366,7 +375,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 			--volume $(PROJECT_PATH_STORAGE)/sweep-$$sweep:$(PROJECT_PATH_ENV)/sweep-$$sweep:rw \
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
-			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+			--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
 			--env EXPOSE_SSH=yes \
 			--env JOB_TIMEOUT=0 \
 			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -411,10 +420,10 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env JOB_TIMEOUT=1d \
-		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
-		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
+		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(_PROJECT_PATH_ENV_RESOLVED)
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook

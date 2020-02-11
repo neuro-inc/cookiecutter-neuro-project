@@ -66,16 +66,17 @@ def test_make_train_connect_gsutil_from_python_api(
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
-        py_cmd_list = [
-            "from google.cloud import storage",
-            'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
-            'text = bucket.get_blob("hello.txt").download_as_string()',
-            "print(text)",
-            'assert "Hello world" in text.decode()',
-        ]
-        py_cmd = "; ".join(py_cmd_list)
-        py_cmd = py_cmd.replace('"', r"\"")
-        cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
+        py_cmd = "; ".join(
+            [
+                "from google.cloud import storage",
+                'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
+                'text = bucket.get_blob("hello.txt").download_as_string()',
+                "print(text)",
+                'assert "Hello world" in text.decode()',
+            ]
+        ).replace('"', r"\"")
+        cmd = f"neuro exec -T --no-key-check {job_id} \"python -c '{py_cmd}'\""
+
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(
                 cmd,
@@ -108,7 +109,7 @@ def test_make_jupyter_connect_aws(
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
-        cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
+        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, verbose=True, expect_patterns=["Hello world!"])
 
@@ -134,8 +135,8 @@ def test_make_jupyter_connect_wandb_from_cli(
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
-        bash_cmd = 'bash -c "wandb status | grep -e "Logged in.* True""'
-        cmd = f"neuro exec -T --no-key-check {job_id} '{bash_cmd}'"
+        bash_cmd = "bash -c 'wandb status | grep -e \"Logged in.* True\"'"
+        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, verbose=True, assert_exit_code=True)
 
@@ -161,15 +162,15 @@ def test_make_jupyter_connect_wandb_from_python_api(
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
 
-        py_cmd_list = [
-            "import wandb",
-            "api = wandb.Api()",
-            'runs = api.runs("art-em/cookiecutter-neuro-project")',
-            "print(runs)",
-        ]
-        py_cmd = "; ".join(py_cmd_list)
-        py_cmd = py_cmd.replace('"', r"\"")
-        cmd = f"neuro exec -T --no-key-check {job_id} 'python -c \"{py_cmd}\"'"
+        py_cmd = "; ".join(
+            [
+                "import wandb",
+                "api = wandb.Api()",
+                'runs = api.runs("art-em/cookiecutter-neuro-project")',
+                "print(runs)",
+            ]
+        ).replace('"', r"\"")
+        cmd = f"neuro exec -T --no-key-check {job_id} \"python -c '{py_cmd}'\""
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(
                 cmd,
