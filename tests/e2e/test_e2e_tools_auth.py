@@ -26,7 +26,7 @@ def test_make_train_connect_gsutil_from_cli(
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
     make_cmd = "make jupyter"
 
-    with finalize(f"neuro kill {mk_train_job()}"):
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
 
         with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
             out = run(
@@ -53,7 +53,7 @@ def test_make_train_connect_gsutil_from_python_api(
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
     make_cmd = "make jupyter"
 
-    with finalize(f"neuro kill {mk_train_job()}"):
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
 
         with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
             out = run(

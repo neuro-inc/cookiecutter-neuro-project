@@ -16,7 +16,7 @@ from tests.e2e.configuration import (
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
     PEXPECT_BUFFER_SIZE_BYTES,
-    PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH,
+    PEXPECT_DEBUG_OUTPUT_LOGFILE,
     PROJECT_HIDDEN_FILES,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
@@ -271,7 +271,7 @@ def _run_once(
     child = _pexpect_spawn(
         cmd,
         timeout=timeout_s,
-        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH.open("w"),
+        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",

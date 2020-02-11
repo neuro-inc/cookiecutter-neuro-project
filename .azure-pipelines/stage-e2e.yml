@@ -19,6 +19,7 @@ stages:
     timeoutInMinutes: 60
 
     variables:
+      PYTHONUTF8: 1
 #      ${{ if eq('true', 'true') }}:
       ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
         e2e.token: $(e2e.token_staging)
