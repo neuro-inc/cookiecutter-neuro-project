@@ -48,7 +48,7 @@ test_e2e_dev:
 
 .PHONY: test_e2e_staging
 test_e2e_staging:
-	PRESET=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=staging --tb=short tests/e2e -k "lint"
+	PRESET=gpu-small NEURO=$(NEURO_COMMAND)  pytest -s -v --environment=staging --tb=short tests/e2e -k "setup_full or auth or lint"
 
 .PHONY: get_e2e_failures
 get_e2e_failures:
