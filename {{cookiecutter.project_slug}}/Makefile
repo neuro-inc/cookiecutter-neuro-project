@@ -482,7 +482,7 @@ format:  ### Automatically format the code
 lint:  ### Run static code analysis locally
 	isort -c -rc {{cookiecutter.code_directory}}
 	black --check {{cookiecutter.code_directory}}
-	mypy {{cookiecutter.code_directory}}
+	mypy --verbose {{cookiecutter.code_directory}}
 	flake8 {{cookiecutter.code_directory}}
 
 ##### MISC #####

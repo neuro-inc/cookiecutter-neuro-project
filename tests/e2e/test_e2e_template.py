@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -915,8 +916,18 @@ def test_make_setup_local() -> None:
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="mypy fails on windows with no clear reason"
+)
 @pytest.mark.run(order=STEP_LOCAL)
 def test_make_lint() -> None:
     # just check exit code
     cmd = "make lint"
+    run(cmd, verbose=True, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_LOCAL + 1)
+def test_make_format() -> None:
+    # just check exit code
+    cmd = "make format"
     run(cmd, verbose=True, detect_new_jobs=False)

@@ -58,8 +58,8 @@ def test_gsutil_auth_from_python_api(
             'text = bucket.get_blob("hello.txt").download_as_string()',
             "print(text)",
         ]
-    )
-    cmd = f"python -c '{py_cmd}'"
+    ).replace('"', r"\"")
+    cmd = f'python -c "{py_cmd}"'
     monkeypatch.setenv("TRAIN_CMD", cmd)
     make_cmd = "make train"
 
@@ -143,8 +143,8 @@ def test_wandb_auth_from_python_api(
             'runs = api.runs("art-em/cookiecutter-neuro-project")',
             "print(runs)",
         ]
-    )
-    cmd = f"python -c '{py_cmd}'"
+    ).replace('"', r"\"")
+    cmd = f'python -c "{py_cmd}"'
     monkeypatch.setenv("TRAIN_CMD", cmd)
 
     run_job_cmd = "make train"
