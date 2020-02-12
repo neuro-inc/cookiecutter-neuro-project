@@ -63,7 +63,7 @@ def test_gsutil_auth_from_python_api(
                 "print(text)",
             ]
         ).replace('"', r"\"")
-        bash_cmd = f'python -c "{py_cmd}"'
+        bash_cmd = f"python -c '{py_cmd}'"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, expect_patterns=["Hello world!"])
@@ -141,7 +141,7 @@ def test_wandb_auth_from_python_api(
                 "print(runs)",
             ]
         ).replace('"', r"\"")
-        bash_cmd = f'python -c "{py_cmd}"'
+        bash_cmd = f"python -c '{py_cmd}'"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, verbose=True)
