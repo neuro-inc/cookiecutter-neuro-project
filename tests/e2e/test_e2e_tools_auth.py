@@ -5,13 +5,12 @@ import pytest
 import tests.e2e.helpers.runners
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
-    DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
     GCP_KEY_FILE,
     MK_JUPYTER_JOB,
     TIMEOUT_NEURO_EXEC,
     TIMEOUT_NEURO_RUN_CPU,
     WANDB_KEY_FILE,
-    mk_train_job,
+    _get_pattern_status_running,
 )
 from tests.e2e.conftest import STEP_RUN
 from tests.e2e.helpers.runners import finalize, run
@@ -25,16 +24,11 @@ def test_gsutil_auth_from_cli(
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
     make_cmd = "make jupyter"
-
     with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-
         with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
             out = run(
                 make_cmd,
-                verbose=True,
-                expect_patterns=[r"Status:[^\n]+running"],
-                attempts=2,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+                expect_patterns=[_get_pattern_status_running()],
                 assert_exit_code=False,
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
@@ -42,7 +36,7 @@ def test_gsutil_auth_from_cli(
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, verbose=True, expect_patterns=["Hello world!"])
+            run(cmd, attempts=2, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -51,28 +45,28 @@ def test_gsutil_auth_from_python_api(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
-    py_cmd = "; ".join(
-        [
-            "from google.cloud import storage",
-            'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
-            'text = bucket.get_blob("hello.txt").download_as_string()',
-            "print(text)",
-        ]
-    ).replace('"', r"\"")
-    cmd = f'python -c "{py_cmd}"'
-    monkeypatch.setenv("TRAIN_CMD", cmd)
-    make_cmd = "make train"
-
-    with finalize(f"neuro kill {mk_train_job()}"):
+    make_cmd = "make jupyter"
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
         with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
-            run(
+            out = run(
                 make_cmd,
-                verbose=True,
-                expect_patterns=[r"Status:[^\n]+running", "Hello world"],
-                attempts=2,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
-                assert_exit_code=True,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
             )
+        job_id = tests.e2e.helpers.runners.parse_job_id(out)
+
+        py_cmd = "; ".join(
+            [
+                "from google.cloud import storage",
+                'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
+                'text = bucket.get_blob("hello.txt").download_as_string()',
+                "print(text)",
+            ]
+        ).replace('"', r"\"")
+        bash_cmd = f'python -c "{py_cmd}"'
+        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
+        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
+            run(cmd, attempts=2, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -88,10 +82,7 @@ def test_aws_auth(
         with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
             out = run(
                 run_job_cmd,
-                verbose=True,
-                expect_patterns=[r"Status:[^\n]+running"],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+                expect_patterns=[_get_pattern_status_running()],
                 assert_exit_code=False,
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
@@ -99,7 +90,7 @@ def test_aws_auth(
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, verbose=True, expect_patterns=["Hello world!"])
+            run(cmd, attempts=2, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -115,10 +106,7 @@ def test_wandb_auth_from_cli(
         with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
             out = run(
                 run_job_cmd,
-                verbose=True,
-                expect_patterns=[r"Status:[^\n]+running"],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+                expect_patterns=[_get_pattern_status_running()],
                 assert_exit_code=False,
             )
         job_id = tests.e2e.helpers.runners.parse_job_id(out)
@@ -126,7 +114,7 @@ def test_wandb_auth_from_cli(
         bash_cmd = "bash -c 'wandb status | grep -e \"Logged in.* True\"'"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, verbose=True, assert_exit_code=True)
+            run(cmd, attempts=2, verbose=True)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -135,30 +123,25 @@ def test_wandb_auth_from_python_api(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-
-    py_cmd = "; ".join(
-        [
-            "import wandb",
-            "api = wandb.Api()",
-            'runs = api.runs("art-em/cookiecutter-neuro-project")',
-            "print(runs)",
-        ]
-    ).replace('"', r"\"")
-    cmd = f'python -c "{py_cmd}"'
-    monkeypatch.setenv("TRAIN_CMD", cmd)
-
-    run_job_cmd = "make train"
-
-    with finalize(f"neuro kill {mk_train_job()}"):
-        with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
-            run(
-                run_job_cmd,
-                verbose=True,
-                expect_patterns=[
-                    r"Status:[^\n]+running",
-                    "<Runs art-em/cookiecutter-neuro-project",
-                ],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
-                error_patterns=["TypeError", "Permission denied"],
+    make_cmd = "make jupyter"
+    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
+        with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
+            out = run(
+                make_cmd,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
             )
+        job_id = tests.e2e.helpers.runners.parse_job_id(out)
+
+        py_cmd = "; ".join(
+            [
+                "import wandb",
+                "api = wandb.Api()",
+                'runs = api.runs("art-em/cookiecutter-neuro-project")',
+                "print(runs)",
+            ]
+        ).replace('"', r"\"")
+        bash_cmd = f'python -c "{py_cmd}"'
+        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
+        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
+            run(cmd, attempts=2, verbose=True)
