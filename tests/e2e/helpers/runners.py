@@ -110,12 +110,12 @@ def run(
     current_attempt = 1
     while True:
         try:
-            details = (
-                f" (will re-run for any of: {repr(attempt_substrings)})"
-                if attempt_substrings
-                else " (will re-run on any error)"
-            )
             if attempts > 1:
+                details = (
+                    f" (will re-run for any of: {repr(attempt_substrings)})"
+                    if attempt_substrings
+                    else " (will re-run on any error)"
+                )
                 log_msg(f"Attempt {current_attempt}/{attempts}{details}")
             return _run(
                 cmd,

@@ -6,9 +6,9 @@ stages:
     displayName: " "
     strategy:
       matrix:
-        Py37-Linux:
-          python.version: '3.7'
-          image: 'ubuntu-latest'
+#        Py37-Linux:
+#          python.version: '3.7'
+#          image: 'ubuntu-latest'
         Py37-Win64:
           python.version: '3.7'
           image: 'vs2017-win2016'
