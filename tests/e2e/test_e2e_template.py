@@ -921,7 +921,7 @@ def test_make_lint_2() -> None:
         "mypy --verbose modules",
     ]:
         print("------")
-        run(cmd, assert_exit_code=False, detect_new_jobs=False)
+        run(cmd, assert_exit_code=False, check_default_errors=False, detect_new_jobs=False)
         print("=====")
 
 
