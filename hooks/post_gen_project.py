@@ -17,11 +17,6 @@ if sys.platform in ["win32", "cygwin"]:
     # resolved to a local path 'C:\Users\...
     # So on Windows, some paths should start with one explicit slash.
     # Note, this does not apply to '--volume'
-    text = text.replace(
-        "--env PYTHONPATH=$(PROJECT_PATH_ENV)", "--env PYTHONPATH=/$(PROJECT_PATH_ENV)"
-    )
-    text = text.replace(
-        "--notebook-dir=$(PROJECT_PATH_ENV)", "--notebook-dir=/$(PROJECT_PATH_ENV)"
-    )
+    text = text.replace("$(PROJECT_PATH_ENV)", "/$(PROJECT_PATH_ENV)")
 
 makefile_path.write_text(text)
