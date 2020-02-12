@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import pytest
 
@@ -475,55 +475,41 @@ def test_make_download_all() -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_defaults(env_neuro_run_timeout: int) -> None:
-    _run_make_train(
-        env_neuro_run_timeout,
-        expect_patterns=[_get_pattern_status_succeeded_or_running()],
-        # BUG: After we have implemented tqdm support, `make train` fails to do
-        # `neuro exec ... tail -f /output` if the training script exits immediately
-        check_default_errors=False,
-    )
+def test_make_train_defaults(env_var_preset_cpu_small: None) -> None:
+    with finalize(f"neuro kill {mk_train_job()}"):
+        out = run(
+            "make train",
+            expect_patterns=[_get_pattern_status_succeeded_or_running()],
+            attempts=3,
+            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+        )
+        job_id = parse_job_id(out)
+        wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_custom_command(
-    monkeypatch: Any, env_neuro_run_timeout: int, env_py_command_check_gpu: str
+    monkeypatch: Any, env_var_preset_cpu_small: None, env_py_command_check_gpu: str
 ) -> None:
     py_cmd = env_py_command_check_gpu
     assert "'" not in py_cmd, f"py_cmd contains single quotes: `{py_cmd}`"
     assert '"' not in py_cmd, f"py_cmd contains double quotes: `{py_cmd}`"
-    cmd = f'bash -c "sleep 5 && python -W ignore -c \\"{py_cmd}\\" && echo \\"done!\\""'
+    cmd = f'bash -c "sleep 5 && python -W ignore -c \\"{py_cmd}\\""'
     log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
     monkeypatch.setenv("TRAIN_CMD", cmd)
 
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
-    _run_make_train(
-        env_neuro_run_timeout,
-        expect_patterns=[_get_pattern_status_succeeded_or_running(), "done!"],
-    )
-
-
-@finalize(f"neuro kill {mk_train_job()}")
-def _run_make_train(
-    neuro_run_timeout: int,
-    expect_patterns: Sequence[str],
-    error_patterns: Sequence[str] = (),
-    check_default_errors: bool = False,
-) -> None:
-    cmd = "make train"
-    with measure_time(cmd, neuro_run_timeout):
-        run(
-            cmd,
-            expect_patterns=expect_patterns,
-            error_patterns=error_patterns,
+    with finalize(f"neuro kill {mk_train_job()}"):
+        out = run(
+            "make train",
+            expect_patterns=[_get_pattern_status_succeeded_or_running()],
             attempts=3,
             attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
-            verbose=True,
-            detect_new_jobs=True,
-            check_default_errors=check_default_errors,
         )
+        job_id = parse_job_id(out)
+        wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)
