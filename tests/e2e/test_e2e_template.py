@@ -101,6 +101,25 @@ def test_make_help_works() -> None:
     assert "setup" in out, f"not found in output: `{out}`"
 
 
+# @pytest.mark.skipif(
+#     sys.platform == "win32",
+#     reason="somehow 'make lint' fails on Windows if run at the end of test suite",
+#     # process_begin: CreateProcess(NULL, mypy --verbose modules, ...) failed.\r\nmake (e=2): The system cannot find the file specified.\r\r\nmingw32-make[1]: *** [Makefile:485: lint] Error 2\r\nmingw32-make[1]: Leaving directory 'C:/Users/VssAdministrator/AppData/Local/Temp/test-cookiecutter/test-project-1df1c0b8'\r\n"  # noqa
+# )
+@pytest.mark.run(order=STEP_LOCAL)
+def test_make_lint() -> None:
+    # just check exit code
+    cmd = "make lint"
+    run(cmd, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_LOCAL + 1)
+def test_make_format() -> None:
+    # just check exit code
+    cmd = "make format"
+    run(cmd, detect_new_jobs=False)
+
+
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_setup_required() -> None:
     run(
@@ -896,34 +915,3 @@ def test_make_setup_local() -> None:
         ],
         detect_new_jobs=False,
     )
-
-
-@pytest.mark.run(order=STEP_LOCAL)
-def test_make_lint() -> None:
-    # just check exit code
-    cmd = "make lint"
-    run(cmd, detect_new_jobs=False)
-
-
-@pytest.mark.run(order=STEP_LOCAL)
-def test_make_lint_2() -> None:
-    for cmd in [
-        "mypy --verbose modules",
-        "mypy --version",
-        "which mypy",
-        "pip install -U mypy",
-        "mypy --version",
-        "pwd",
-        "ls -l",
-        "mypy --verbose modules",
-    ]:
-        print("------")
-        run(cmd, assert_exit_code=False, check_default_errors=False, detect_new_jobs=False)
-        print("=====")
-
-
-@pytest.mark.run(order=STEP_LOCAL + 1)
-def test_make_format() -> None:
-    # just check exit code
-    cmd = "make format"
-    run(cmd, detect_new_jobs=False)

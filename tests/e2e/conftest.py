@@ -49,7 +49,8 @@ from tests.utils import inside_dir
 
 
 STEP_PRE_SETUP = 0
-STEP_SETUP = 3
+STEP_LOCAL = 2
+STEP_SETUP = 5
 STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
 STEP_POST_UPLOAD = 11
@@ -58,7 +59,6 @@ STEP_PRE_RUN = 27
 STEP_RUN = 30
 STEP_KILL = 90
 STEP_CLEANUP = 100
-STEP_LOCAL = 200
 
 # == pytest config ==
 
