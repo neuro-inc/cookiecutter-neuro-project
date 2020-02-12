@@ -97,7 +97,7 @@ from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
 def test_make_help_works() -> None:
-    out = run("make help", verbose=True)
+    out = run("make help")
     assert "setup" in out, f"not found in output: `{out}`"
 
 
@@ -257,7 +257,6 @@ def _run_make_setup_test() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
         run(
             make_cmd,
-            verbose=True,
             expect_patterns=expected_patterns,
             attempts=3,
             attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
@@ -284,7 +283,6 @@ def test_import_code_in_notebooks(
         with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=[_get_pattern_status_running()],
                 error_patterns=[
                     fr"pattern '{nb_path}' matched no files",
@@ -299,7 +297,6 @@ def test_import_code_in_notebooks(
         run(
             f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "stat {nb_path}"',
             attempts=2,
-            verbose=True,
             expect_patterns=[fr"File: {nb_path}"],
             detect_new_jobs=False,
         )
@@ -316,7 +313,6 @@ def test_import_code_in_notebooks(
         run(
             cmd,
             attempts=2,
-            verbose=True,
             expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
             error_patterns=["Error: ", "CRITICAL"],
             detect_new_jobs=False,
@@ -336,7 +332,7 @@ def test_make_upload_code() -> None:
 
     make_cmd = "make upload-code"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CODE):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
     assert actual == PROJECT_CODE_DIR_CONTENT
 
@@ -350,7 +346,7 @@ def test_make_upload_data() -> None:
 
     make_cmd = "make upload-data"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
     assert len(actual) == N_FILES
@@ -369,7 +365,7 @@ def test_make_upload_config(
 
     make_cmd = "make upload-config"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
     assert actual == PROJECT_CONFIG_DIR_CONTENT
@@ -385,7 +381,7 @@ def test_make_upload_notebooks() -> None:
 
     make_cmd = "make upload-notebooks"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_NOTEBOOKS):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
     assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
@@ -401,7 +397,7 @@ def test_make_upload_results() -> None:
 
     make_cmd = "make upload-results"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_RESULTS):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
     assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
@@ -411,7 +407,7 @@ def test_make_upload_results() -> None:
 def test_make_upload_all() -> None:
     # just check exit code
     cmd = "make upload-all"
-    run(cmd, verbose=True, detect_new_jobs=False)
+    run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -423,7 +419,7 @@ def test_make_download_data() -> None:
     make_cmd = "make download-data"
     cleanup_local_dirs(MK_DATA_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     assert len(ls_files(MK_DATA_DIR)) == N_FILES
 
@@ -436,7 +432,7 @@ def test_make_download_noteboooks() -> None:
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
 
@@ -449,7 +445,7 @@ def test_make_download_config() -> None:
     make_cmd = "make download-config"
     cleanup_local_dirs(MK_CONFIG_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
 
@@ -463,7 +459,7 @@ def test_make_download_results() -> None:
     make_cmd = "make download-results"
     cleanup_local_dirs(MK_RESULTS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_RESULTS):
-        run(make_cmd, verbose=True)
+        run(make_cmd)
 
     assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
 
@@ -472,7 +468,7 @@ def test_make_download_results() -> None:
 def test_make_download_all() -> None:
     cmd = "make download-all"
     with measure_time(cmd):
-        run(cmd, verbose=True, detect_new_jobs=False)
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -568,7 +564,6 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 detect_new_jobs=True,
                 expect_patterns=[
                     _get_pattern_status_running(),
@@ -670,7 +665,6 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
     with measure_time(make_cmd, timeout_run):
         out = run(
             make_cmd,
-            verbose=True,
             expect_patterns=[_get_pattern_status_running()],
             attempts=3,
             attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
@@ -681,7 +675,7 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
 
     cmd = "make ps"
     with measure_time(cmd):
-        out = run(cmd, verbose=True, detect_new_jobs=False)
+        out = run(cmd, detect_new_jobs=False)
     assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
 
     repeat_until_success(
@@ -695,7 +689,7 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
-        run(make_cmd, verbose=True, timeout_s=TIMEOUT_NEURO_KILL)
+        run(make_cmd, timeout_s=TIMEOUT_NEURO_KILL)
     wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
@@ -708,7 +702,6 @@ def test_gpu_available(environment: str) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
                 attempts=3,
                 attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
@@ -726,7 +719,7 @@ def test_gpu_available(environment: str) -> None:
                 f'"python -c \\"{py}\\""'
             )
             with measure_time(cmd):
-                run(cmd, attempts=2, verbose=True, timeout_s=TIMEOUT_NEURO_EXEC)
+                run(cmd, attempts=2, timeout_s=TIMEOUT_NEURO_EXEC)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -736,7 +729,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=[r"Status:[^\n]+running"],
                 attempts=3,
                 attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
@@ -747,7 +739,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=[_get_pattern_connected_ssh()],
                 timeout_s=TIMEOUT_NEURO_EXEC,
                 assert_exit_code=False,
@@ -759,7 +750,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=["Starting SSH server"],
                 timeout_s=TIMEOUT_NEURO_LOGS,
                 assert_exit_code=False,
@@ -769,7 +759,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 expect_patterns=[r"Press \^C to stop forwarding"],
                 timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
                 assert_exit_code=False,
@@ -787,7 +776,6 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 detect_new_jobs=True,
                 expect_patterns=[_get_pattern_status_running()],
                 assert_exit_code=False,
@@ -797,7 +785,6 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                verbose=True,
                 detect_new_jobs=False,
                 expect_patterns=[_get_pattern_connected_ssh()],
                 assert_exit_code=False,
@@ -813,7 +800,7 @@ def test_make_kill_all() -> None:
     # just check exit code
     cmd = f"make kill-all"
     with measure_time(cmd):
-        run(cmd, verbose=True, detect_new_jobs=False)
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
@@ -825,7 +812,6 @@ def test_make_clean_code() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
             # TODO: add clean-specific error patterns
         )
@@ -843,7 +829,6 @@ def test_make_clean_config(
     with measure_time(make_cmd):
         run(
             make_cmd,
-            verbose=True,
             timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
             # TODO: add clean-specific error patterns
         )
@@ -860,7 +845,6 @@ def test_make_clean_data() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
             # TODO: add clean-specific error patterns
         )
@@ -876,7 +860,6 @@ def test_make_clean_notebooks() -> None:
     with measure_time(make_cmd):
         run(
             make_cmd,
-            verbose=True,
             timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
             # TODO: add clean-specific error patterns
         )
@@ -890,7 +873,7 @@ def test_make_clean_results() -> None:
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
-        run(make_cmd, verbose=True, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
+        run(make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
 
 
@@ -899,7 +882,7 @@ def test_make_clean_all() -> None:
     # just check exit code
     cmd = "make clean-all"
     with measure_time(cmd):
-        run(cmd, verbose=True, detect_new_jobs=False)
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_LOCAL)
@@ -911,7 +894,6 @@ def test_make_setup_local() -> None:
         expect_patterns=[
             _get_pattern_pip_installing(pip) for pip in PACKAGES_PIP_CUSTOM
         ],
-        verbose=True,
         detect_new_jobs=False,
     )
 
@@ -923,11 +905,28 @@ def test_make_setup_local() -> None:
 def test_make_lint() -> None:
     # just check exit code
     cmd = "make lint"
-    run(cmd, verbose=True, detect_new_jobs=False)
+    run(cmd, detect_new_jobs=False)
+
+
+@pytest.mark.run(order=STEP_LOCAL)
+def test_make_lint_2() -> None:
+    for cmd in [
+        "mypy --verbose modules",
+        "mypy --version",
+        "which mypy",
+        "pip install -U mypy",
+        "mypy --version",
+        "pwd",
+        "ls -l",
+        "mypy --verbose modules",
+    ]:
+        print("------")
+        run(cmd, assert_exit_code=False, detect_new_jobs=False)
+        print("=====")
 
 
 @pytest.mark.run(order=STEP_LOCAL + 1)
 def test_make_format() -> None:
     # just check exit code
     cmd = "make format"
-    run(cmd, verbose=True, detect_new_jobs=False)
+    run(cmd, detect_new_jobs=False)
