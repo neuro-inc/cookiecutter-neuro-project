@@ -58,34 +58,23 @@ TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
 LOCAL_PORT?=2211
 
-# This is a workaround of the problem on Windows where some paths starting with
-# a single slash '/' are for some reason resolved to a local path 'C:\Users\...
-# So on Windows, some paths should start with two slashes: '//'
-_PLATFORM:=$(shell python -c "import sys; print('WINDOWS' if sys.platform in ['win32','cygwin'] else 'NON_WINDOWS')")
-ifeq ($(_PLATFORM),WIN)
-	_PROJECT_PATH_ENV_RESOLVED=/$(PROJECT_PATH_ENV)
-	_STDERR=$${TEMP}/$(PROJECT_ID)-stderr.txt
-else
-	_PROJECT_PATH_ENV_RESOLVED=$(PROJECT_PATH_ENV)
-	_STDERR=/dev/stderr
-endif
 
 ##### SECRETS ######
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
 GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
-GCP_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/${GCP_SECRET_PATH_LOCAL}
+GCP_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${GCP_SECRET_PATH_LOCAL}
 
 # AWS integration settings:
 AWS_SECRET_FILE?=aws-credentials.txt
 AWS_SECRET_PATH_LOCAL=${CONFIG_DIR}/${AWS_SECRET_FILE}
-AWS_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/${AWS_SECRET_PATH_LOCAL}
+AWS_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/${AWS_SECRET_PATH_LOCAL}
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
 WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
-WANDB_SECRET_PATH_ENV=${_PROJECT_PATH_ENV_RESOLVED}/$(WANDB_SECRET_PATH_LOCAL)
+WANDB_SECRET_PATH_ENV=${PROJECT_PATH_ENV}/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
 WANDB_SWEEPS_FILE=.wandb_sweeps
@@ -289,7 +278,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -327,7 +316,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -354,7 +343,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
 		|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
-	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee $(_STDERR) | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
@@ -377,7 +366,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 			--volume $(PROJECT_PATH_STORAGE)/sweep-$$sweep:$(PROJECT_PATH_ENV)/sweep-$$sweep:rw \
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
-			--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
+			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
 			--env JOB_TIMEOUT=0 \
 			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
@@ -422,10 +411,10 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env JOB_TIMEOUT=1d \
-		--env PYTHONPATH=$(_PROJECT_PATH_ENV_RESOLVED) \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
 		$(CUSTOM_ENV_NAME) \
-		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(_PROJECT_PATH_ENV_RESOLVED)
+		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
@@ -451,7 +440,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--env JOB_TIMEOUT=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
-		tensorboard --host=0.0.0.0 --logdir=$(_PROJECT_PATH_ENV_RESOLVED)/$(RESULTS_DIR)
+		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
