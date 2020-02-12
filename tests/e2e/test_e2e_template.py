@@ -490,7 +490,7 @@ def test_make_train_defaults(env_var_preset_cpu_small: None) -> None:
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_train_custom_command(
-    monkeypatch: Any, env_var_preset_cpu_small: None, env_py_command_check_gpu: str
+    monkeypatch: Any, env_py_command_check_gpu: str
 ) -> None:
     py_cmd = env_py_command_check_gpu
     assert "'" not in py_cmd, f"py_cmd contains single quotes: `{py_cmd}`"
