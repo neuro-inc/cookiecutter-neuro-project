@@ -115,10 +115,7 @@ def print_system_encoding() -> None:
     log_msg(f"System stderr encoding: {sys.stderr.encoding}")
     log_msg(f"File system encoding: {sys.getfilesystemencoding()}")
     log_msg(f"Locale: {locale.getlocale()}")
-    log_msg(
-        f"Locale preferred encoding: {locale.getpreferredencoding(do_setlocale=False)}"
-    )  # noqa
-    # locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+    log_msg(f"Locale preferred encoding: {locale.getpreferredencoding(False)}")
 
 
 @pytest.fixture(scope="session")
@@ -132,6 +129,7 @@ def environment(request: t.Any) -> str:
 @pytest.fixture(scope="session")
 def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
+        # TODO: remove this section once we don't use CircleCI
         if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
