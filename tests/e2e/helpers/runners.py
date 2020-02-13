@@ -271,23 +271,25 @@ def _run_once(
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
-    log_file = LOGFILE_PATH.open("a")
-    child = _pexpect_spawn(
-        cmd,
-        timeout=timeout_s,
-        logfile=log_file,
-        maxread=PEXPECT_BUFFER_SIZE_BYTES,
-        searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
-        encoding="utf-8",
-    )
     output = ""
     need_dump = False
-    if not expect_patterns:
-        # work until the process returns
-        expect_patterns = [pexpect.EOF]
-    else:
-        log_msg(f"Search patterns: {repr(expect_patterns)}")
+    logfile: t.Optional[t.IO[str]] = None
     try:
+        logfile = LOGFILE_PATH.open("a")
+        child = _pexpect_spawn(
+            cmd,
+            timeout=timeout_s,
+            logfile=logfile,
+            maxread=PEXPECT_BUFFER_SIZE_BYTES,
+            searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
+            encoding="utf-8",
+        )
+        if not expect_patterns:
+            # work until the process returns
+            expect_patterns = [pexpect.EOF]
+        else:
+            log_msg(f"Search patterns: {repr(expect_patterns)}")
+
         for expected in expect_patterns:
             try:
                 child.expect(expected)
@@ -333,8 +335,9 @@ def _run_once(
             _dump_submitted_job_ids(_detect_job_ids(output))
         if need_dump:
             log_msg(f"DUMP: {repr(output)}")
-        log_file.flush()
-        log_file.close()
+        if logfile:
+            logfile.flush()
+            logfile.close()
     return output
 
 

@@ -101,11 +101,6 @@ def test_make_help_works() -> None:
     assert "setup" in out, f"not found in output: `{out}`"
 
 
-# @pytest.mark.skipif(
-#     sys.platform == "win32",
-#     reason="somehow 'make lint' fails on Windows if run at the end of test suite",
-#     # process_begin: CreateProcess(NULL, mypy --verbose modules, ...) failed.\r\nmake (e=2): The system cannot find the file specified.\r\r\nmingw32-make[1]: *** [Makefile:485: lint] Error 2\r\nmingw32-make[1]: Leaving directory 'C:/Users/VssAdministrator/AppData/Local/Temp/test-cookiecutter/test-project-1df1c0b8'\r\n"  # noqa
-# )
 @pytest.mark.run(order=STEP_LOCAL)
 def test_make_lint() -> None:
     # just check exit code
