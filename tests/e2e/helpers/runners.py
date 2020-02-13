@@ -26,6 +26,9 @@ from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.utils import merge_similars
 
 
+WIN = sys.platform == "win32"
+
+
 class ExitCodeException(Exception):
     def __init__(self, exit_code: int):
         self._exit_code = exit_code
@@ -40,8 +43,8 @@ class ExitCodeException(Exception):
 
 _pexpect_spawn: t.Callable[..., t.Any]
 
-if sys.platform == "win32":
-    from pexpect.popen_spawn import PopenSpawn
+if WIN:
+    from pexpect.popen_spawn import PopenSpawn  # type: ignore
 
     _pexpect_spawn = PopenSpawn
 else:
@@ -311,7 +314,10 @@ def _run_once(
                 # wait for child to exit
                 log_msg(f"Waiting for '{_hide_secret_cmd(cmd)}'", logger=LOGGER.info)
                 child.wait()
-            # child.close(force=True)
+            if not WIN:
+                # On Windows, child does not have method `close()`, but it seems
+                # it does not need it as it does not open a ptty connection
+                child.close(force=True)
             if child.status:
                 assert child.exitstatus != 0, "Here exit status should be non-zero!"
                 need_dump = True
