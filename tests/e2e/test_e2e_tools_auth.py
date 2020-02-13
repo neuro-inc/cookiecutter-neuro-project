@@ -111,22 +111,15 @@ def test_wandb_auth_from_cli(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-    run_job_cmd = "make jupyter"
-    kill_job_cmd = f"neuro kill {MK_JUPYTER_JOB}"
 
-    with finalize(kill_job_cmd):
-        with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
-            out = run(
-                run_job_cmd,
-                expect_patterns=[_get_pattern_status_running()],
-                assert_exit_code=False,
-            )
-        job_id = parse_job_id(out)
-
-        bash_cmd = r"bash -c 'wandb status | grep -e \"Logged in.* True\"'"
-        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, verbose=True)
+    make_cmd = (
+        "make train "
+        "TRAIN_CMD=\"wandb status | grep -e 'Logged in.* True'\" "
+        "TRAIN_STREAM_LOGS=no"
+    )
+    with finalize(f"neuro kill {mk_train_job()}"):
+        with measure_time(make_cmd):
+            run(make_cmd)
 
 
 @pytest.mark.run(order=STEP_RUN)
