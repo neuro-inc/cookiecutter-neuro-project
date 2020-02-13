@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -50,9 +51,13 @@ def test_gsutil_auth_from_python_api(
 
     script = Path(MK_CODE_DIR) / "check_bucket.py"
     script.write_text(
-        "from google.cloud import storage"
-        'bucket = storage.Client().get_bucket("cookiecutter-e2e")'
-        'print(bucket.get_blob("hello.txt").download_as_string())'
+        textwrap.dedent(
+            """
+            from google.cloud import storage
+            bucket = storage.Client().get_bucket("cookiecutter-e2e")
+            print(bucket.get_blob("hello.txt").download_as_string())
+            """
+        )
     )
     make_cmd = "make upload-code"
     with measure_time(make_cmd):
