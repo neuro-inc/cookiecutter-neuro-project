@@ -49,7 +49,7 @@ def test_gsutil_auth_from_python_api(
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
 
-    script_path = f"{MK_CODE_DIR}/check_bucket.py"
+    script_path = f"{MK_CODE_DIR}/check_gsutil.py"
     script = Path(script_path)
     script.write_text(
         textwrap.dedent(
@@ -73,7 +73,12 @@ def test_gsutil_auth_from_python_api(
 
         cmd = f"neuro logs {job_id}"
         with measure_time(cmd):
-            run(cmd, attempts=2, expect_patterns=["Hello world!"])
+            run(
+                cmd,
+                attempts=2,
+                expect_patterns=["Hello world!"],
+                error_patterns=["Errno", "No such file or directory"],
+            )
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -130,25 +135,34 @@ def test_wandb_auth_from_python_api(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-    make_cmd = "make jupyter"
-    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
-            out = run(
-                make_cmd,
-                expect_patterns=[_get_pattern_status_running()],
-                assert_exit_code=False,
-            )
+
+    script_path = f"{MK_CODE_DIR}/check_wandb.py"
+    script = Path(script_path)
+    script.write_text(
+        textwrap.dedent(
+            """
+            import wandb
+            api = wandb.Api()
+            print(api.runs("art-em/cookiecutter-neuro-project"))
+            """
+        )
+    )
+    make_cmd = "make upload-code"
+    with measure_time(make_cmd):
+        run(make_cmd, detect_new_jobs=False)
+
+    make_cmd = f'make train TRAIN_CMD="python {script_path}" TRAIN_STREAM_LOGS=no'
+    with finalize(f"neuro kill {mk_train_job()}"):
+        with measure_time(make_cmd):
+            out = run(make_cmd)
+
         job_id = parse_job_id(out)
 
-        py_cmd = "; ".join(
-            [
-                "import wandb",
-                "api = wandb.Api()",
-                'runs = api.runs("art-em/cookiecutter-neuro-project")',
-                "print(runs)",
-            ]
-        ).replace('"', r"\"")
-        bash_cmd = f"python -c '{py_cmd}'"
-        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, verbose=True)
+        cmd = f"neuro logs {job_id}"
+        with measure_time(cmd):
+            run(
+                cmd,
+                attempts=2,
+                expect_patterns=["<Runs art-em/cookiecutter-neuro-project"],
+                error_patterns=["TypeError", "Permission denied"],
+            )
