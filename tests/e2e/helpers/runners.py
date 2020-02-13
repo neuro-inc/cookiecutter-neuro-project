@@ -16,7 +16,7 @@ from tests.e2e.configuration import (
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
     PEXPECT_BUFFER_SIZE_BYTES,
-    PEXPECT_DEBUG_OUTPUT_LOGFILE,
+    PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH,
     PROJECT_HIDDEN_FILES,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
@@ -268,10 +268,11 @@ def _run_once(
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
+    log_file = PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH.open("a")
     child = _pexpect_spawn(
         cmd,
         timeout=timeout_s,
-        logfile=PEXPECT_DEBUG_OUTPUT_LOGFILE,
+        logfile=log_file,
         maxread=PEXPECT_BUFFER_SIZE_BYTES,
         searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
         encoding="utf-8",
@@ -326,6 +327,8 @@ def _run_once(
             _dump_submitted_job_ids(_detect_job_ids(output))
         if need_dump:
             log_msg(f"DUMP: {repr(output)}")
+        log_file.flush()
+        log_file.close()
     return output
 
 

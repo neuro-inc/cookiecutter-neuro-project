@@ -17,18 +17,19 @@ def _timestamp() -> str:
     return f"{str(m).zfill(2)}:{s:.3f}"
 
 
-def get_logger() -> logging.Logger:
+def get_logger() -> t.Tuple[logging.Logger, logging.FileHandler]:
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH, "w", "utf-8")
+    handler = logging.FileHandler(PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH, "a", "utf-8")
     # formatter = logging.Formatter('%(name)s %(message)s')
     # handler.setFormatter(formatter)
     logger.addHandler(handler)
-    return logger
+    return logger, handler
 
 
-LOGGER = get_logger()
+LOGGER, LOG_HANDLER = get_logger()
 
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
     logger(msg)
+    LOG_HANDLER.flush()
