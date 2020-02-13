@@ -819,16 +819,13 @@ def test_make_kill_all() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_code() -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
-    assert actual == PROJECT_CODE_DIR_CONTENT
+    assert neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
+    # just check exit code
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
-        run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CODE,
-            # TODO: add clean-specific error patterns
-        )
+        run(make_cmd)
+
     assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
 
 
