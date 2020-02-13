@@ -58,12 +58,13 @@ def test_gsutil_auth_from_python_api(
         py_cmd = "; ".join(
             [
                 "from google.cloud import storage",
-                'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
-                'text = bucket.get_blob("hello.txt").download_as_string()',
+                "bucket = storage.Client().get_bucket('cookiecutter-e2e')",
+                "text = bucket.get_blob('hello.txt').download_as_string()",
                 "print(text)",
             ]
-        ).replace('"', r"\"")
-        bash_cmd = f"python -c '{py_cmd}'"
+        )
+        assert '"' not in py_cmd, repr(py_cmd)
+        bash_cmd = f'python -c \\"{py_cmd}\\"'
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, expect_patterns=["Hello world!"])
