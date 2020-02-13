@@ -123,7 +123,7 @@ def test_wandb_auth_from_cli(
             )
         job_id = parse_job_id(out)
 
-        bash_cmd = "bash -c 'wandb status | grep -e \"Logged in.* True\"'"
+        bash_cmd = r"bash -c 'wandb status | grep -e \"Logged in.* True\"'"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
             run(cmd, attempts=2, verbose=True)
