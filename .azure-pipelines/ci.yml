@@ -1,10 +1,9 @@
-# Somehow now, if 'trigger' is present, PR builds don't run at all
-#trigger:
-#  batch: true
-#  branches:
-#    include:
-#    - master
-#    - release
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - release
 
 pr:
   autoCancel: true
