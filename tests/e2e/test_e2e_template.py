@@ -628,12 +628,12 @@ def test_make_hypertrain(
                 run(
                     f"neuro logs {job}",
                     expect_patterns=[
-                        r"Successfully logged in to Weights & Biases!",
-                        r"wandb: Starting wandb agent",
-                        r"Running runs:",
-                        r"Agent received command: run",
-                        r"Agent starting run with config:",
-                        r"Your training script here",
+                        "Successfully logged in to Weights",
+                        "wandb: Starting wandb agent",
+                        "Running runs:",
+                        "Agent received command: run",
+                        "Agent starting run with config:",
+                        "Your training script here",
                     ],
                     error_patterns=[r"ERROR", r"Error while calling W&B API"],
                     assert_exit_code=False,  # do not wait till end
