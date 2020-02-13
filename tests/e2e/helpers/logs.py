@@ -32,6 +32,6 @@ LOGGER = get_logger()
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
     logger(msg)
-    with LOGFILE_PATH.open("a", buffering=0, encoding="utf-8") as f:
+    with LOGFILE_PATH.open("a", encoding="utf-8") as f:
         f.write(f"{_timestamp()}: {msg}\n")
         f.flush()
