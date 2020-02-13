@@ -146,7 +146,6 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | tr -d \"\r\\r\" | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
@@ -482,7 +481,7 @@ format:  ### Automatically format the code
 lint:  ### Run static code analysis locally
 	isort -c -rc {{cookiecutter.code_directory}}
 	black --check {{cookiecutter.code_directory}}
-	mypy --verbose {{cookiecutter.code_directory}}
+	mypy {{cookiecutter.code_directory}}
 	flake8 {{cookiecutter.code_directory}}
 
 ##### MISC #####
