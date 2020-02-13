@@ -1,8 +1,6 @@
 trigger:
-  branches:
-    include:
-    - master
-    - release
+- master
+- release
 
 pr:
   autoCancel: false
