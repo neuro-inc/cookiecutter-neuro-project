@@ -26,5 +26,5 @@ schedules:
     always: true
 
 stages:
-#- template: stage-unit.yml
+- template: stage-unit.yml
 - template: stage-e2e.yml
