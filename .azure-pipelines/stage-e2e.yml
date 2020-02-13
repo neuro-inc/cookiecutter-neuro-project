@@ -6,9 +6,9 @@ stages:
     displayName: " "
     strategy:
       matrix:
-#        Py37-Linux:
-#          python.version: '3.7'
-#          image: 'ubuntu-latest'
+        Py37-Linux:
+          python.version: '3.7'
+          image: 'ubuntu-latest'
         Py37-Win64:
           python.version: '3.7'
           image: 'vs2017-win2016'
@@ -20,15 +20,15 @@ stages:
 
     variables:
       PYTHONUTF8: 1
-      ${{ if eq('true', 'true') }}:
-#      ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
+#      ${{ if eq('true', 'true') }}:
+      ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
         e2e.token: $(e2e.token_staging)
         e2e.url: 'https://staging.neu.ro/api/v1'
         e2e.target: 'test_e2e_staging'
-#      ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
-#        e2e.token: $(e2e.token_dev)
-#        e2e.url: 'https://dev.neu.ro/api/v1'
-#        e2e.target: 'test_e2e_dev'
+      ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
+        e2e.token: $(e2e.token_dev)
+        e2e.url: 'https://dev.neu.ro/api/v1'
+        e2e.target: 'test_e2e_dev'
 
 
     steps:
