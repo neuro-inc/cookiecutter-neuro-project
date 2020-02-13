@@ -49,7 +49,8 @@ def test_gsutil_auth_from_python_api(
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
 
-    script = Path(MK_CODE_DIR) / "check_bucket.py"
+    script_path = f"{MK_CODE_DIR}/check_bucket.py"
+    script = Path(script_path)
     script.write_text(
         textwrap.dedent(
             """
@@ -63,7 +64,7 @@ def test_gsutil_auth_from_python_api(
     with measure_time(make_cmd):
         run(make_cmd, detect_new_jobs=False)
 
-    make_cmd = f'make train TRAIN_CMD="python {script}" TRAIN_STREAM_LOGS=no'
+    make_cmd = f'make train TRAIN_CMD="python {script_path}" TRAIN_STREAM_LOGS=no'
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
             out = run(make_cmd)
