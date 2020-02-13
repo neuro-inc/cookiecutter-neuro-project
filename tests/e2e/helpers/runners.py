@@ -74,7 +74,7 @@ def run(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    check_default_errors: bool = True,
+    check_default_errors: bool = False,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
