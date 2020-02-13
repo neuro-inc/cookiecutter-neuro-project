@@ -156,7 +156,7 @@ PEXPECT_BUFFER_SIZE_BYTES = 10 * 1024 * 1024
 # use `sys.stdout` to echo everything to standard output
 # use `open('mylog.txt','wb')` to log to a file
 # use `None` to disable logging to console
-PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH: Path = LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME
+LOGFILE_PATH: Path = LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME
 # note: ERROR, being the most general error, should go the last
 DEFAULT_NEURO_ERROR_PATTERNS = (
     "404: Not Found",

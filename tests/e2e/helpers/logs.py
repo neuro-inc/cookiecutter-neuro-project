@@ -3,7 +3,7 @@ import typing as t
 from datetime import datetime
 from math import floor
 
-from tests.e2e.configuration import LOGGER_NAME, PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH
+from tests.e2e.configuration import LOGFILE_PATH, LOGGER_NAME
 
 
 TIME_START = datetime.now()
@@ -17,19 +17,21 @@ def _timestamp() -> str:
     return f"{str(m).zfill(2)}:{s:.3f}"
 
 
-def get_logger() -> t.Tuple[logging.Logger, logging.FileHandler]:
+def get_logger() -> logging.Logger:
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH, "a", "utf-8")
-    # formatter = logging.Formatter('%(name)s %(message)s')
-    # handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger, handler
+    # TODO: If LOGFILE_PATH is a logger's handler, then it writes pexpect's output
+    #  at the end of file, after all log messages. Need to re-write with StreamHandler
+    # handler = logging.FileHandler(LOGFILE_PATH, "a", "utf-8")
+    # logger.addHandler(handler)
+    return logger
 
 
-LOGGER, LOG_HANDLER = get_logger()
+LOGGER = get_logger()
 
 
 def log_msg(msg: str, *, logger: t.Callable[..., None] = LOGGER.info) -> None:
     logger(msg)
-    LOG_HANDLER.flush()
+    with LOGFILE_PATH.open("a", buffering=0, encoding="utf-8") as f:
+        f.write(f"{_timestamp()}: {msg}\n")
+        f.flush()

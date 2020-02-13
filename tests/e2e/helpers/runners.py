@@ -15,8 +15,8 @@ from tests.e2e.configuration import (
     JOB_ID_DECLARATION_REGEX,
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
+    LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
-    PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH,
     PROJECT_HIDDEN_FILES,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
@@ -226,7 +226,7 @@ def _run_once(
     them in a specified order). If any expected pattern was not found,
     `RuntimeError` is raised. Use `verbose=True` to print useful information
     to log (also to dump all child process' output to the handler defined
-    in `PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH`).
+    in `LOGFILE_PATH`).
     By default the method throws ExitCodeException if the process is killed or
     exits with non-zero exit code. Passing assert_exit_code=False suppresses this
     behavior.
@@ -268,7 +268,7 @@ def _run_once(
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
-    log_file = PEXPECT_DEBUG_OUTPUT_LOGFILE_PATH.open("a")
+    log_file = LOGFILE_PATH.open("a")
     child = _pexpect_spawn(
         cmd,
         timeout=timeout_s,
