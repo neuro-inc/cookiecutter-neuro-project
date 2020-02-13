@@ -61,7 +61,7 @@ def test_gsutil_auth_from_python_api(
                 'bucket = storage.Client().get_bucket("cookiecutter-e2e")',
                 'print(bucket.get_blob("hello.txt").download_as_string())',
             ]
-        ).replace('"', r"\"")
+        ).replace('"', r'\\"')
         bash_cmd = f"python -c '{py_cmd}'"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         from tests.e2e.helpers.logs import log_msg
