@@ -22,7 +22,7 @@ from tests.e2e.helpers.utils import measure_time
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_gsutil_auth_from_cli(
+def test_gsutil_auth_works_from_cli(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
@@ -44,7 +44,7 @@ def test_gsutil_auth_from_cli(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_gsutil_auth_from_python_api(
+def test_gsutil_auth_works_from_python_api(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
@@ -83,7 +83,7 @@ def test_gsutil_auth_from_python_api(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_aws_auth(
+def test_aws_auth_works(
     decrypt_aws_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
@@ -107,7 +107,7 @@ def test_aws_auth(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_wandb_auth_from_cli(
+def test_wandb_auth_works_from_cli(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
@@ -124,7 +124,7 @@ def test_wandb_auth_from_cli(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-def test_wandb_auth_from_python_api(
+def test_wandb_auth_works_from_python_api(
     decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
