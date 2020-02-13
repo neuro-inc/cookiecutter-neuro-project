@@ -1,6 +1,10 @@
-trigger:
-- master
-- release
+# Somehow now, if 'trigger' is present, PR builds don't run at all
+#trigger:
+#  batch: true
+#  branches:
+#    include:
+#    - master
+#    - release
 
 pr:
   autoCancel: false
@@ -10,13 +14,13 @@ pr:
 
 schedules:
   - cron: "0 0 * * *"
-    displayName: "Daily midnight UTC build: master"
+    displayName: "Nightly build: master"
     branches:
       include:
       - master
     always: true
-  - cron: "*/4 * * * *"
-    displayName: "Every-4-hour build: release"
+  - cron: "0 1 * * *"
+    displayName: "Nightly build: release"
     branches:
       include:
       - release
