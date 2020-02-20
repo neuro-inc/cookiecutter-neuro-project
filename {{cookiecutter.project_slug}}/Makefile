@@ -12,7 +12,7 @@ RESULTS_DIR?=results
 
 PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 
-PROJECT_PATH_ENV?=/{{cookiecutter.project_slug}}
+PROJECT_PATH_ENV?=/project
 
 ##### JOB NAMES #####
 
