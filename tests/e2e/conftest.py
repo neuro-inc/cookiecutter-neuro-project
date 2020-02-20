@@ -14,7 +14,6 @@ from tests.e2e.configuration import (
     FILE_SIZE_B,
     GCP_KEY_FILE,
     LOCAL_CLEANUP_STORAGE_FILE,
-    LOCAL_FAILURES_REPORT_FILE,
     LOCAL_PROJECT_CONFIG_PATH,
     LOCAL_ROOT_PATH,
     LOCAL_TESTS_SAMPLES_PATH,
@@ -89,24 +88,6 @@ def pytest_configure(config: t.Any) -> None:
     )
 
 
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item: t.Any, call: t.Any) -> t.Iterator[None]:
-    # source: https://stackoverflow.com/a/48071166
-    rep: t.Any = None
-    outcome = yield
-    try:
-        assert outcome, "outcome is None"
-        rep = outcome.get_result()
-        if rep.failed:
-            details = f"{call.excinfo.typename}: {call.excinfo.value}"
-            line = f"- {item.nodeid} run in {rep.duration:.2f} sec: {details}"
-            with LOCAL_FAILURES_REPORT_FILE.open("a") as f:
-                f.write(line)
-    except Exception as e:
-        details = f"item={item}, call={call}, rep={rep}"
-        log_msg(f"Failed to log test error: {e}\n{details}", logger=LOGGER.error)
-
-
 @pytest.fixture(scope="session")
 def environment(request: t.Any) -> str:
     env = request.config.getoption("--environment") or "dev"
@@ -151,13 +132,6 @@ def env_py_command_check_gpu(environment: str) -> str:
     else:
         cmd = "; ".join(pre_cmds + [f"assert {gpu}" for gpu in gpu_assertions])
     return cmd
-
-
-@pytest.fixture(scope="session", autouse=True)
-def delete_failures_file() -> t.Iterator[None]:
-    LOCAL_FAILURES_REPORT_FILE.write_text("")
-    log_msg(f"File {LOCAL_TESTS_SAMPLES_PATH} cleaned.")
-    yield
 
 
 @pytest.fixture(scope="session", autouse=True)
