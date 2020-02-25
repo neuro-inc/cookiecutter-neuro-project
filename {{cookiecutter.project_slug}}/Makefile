@@ -1,7 +1,7 @@
 ##### PATHS #####
 
-VERSION=v1.3
-BASE_ENV_VERSION=v1.3
+VERSION=v1.4
+BASE_ENV_VERSION=v1.4
 PROJECT_ID=placeholder
 
 DATA_DIR?=data
