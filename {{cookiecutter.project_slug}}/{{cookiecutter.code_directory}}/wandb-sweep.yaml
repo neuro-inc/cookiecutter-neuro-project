@@ -1,4 +1,4 @@
-program: /{{cookiecutter.project_slug}}/{{cookiecutter.code_directory}}/train.py
+program: /project/{{cookiecutter.code_directory}}/train.py
 method: grid
 metric:
   name: accuracy01/valid
