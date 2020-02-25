@@ -8,7 +8,7 @@ STORAGE_FILE="$OUTPUT_DIR/cleanup_storage.txt"
 echo "Cleaning up jobs..."
 
 echo "Reading jobs file: $JOBS_FILE"
-jobs=$([ -f $JOBS_FILE ] && cat $JOBS_FILE | tr -d "\r\\r" || true)
+jobs=$([ -f $JOBS_FILE ] && cat $JOBS_FILE | tr -d "\r" || true)
 echo "About to kill $(wc -w <<< $jobs) jobs: $jobs"
 
 echo "-------"
@@ -27,7 +27,7 @@ echo "OK"
 echo "Cleaning up storage..."
 
 echo "Reading storage file: $STORAGE_FILE"
-dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE | tr -d "\r\\r" || true)
+dirs=$([ -f $STORAGE_FILE ] && cat $STORAGE_FILE | tr -d "\r" || true)
 echo "About to remove $(wc -w <<< $dirs) directories: $dirs"
 
 echo "-------"
