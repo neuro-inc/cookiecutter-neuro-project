@@ -467,7 +467,7 @@ kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tens
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	pip install --progress-bar=off -U --no-cache-dir -r requirements.txt
+	pip install -r requirements.txt
 
 .PHONY: format
 format:  ### Automatically format the code
