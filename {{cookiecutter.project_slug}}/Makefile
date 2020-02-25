@@ -80,8 +80,6 @@ WANDB_SWEEPS_FILE=.wandb_sweeps
 
 ##### COMMANDS #####
 
-APT?=apt-get -qq
-PIP?=pip install --progress-bar=off -U --no-cache-dir
 NEURO?=neuro
 
 ifeq (${TRAIN_STREAM_LOGS}, yes)
@@ -145,8 +143,8 @@ setup: ### Setup remote environment
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
-	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -qq update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % apt-get -qq install --no-install-recommends % && apt-get -qq clean && apt-get -qq autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-key-check $(SETUP_JOB) "bash -c 'pip install --progress-bar=off -U --no-cache-dir -r $(PROJECT_PATH_ENV)/requirements.txt'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done
@@ -469,7 +467,7 @@ kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tens
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	$(PIP) -r requirements.txt
+	pip install --progress-bar=off -U --no-cache-dir -r requirements.txt
 
 .PHONY: format
 format:  ### Automatically format the code
