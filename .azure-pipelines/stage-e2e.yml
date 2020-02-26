@@ -1,5 +1,6 @@
 stages:
 - stage: e2e
+  name: "$(TeamProject)_$(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)"
   displayName: "e2e"
   jobs:
   - job:
@@ -60,7 +61,7 @@ stages:
         COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
 
     - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output
-      artifact: output-$(image)
+      artifact: output-$(image)-$(Date:yyyyMMdd)$(Rev:.r)
       condition: always()
 
     - script: |
