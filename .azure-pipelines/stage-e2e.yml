@@ -41,26 +41,26 @@ stages:
         versionSpec: '$(python.version)'
       displayName: "Use Python $(python.version)"
 
-    - script: |
-        python -m pip install -U pip
-      displayName: 'Install pre-requirements'
-
-    - script: |
-        make init
-        python -m pip install -U wandb
-      displayName: 'Install dependencies'
-
-    - script: |
-        make $(e2e.target)
-      displayName: 'Run e2e against $(e2e.url)'
-      env:
-        CI: true
-        COOKIECUTTER_TEST_E2E_TOKEN: $(e2e.token)
-        COOKIECUTTER_TEST_E2E_URL: $(e2e.url)
-        COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
+#    - script: |
+#        python -m pip install -U pip
+#      displayName: 'Install pre-requirements'
+#
+#    - script: |
+#        make init
+#        python -m pip install -U wandb
+#      displayName: 'Install dependencies'
+#
+#    - script: |
+#        make $(e2e.target)
+#      displayName: 'Run e2e against $(e2e.url)'
+#      env:
+#        CI: true
+#        COOKIECUTTER_TEST_E2E_TOKEN: $(e2e.token)
+#        COOKIECUTTER_TEST_E2E_URL: $(e2e.url)
+#        COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
 
     - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output
-      artifact: output-$(image)-$(System.JobName)
+      artifact: output-$(System.JobName)-$(System.JobId)
       condition: always()
 
     - script: |
