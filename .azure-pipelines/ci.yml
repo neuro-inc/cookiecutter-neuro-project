@@ -25,7 +25,7 @@ schedules:
       - release
     always: true
 
-name: "$(TeamProject)_$(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)"
+name: "$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)"
 stages:
 - template: stage-unit.yml
 - template: stage-e2e.yml
