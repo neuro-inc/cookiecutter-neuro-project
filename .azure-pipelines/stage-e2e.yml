@@ -1,6 +1,5 @@
 stages:
 - stage: e2e
-  name: "$(TeamProject)_$(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)"
   displayName: "e2e"
   jobs:
   - job:
