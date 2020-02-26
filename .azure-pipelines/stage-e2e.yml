@@ -60,7 +60,7 @@ stages:
         COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
 
     - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output
-      artifact: output-$(image)-$(Date:yyyyMMdd)$(Rev:.r)
+      artifact: output-$(image)-$[ variables['System.JobName'] ]
       condition: always()
 
     - script: |
