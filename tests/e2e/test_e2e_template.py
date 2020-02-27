@@ -242,11 +242,10 @@ def _run_make_setup_test() -> None:
         f"Selecting previously unselected package {entry}"
         for entry in PACKAGES_APT_CUSTOM
     ]
-    # TODO: test also pre-installed PIP packages
-    pip_deps = sorted(
-        [entry.replace("==", "-").replace("_", "-") for entry in PACKAGES_PIP_CUSTOM]
-    )
-    pip_deps_message = r"Successfully installed [^\n]*" + r"[^\n]*".join(pip_deps)
+    pip_deps_messages = [
+        r"(Successfully installed|Collecting|Requirement already)[^\n]*" + pip
+        for pip in PACKAGES_PIP_CUSTOM
+    ]
 
     expected_patterns = [
         # run
@@ -255,7 +254,7 @@ def _run_make_setup_test() -> None:
         *apt_deps_messages,
         # pip install
         # (pip works either with stupid progress bars, or completely silently)
-        pip_deps_message,
+        *pip_deps_messages,
         # neuro save
         rf"Saving .*{JOB_ID_PATTERN}",
         r"Creating image",
