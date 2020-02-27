@@ -1,0 +1,69 @@
+stages:
+- stage: e2e
+  displayName: "e2e"
+  jobs:
+  - job:
+    displayName: " "
+    strategy:
+      matrix:
+        Py37-Linux:
+          python.version: '3.7'
+          image: 'ubuntu-latest'
+        Py37-Win64:
+          python.version: '3.7'
+          image: 'vs2017-win2016'
+
+    pool:
+      vmImage: $[ variables['image'] ]
+
+    timeoutInMinutes: 60
+
+    variables:
+      PYTHONUTF8: 1
+#      ${{ if eq('true', 'true') }}:
+      ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
+        e2e.token: $(e2e.token_staging)
+        e2e.url: 'https://staging.neu.ro/api/v1'
+        e2e.target: 'test_e2e_staging'
+      ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
+        e2e.token: $(e2e.token_dev)
+        e2e.url: 'https://dev.neu.ro/api/v1'
+        e2e.target: 'test_e2e_dev'
+
+
+    steps:
+
+    - checkout: self
+      clean: true
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: "Use Python $(python.version)"
+
+    - script: |
+        python -m pip install -U pip
+      displayName: 'Install pre-requirements'
+
+    - script: |
+        make init
+        python -m pip install -U wandb
+      displayName: 'Install dependencies'
+
+    - script: |
+        make $(e2e.target)
+      displayName: 'Run e2e against $(e2e.url)'
+      env:
+        CI: true
+        COOKIECUTTER_TEST_E2E_TOKEN: $(e2e.token)
+        COOKIECUTTER_TEST_E2E_URL: $(e2e.url)
+        COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
+
+    - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output
+      artifact: output-$(System.JobName)-$(System.JobId)
+      condition: always()
+
+    - script: |
+        make cleanup_e2e
+      displayName: 'Cleanup after e2e tests'
+      condition:  always()

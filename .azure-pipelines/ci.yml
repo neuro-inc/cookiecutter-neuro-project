@@ -1,0 +1,31 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - release
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+
+schedules:
+  - cron: "0 0 * * *"
+    displayName: "Nightly build: master"
+    branches:
+      include:
+      - master
+    always: true
+  - cron: "0 1 * * *"
+    displayName: "Nightly build: release"
+    branches:
+      include:
+      - release
+    always: true
+
+name: "$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)"
+stages:
+- template: stage-unit.yml
+- template: stage-e2e.yml

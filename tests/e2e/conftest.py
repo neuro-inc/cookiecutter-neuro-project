@@ -1,4 +1,6 @@
+import locale
 import os
+import sys
 import tempfile
 import time
 import typing as t
@@ -46,7 +48,8 @@ from tests.utils import inside_dir
 
 
 STEP_PRE_SETUP = 0
-STEP_SETUP = 3
+STEP_LOCAL = 2
+STEP_SETUP = 5
 STEP_POST_SETUP = 7
 STEP_UPLOAD = 10
 STEP_POST_UPLOAD = 11
@@ -55,7 +58,6 @@ STEP_PRE_RUN = 27
 STEP_RUN = 30
 STEP_KILL = 90
 STEP_CLEANUP = 100
-STEP_LOCAL = 200
 
 # == pytest config ==
 
@@ -88,6 +90,15 @@ def pytest_configure(config: t.Any) -> None:
     )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def print_system_encoding() -> None:
+    log_msg(f"System stdout encoding: {sys.stdout.encoding}")
+    log_msg(f"System stderr encoding: {sys.stderr.encoding}")
+    log_msg(f"File system encoding: {sys.getfilesystemencoding()}")
+    log_msg(f"Locale: {locale.getlocale()}")
+    log_msg(f"Locale preferred encoding: {locale.getpreferredencoding(False)}")
+
+
 @pytest.fixture(scope="session")
 def environment(request: t.Any) -> str:
     env = request.config.getoption("--environment") or "dev"
@@ -99,12 +110,19 @@ def environment(request: t.Any) -> str:
 @pytest.fixture(scope="session")
 def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
+        # TODO: remove this section once we don't use CircleCI
         if environment == "dev":
             env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
         else:
             env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
             env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
+
+        if env_name_token not in os.environ:
+            # on Azure
+            env_name_token = "COOKIECUTTER_TEST_E2E_TOKEN"
+            env_name_url = "COOKIECUTTER_TEST_E2E_URL"
+
         return ClientConfig(
             token=os.environ[env_name_token], url=os.environ[env_name_url]
         )
@@ -299,35 +317,14 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
                 )
 
 
-@pytest.fixture(autouse=True)
-def env_var_gcp_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "GCP_SECRET_FILE", GCP_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 @pytest.fixture()
 def decrypt_gcp_key() -> t.Iterator[None]:
     yield from _decrypt_key(GCP_KEY_FILE)
 
 
-@pytest.fixture(autouse=True)
-def env_var_aws_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "AWS_SECRET_FILE", AWS_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 @pytest.fixture()
 def decrypt_aws_key() -> t.Iterator[None]:
     yield from _decrypt_key(AWS_KEY_FILE)
-
-
-@pytest.fixture(autouse=True)
-def env_var_wandb_secret_file(monkeypatch: t.Any) -> None:
-    key, val = "WANDB_SECRET_FILE", WANDB_KEY_FILE
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
 
 
 @pytest.fixture()
