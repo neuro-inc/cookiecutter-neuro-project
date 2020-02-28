@@ -729,7 +729,7 @@ def test_gpu_available(environment: str) -> None:
         for py in py_commands:
             cmd = (
                 f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
-                f'"python -c \\"{py}\\""'
+                f'"python -c \'{py}\'"'
             )
             with measure_time(cmd):
                 run(cmd, attempts=2, timeout_s=TIMEOUT_NEURO_EXEC)
