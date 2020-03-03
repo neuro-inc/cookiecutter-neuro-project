@@ -63,53 +63,53 @@ LOCAL_PORT?=2211
 
 # Google Cloud integration settings:
 GCP_SECRET_FILE?=neuro-job-key.json
-GCP_SECRET_PATH_LOCAL=${CONFIG_DIR}/${GCP_SECRET_FILE}
-GCP_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/${GCP_SECRET_PATH_LOCAL}
+GCP_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(GCP_SECRET_FILE)
+GCP_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(GCP_SECRET_PATH_LOCAL)
 
 # AWS integration settings:
 AWS_SECRET_FILE?=aws-credentials.txt
-AWS_SECRET_PATH_LOCAL=${CONFIG_DIR}/${AWS_SECRET_FILE}
-AWS_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/${AWS_SECRET_PATH_LOCAL}
+AWS_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(AWS_SECRET_FILE)
+AWS_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(AWS_SECRET_PATH_LOCAL)
 
 # Weights and Biases integration settings:
 WANDB_SECRET_FILE?=wandb-token.txt
-WANDB_SECRET_PATH_LOCAL=${CONFIG_DIR}/${WANDB_SECRET_FILE}
+WANDB_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(WANDB_SECRET_FILE)
 WANDB_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
-WANDB_SWEEP_CONFIG_PATH=${CODE_DIR}/${WANDB_SWEEP_CONFIG_FILE}
+WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
 ##### COMMANDS #####
 
 NEURO?=neuro
 
-ifeq (${TRAIN_STREAM_LOGS}, yes)
+ifeq ($(TRAIN_STREAM_LOGS), yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
 	TRAIN_WAIT_START_OPTION=
 endif
 
 # Check if GCP authentication file exists, then set up variables
-ifneq ($(wildcard ${GCP_SECRET_PATH_LOCAL}),)
+ifneq ($(wildcard $(GCP_SECRET_PATH_LOCAL)),)
 	OPTION_GCP_CREDENTIALS=\
-		--env GOOGLE_APPLICATION_CREDENTIALS="${GCP_SECRET_PATH_ENV}" \
-		--env GCP_SERVICE_ACCOUNT_KEY_PATH="${GCP_SECRET_PATH_ENV}"
+		--env GOOGLE_APPLICATION_CREDENTIALS="$(GCP_SECRET_PATH_ENV)" \
+		--env GCP_SERVICE_ACCOUNT_KEY_PATH="$(GCP_SECRET_PATH_ENV)"
 else
 	OPTION_GCP_CREDENTIALS=
 endif
 
 # Check if AWS authentication file exists, then set up variables
-ifneq ($(wildcard ${AWS_SECRET_PATH_LOCAL}),)
+ifneq ($(wildcard $(AWS_SECRET_PATH_LOCAL)),)
 	OPTION_AWS_CREDENTIALS=\
-		--env AWS_CONFIG_FILE="${AWS_SECRET_PATH_ENV}" \
-		--env NM_AWS_CONFIG_FILE="${AWS_SECRET_PATH_ENV}"
+		--env AWS_CONFIG_FILE="$(AWS_SECRET_PATH_ENV)" \
+		--env NM_AWS_CONFIG_FILE="$(AWS_SECRET_PATH_ENV)"
 else
 	OPTION_AWS_CREDENTIALS=
 endif
 
 # Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
-	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="${WANDB_SECRET_PATH_ENV}"
+	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="$(WANDB_SECRET_PATH_ENV)"
 else
 	OPTION_WANDB_CREDENTIALS=
 endif
@@ -233,33 +233,33 @@ clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ###
 
 .PHONY: gcloud-check-auth
 gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
-	@echo "Using variable: GCP_SECRET_FILE='${GCP_SECRET_FILE}'"
-	@test "${OPTION_GCP_CREDENTIALS}" \
-		&& echo "Google Cloud will be authenticated via service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'" \
-		|| { echo "ERROR: Not found Google Cloud service account key file: '$${PWD}/${GCP_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named GCP_SECRET_FILE='${GCP_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+	@echo "Using variable: GCP_SECRET_FILE='$(GCP_SECRET_FILE)'"
+	@test "$(OPTION_GCP_CREDENTIALS)" \
+		&& echo "Google Cloud will be authenticated via service account key file: '$$PWD/$(GCP_SECRET_PATH_LOCAL)'" \
+		|| { echo "ERROR: Not found Google Cloud service account key file: '$$PWD/$(GCP_SECRET_PATH_LOCAL)'"; \
+			echo "Please save the key file named GCP_SECRET_FILE='$(GCP_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
 			false; }
 
 ##### AWS Integration #####
 
 .PHONY: aws-check-auth
 aws-check-auth:  ### Check if the file containing AWS user account credentials exists
-	@echo "Using variable: AWS_SECRET_FILE='${AWS_SECRET_FILE}'"
-	@test "${OPTION_AWS_CREDENTIALS}" \
-		&& echo "AWS will be authenticated via user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'" \
-		|| { echo "ERROR: Not found AWS user account credentials file: '$${PWD}/${AWS_SECRET_PATH_LOCAL}'"; \
-			echo "Please save the key file named AWS_SECRET_FILE='${AWS_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+	@echo "Using variable: AWS_SECRET_FILE='$(AWS_SECRET_FILE)'"
+	@test "$(OPTION_AWS_CREDENTIALS)" \
+		&& echo "AWS will be authenticated via user account credentials file: '$$PWD/$(AWS_SECRET_PATH_LOCAL)'" \
+		|| { echo "ERROR: Not found AWS user account credentials file: '$$PWD/$(AWS_SECRET_PATH_LOCAL)'"; \
+			echo "Please save the key file named AWS_SECRET_FILE='$(AWS_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
 			false; }
 
 ##### WandB Integration #####
 
 .PHONY: wandb-check-auth
 wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
-	@echo Using variable: WANDB_SECRET_FILE='${WANDB_SECRET_FILE}'
-	@test "${OPTION_WANDB_CREDENTIALS}" \
-		&& echo "Weights & Biases will be authenticated via key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'" \
-		|| { echo "ERROR: Not found Weights & Biases key file: '$${PWD}/$(WANDB_SECRET_PATH_LOCAL)'"; \
-			echo "Please save the key file named WANDB_SECRET_FILE='${WANDB_SECRET_FILE}' to './${CONFIG_DIR}/'"; \
+	@echo Using variable: WANDB_SECRET_FILE='$(WANDB_SECRET_FILE)'
+	@test "$(OPTION_WANDB_CREDENTIALS)" \
+		&& echo "Weights & Biases will be authenticated via key file: '$$PWD/$(WANDB_SECRET_PATH_LOCAL)'" \
+		|| { echo "ERROR: Not found Weights & Biases key file: '$$PWD/$(WANDB_SECRET_PATH_LOCAL)'"; \
+			echo "Please save the key file named WANDB_SECRET_FILE='$(WANDB_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
 			false; }
 
 ##### JOBS #####
@@ -278,7 +278,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
-		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
 		sleep infinity
 
@@ -292,7 +292,7 @@ logs-develop:  ### Connect to the remote shell running on the development job
 
 .PHONY: port-forward-develop
 port-forward-develop:  ### Forward SSH port to localhost for remote debugging
-	@test ${LOCAL_PORT} || { echo 'Please set up env var LOCAL_PORT'; false; }
+	@test $(LOCAL_PORT) || { echo 'Please set up env var LOCAL_PORT'; false; }
 	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
 
 .PHONY: kill-develop
@@ -316,10 +316,10 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
-		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
-ifeq (${TRAIN_STREAM_LOGS}, yes)
+ifeq ($(TRAIN_STREAM_LOGS), yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
 	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
 endif
@@ -334,12 +334,12 @@ N_HYPERPARAM_JOBS?=3
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
 	@echo "Initializing local wandb using config file './$(WANDB_SECRET_PATH_LOCAL)'"
-	@wandb login $$(cat "./$(WANDB_SECRET_PATH_LOCAL)")
+	@wandb login `cat "./$(WANDB_SECRET_PATH_LOCAL)"`
 	echo "Creating W&B Sweep..."
-	echo "Using variable: WANDB_SWEEP_CONFIG_FILE='${WANDB_SWEEP_CONFIG_FILE}'"
+	echo "Using variable: WANDB_SWEEP_CONFIG_FILE='$(WANDB_SWEEP_CONFIG_FILE)'"
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
-		|| { echo "ERROR: W&B sweep config file not found: '$${PWD}/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
+		|| { echo "ERROR: W&B sweep config file not found: '$$PWD/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
 	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
@@ -348,10 +348,10 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@echo "Uploading wandb config file './wandb/settings' to Neuro Storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
-	sweep=$$(tail -1 $(WANDB_SWEEPS_FILE)) && \
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
-	echo "Running ${N_HYPERPARAM_JOBS} jobs of sweep '$$sweep'..." && \
-	for index in $$(seq 1 $(N_HYPERPARAM_JOBS)) ; do \
+	echo "Running $(N_HYPERPARAM_JOBS) jobs of sweep '$$sweep'..." && \
+	for index in `seq 1 $(N_HYPERPARAM_JOBS)` ; do \
 		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
@@ -366,7 +366,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
 			--env JOB_TIMEOUT=0 \
-			${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 			$(CUSTOM_ENV_NAME) \
 			bash -c "cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
@@ -375,8 +375,8 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
 	@[ ! -f "$(WANDB_SWEEPS_FILE)" ] && echo "File '$(WANDB_SWEEPS_FILE)' does not exist. Abort." || { \
-		for sweep in $$(tac $(WANDB_SWEEPS_FILE)); do \
-			jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep") && \
+		for sweep in `tac $(WANDB_SWEEPS_FILE)`; do \
+			jobs=`neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep"` && \
 			echo "Killing jobs of the sweep '$$sweep'..." && \
 			$(NEURO) kill $${jobs:-placeholder} ||: ; \
 		done; \
@@ -385,7 +385,7 @@ kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of 
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs=$$(neuro --quiet ps --description="$(PROJECT_ID):train" | tr -d "\r") && \
+	jobs=`neuro --quiet ps --description="$(PROJECT_ID):train" | tr -d "\r"` && \
 	$(NEURO) kill $${jobs:-placeholder} || :
 
 .PHONY: connect-train
@@ -409,7 +409,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
-		${OPTION_GCP_CREDENTIALS} ${OPTION_AWS_CREDENTIALS} ${OPTION_WANDB_CREDENTIALS} \
+		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
 		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
 

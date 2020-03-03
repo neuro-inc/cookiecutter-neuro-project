@@ -567,7 +567,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
     with finalize(f"neuro kill {mk_train_job()}"):
         cmd = (
             'python -c "import time, tqdm; '
-            '[time.sleep(0.01) for _ in tqdm.tqdm(range(1000))]"'
+            '[time.sleep(0.1) for _ in tqdm.tqdm(range(10000))]"'
         )
         assert "'" not in cmd, f"cmd contains single quotes: `{cmd}`"
         log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
@@ -581,12 +581,10 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
                 expect_patterns=[
                     _get_pattern_status_running(),
                     r"Streaming logs of the job",
-                    r"\d+%.*\d+/1000",
-                    r"Stopped streaming logs",
+                    r"\d+%.*\d+/10000",
                 ],
                 error_patterns=["[Ee]rror"],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+                assert_exit_code=False,
             )
 
         run("make kill-train", detect_new_jobs=False)
