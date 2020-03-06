@@ -340,7 +340,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
 		|| { echo "ERROR: W&B sweep config file not found: '$$PWD/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
-	wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	WANDB_PROJECT=$(PROJECT_POSTFIX) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
@@ -368,7 +368,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--env JOB_TIMEOUT=0 \
 			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 			$(CUSTOM_ENV_NAME) \
-			bash -c "cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
+			bash -c "export WANDB_PROJECT=$(PROJECT_POSTFIX) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
 	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
