@@ -196,10 +196,6 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     with pip_file.open("a") as f:
         for package in PACKAGES_PIP_CUSTOM:
             f.write("\n" + package)
-    with pip_file.open("r") as f:
-        print(f"---requirements.txt:---\n")
-        print(f"```{f.read()}```")
-
 
     config_dir = Path(MK_CONFIG_DIR)
     assert config_dir.is_dir()
