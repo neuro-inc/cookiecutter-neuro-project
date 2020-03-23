@@ -8,8 +8,8 @@ from collections import namedtuple
 from pathlib import Path
 
 import pytest
-from cryptography.fernet import Fernet
 
+from cryptography.fernet import Fernet
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
@@ -24,8 +24,8 @@ from tests.e2e.configuration import (
     MK_CONFIG_DIR,
     MK_DATA_DIR,
     MK_NOTEBOOKS_DIR,
-    MK_PROJECT_PATH_STORAGE,
     MK_PROJECT,
+    MK_PROJECT_PATH_STORAGE,
     MK_RESULTS_DIR,
     N_FILES,
     PACKAGES_APT_CUSTOM,
