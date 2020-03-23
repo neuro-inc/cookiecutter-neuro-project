@@ -294,7 +294,8 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
     assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"
     with file_enc.open(mode="rb") as f_enc:
         with output.open(mode="wb") as f_dec:
-            fernet = Fernet(os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"])
+            key = os.environ["COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY"]
+            fernet = Fernet(key.encode())
             dec = fernet.decrypt(f_enc.read())
             f_dec.write(dec)
 

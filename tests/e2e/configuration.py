@@ -90,7 +90,7 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["figlet"]
-PACKAGES_PIP_CUSTOM = ["neuromation", "pexpect"]
+PACKAGES_PIP_CUSTOM = ["pexpect"]
 WANDB_SWEEP_FILE = "wandb-sweep.yaml"
 GCP_KEY_FILE = "gcp-key.json"
 AWS_KEY_FILE = "aws-credentials.txt"

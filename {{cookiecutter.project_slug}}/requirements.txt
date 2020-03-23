@@ -1,3 +1,4 @@
+neuromation==20.3.23
 flake8
 mypy
 isort
