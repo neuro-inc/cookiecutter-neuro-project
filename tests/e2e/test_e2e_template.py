@@ -604,10 +604,10 @@ def test_make_hypertrain(
     # Print wandb status for debugging reasons
     run("wandb status")
 
-    n = 2
+    n = 1
     with finalize("make kill-hypertrain-all"):
         out = run(
-            f"make hypertrain N_HYPERPARAM_JOBS={n} TRAIN_CMD='sleep 10'",
+            f"make hypertrain N_HYPERPARAM_JOBS={n} TRAIN_CMD='sleep 10 && echo done'",
             expect_patterns=(
                 [_get_pattern_status_running()] * n
                 + [f"Started {n} hyper-parameter search jobs"]
@@ -625,7 +625,7 @@ def test_make_hypertrain(
                         "Running runs:",
                         "Agent received command: run",
                         "Agent starting run with config:",
-                        "Your training script here",
+                        "done",
                     ],
                     error_patterns=[r"ERROR", r"Error while calling W&B API"],
                     assert_exit_code=False,  # do not wait till end
