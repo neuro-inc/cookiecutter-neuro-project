@@ -21,7 +21,7 @@ from tests.e2e.configuration import (
     MK_PROJECT_FILES,
     MK_PROJECT_PATH_ENV,
     MK_PROJECT_PATH_STORAGE,
-    MK_PROJECT_SLUG,
+    MK_PROJECT,
     MK_RESULTS_DIR,
     MK_RUN_DEFAULT,
     MK_SETUP_JOB,
@@ -316,7 +316,7 @@ def test_import_code_in_notebooks(
 
         expected_string = r"----\s+Your training script here\s+----"
 
-        out_file = f"/tmp/out-nbconvert-{MK_PROJECT_SLUG}"
+        out_file = f"/tmp/out-nbconvert-{MK_PROJECT}"
         exec_cmd = (
             "bash -c 'jupyter nbconvert --execute --no-prompt --no-input "
             f"--to=asciidoc --output={out_file} {nb_path} && "

@@ -25,7 +25,7 @@ from tests.e2e.configuration import (
     MK_DATA_DIR,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT_PATH_STORAGE,
-    MK_PROJECT_SLUG,
+    MK_PROJECT,
     MK_RESULTS_DIR,
     N_FILES,
     PACKAGES_APT_CUSTOM,
@@ -171,7 +171,7 @@ def cookiecutter_setup(change_directory_to_temp: None) -> t.Iterator[None]:
             error_patterns=["raise .*Exception"],
             verbose=False,
         )
-    with inside_dir(MK_PROJECT_SLUG):
+    with inside_dir(MK_PROJECT):
         log_msg(f"Working inside test project: {Path().absolute()}")
         yield
 

@@ -50,7 +50,7 @@ TIMEOUT_NEURO_PORT_FORWARD = 15
 # Project name is defined in cookiecutter.yaml, from `project_name`
 UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
 EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
-MK_PROJECT_SLUG = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
+MK_PROJECT = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
 MK_CODE_DIR = "modules"
 MK_CONFIG_DIR = "config"
@@ -58,21 +58,21 @@ MK_DATA_DIR = "data"
 MK_NOTEBOOKS_DIR = "notebooks"
 MK_RESULTS_DIR = "results"
 
-MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT_SLUG}"
+MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT}"
 MK_PROJECT_PATH_ENV = "/project"
 
 
-MK_SETUP_JOB = f"setup-{MK_PROJECT_SLUG}"
-MK_TRAIN_JOB = f"train-{MK_PROJECT_SLUG}"
-MK_DEVELOP_JOB = f"develop-{MK_PROJECT_SLUG}"
-MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT_SLUG}"
-MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT_SLUG}"
-MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT_SLUG}"
+MK_SETUP_JOB = f"setup-{MK_PROJECT}"
+MK_TRAIN_JOB = f"train-{MK_PROJECT}"
+MK_DEVELOP_JOB = f"develop-{MK_PROJECT}"
+MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT}"
+MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT}"
+MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT}"
 
 MK_RUN_DEFAULT = "base"  # env var 'RUN'
 
 MK_BASE_ENV_NAME = "neuromation/base"
-MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT_SLUG}"
+MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT}"
 
 
 PROJECT_APT_FILE_NAME = "apt.txt"
@@ -108,7 +108,7 @@ PROJECT_RESULTS_DIR_CONTENT = {"sample.log"}
 
 # == tests constants ==
 
-LOG_FILE_NAME = f"output_{MK_PROJECT_SLUG}.log"
+LOG_FILE_NAME = f"output_{MK_PROJECT}.log"
 CLEANUP_JOBS_FILE_NAME = "cleanup_jobs.txt"
 CLEANUP_STORAGE_FILE_NAME = "cleanup_storage.txt"
 CLEANUP_SCRIPT_FILE_NAME = "cleanup.sh"
