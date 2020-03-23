@@ -604,10 +604,10 @@ def test_make_hypertrain(
     # Print wandb status for debugging reasons
     run("wandb status")
 
-    n = 1
+    n = 2
     with finalize("make kill-hypertrain-all"):
         out = run(
-            f"make hypertrain N_HYPERPARAM_JOBS={n} TRAIN_CMD='sleep 10 && echo done'",
+            f"make hypertrain N_HYPERPARAM_JOBS={n}",
             expect_patterns=(
                 [_get_pattern_status_running()] * n
                 + [f"Started {n} hyper-parameter search jobs"]

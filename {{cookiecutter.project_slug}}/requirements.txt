@@ -1,6 +1,6 @@
 neuromation==20.3.23
+wandb==0.8.28
 flake8
 mypy
 isort
 black
-wandb
