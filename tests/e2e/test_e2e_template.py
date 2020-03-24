@@ -604,7 +604,7 @@ def test_make_hypertrain(
     # Print wandb status for debugging reasons
     run("wandb status")
 
-    n = 2
+    n = 1
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_HYPERPARAM_JOBS={n}",
@@ -614,6 +614,7 @@ def test_make_hypertrain(
             ),
         )
         jobs = parse_jobs_ids(out, expect_num=n)
+        run("make ps-hypertrain", expect_patterns=jobs)
 
         with finalize(*(f"neuro kill {job}" for job in jobs)):
             for job in jobs:
@@ -781,7 +782,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
-def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
+def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
     with finalize(f"neuro kill {mk_train_job()}"):
         cmd = 'make train TRAIN_CMD="sleep 3h"'
         with measure_time(cmd):
@@ -799,6 +800,14 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
                 detect_new_jobs=False,
                 expect_patterns=[_get_pattern_connected_ssh()],
                 assert_exit_code=False,
+            )
+
+        cmd = "make ps-train"
+        with measure_time(cmd):
+            run(
+                cmd,
+                detect_new_jobs=False,
+                expect_patterns=[mk_train_job()],
             )
 
         cmd = "make kill-train"
