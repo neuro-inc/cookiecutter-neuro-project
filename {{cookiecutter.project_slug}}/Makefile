@@ -15,20 +15,18 @@ PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
 PROJECT_PATH_ENV?=/project
 
 ##### JOB NAMES #####
-
-PROJECT_POSTFIX?={{cookiecutter.project_slug}}
-
-SETUP_JOB?=setup-$(PROJECT_POSTFIX)
-TRAIN_JOB?=train-$(PROJECT_POSTFIX)
-DEVELOP_JOB?=develop-$(PROJECT_POSTFIX)
-JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
-TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
-FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
+PROJECT?={{cookiecutter.project_slug}}
+SETUP_JOB?=setup-$(PROJECT)
+TRAIN_JOB?=train-$(PROJECT)
+DEVELOP_JOB?=develop-$(PROJECT)
+JUPYTER_JOB?=jupyter-$(PROJECT)
+TENSORBOARD_JOB?=tensorboard-$(PROJECT)
+FILEBROWSER_JOB?=filebrowser-$(PROJECT)
 
 ##### ENVIRONMENTS #####
 
 BASE_ENV_NAME?=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX):$(VERSION)
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT):$(VERSION)
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
@@ -340,7 +338,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
 		|| { echo "ERROR: W&B sweep config file not found: '$$PWD/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
-	WANDB_PROJECT=$(PROJECT_POSTFIX) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	WANDB_PROJECT=$(PROJECT) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
@@ -368,7 +366,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--env JOB_TIMEOUT=0 \
 			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 			$(CUSTOM_ENV_NAME) \
-			bash -c "export WANDB_PROJECT=$(PROJECT_POSTFIX) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
+			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
 	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
@@ -498,7 +496,7 @@ _upgrade:
 		--overwrite-if-exists \
 		--checkout release \
 		gh:neuromation/cookiecutter-neuro-project \
-		project_slug=$(PROJECT_POSTFIX) \
+		project_slug=$(PROJECT) \
 		code_directory=$(CODE_DIR)
 	git checkout -- $(DATA_DIR) $(CODE_DIR) $(CONFIG_DIR) $(NOTEBOOKS_DIR) $(RESULTS_DIR)
 	git checkout -- .gitignore requirements.txt apt.txt setup.cfg README.md
