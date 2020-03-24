@@ -805,9 +805,7 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
         cmd = "make ps-train"
         with measure_time(cmd):
             run(
-                cmd,
-                detect_new_jobs=False,
-                expect_patterns=[mk_train_job()],
+                cmd, detect_new_jobs=False, expect_patterns=[mk_train_job()],
             )
 
         cmd = "make kill-train"
