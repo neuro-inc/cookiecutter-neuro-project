@@ -138,7 +138,7 @@ setup: ### Setup remote environment
 		--description "$(PROJECT_ID):setup" \
 		--preset cpu-small \
 		--detach \
-		--env JOB_TIMEOUT=1h \
+		--life-span=1h \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
 		$(BASE_ENV_NAME) \
 		'sleep infinity'
@@ -275,7 +275,7 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
 		sleep infinity
@@ -313,7 +313,7 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=0 \
+		--life-span=0 \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
@@ -363,7 +363,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
-			--env JOB_TIMEOUT=0 \
+			--life-span=0 \
 			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 			$(CUSTOM_ENV_NAME) \
 			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
@@ -405,7 +405,7 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV_NAME) \
@@ -432,7 +432,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
@@ -450,7 +450,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
 		filebrowser/filebrowser \
 		--noauth
