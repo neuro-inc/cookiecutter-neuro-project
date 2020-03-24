@@ -328,6 +328,11 @@ endif
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN) || :
 
+.PHONY: kill-train-all
+kill-train-all:  ### Terminate all training jobs you have submitted
+	jobs=`neuro -q ps --tag "target:train" $(_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
+
 # Number of hyper-parameter search jobs
 N_HYPERPARAM_JOBS?=3
 
@@ -372,21 +377,17 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	done; \
 	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
+.PHONY: kill-hypertrain
+kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	jobs=`neuro -q ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
+
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	@[ ! -f "$(WANDB_SWEEPS_FILE)" ] && echo "File '$(WANDB_SWEEPS_FILE)' does not exist. Abort." || { \
-		for sweep in `tac $(WANDB_SWEEPS_FILE)`; do \
-			echo "Killing jobs of the sweep '$$sweep'..." && \
-			jobs=`neuro -q ps --tag "target:train" --tag "sweep:$$sweep" $(_TAGS) | tr -d "\r"` && \
-			$(NEURO) kill $${jobs:-placeholder} ||: ; \
-		done; \
-		echo "Please remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." ; \
-	}
-
-.PHONY: kill-train-all
-kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs=`neuro -q ps --tag "target:train" $(_TAGS) | tr -d "\r"` && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	jobs=`neuro -q ps --tag "target:hypertrain" $(_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
@@ -490,12 +491,17 @@ lint:  ### Run static code analysis locally
 ps:  ### List all running and pending jobs
 	$(NEURO) ps $(_TAGS)
 
-.PHONY: ps-train
-ps-train:  ### List all running and pending training jobs
+.PHONY: ps-train-all
+ps-train-all:  ### List all running and pending training jobs
 	$(NEURO) ps --tag "target:train" $(_TAGS)
 
 .PHONY: ps-hypertrain
 ps-hypertrain:  ### List all running and pending training jobs
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	$(NEURO) ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_TAGS)
+
+.PHONY: ps-hypertrain-all
+ps-hypertrain-all:  ### List all running and pending training jobs
 	$(NEURO) ps --tag "target:hypertrain" $(_TAGS)
 
 
