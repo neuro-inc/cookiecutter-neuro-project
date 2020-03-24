@@ -625,7 +625,7 @@ def test_make_hypertrain(
                         "Running runs:",
                         "Agent received command: run",
                         "Agent starting run with config:",
-                        "done",
+                        "Your training script here",
                     ],
                     error_patterns=[r"ERROR", r"Error while calling W&B API"],
                     assert_exit_code=False,  # do not wait till end
