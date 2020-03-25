@@ -461,9 +461,12 @@ def parse_job_url(out: str) -> str:
     return search.group(1)
 
 
-def neuro_ls(path: str) -> t.Set[str]:
+def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
+    options: t.List[str] = []
+    if hidden:
+        options.append("-a")
     out = run(
-        f"neuro ls -a {path}",
+        f"neuro ls {' '.join(options)} {path}",
         timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
@@ -513,17 +516,13 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
     return status
 
 
-def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
-    return ls_files(local_path) | ls_dirs(local_path)
-
-
-def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
+def ls(local_path: t.Union[Path, str], hidden: bool = True) -> t.Set[str]:
+    # return ls_files(local_path, hidden) | ls_dirs(local_path, hidden)
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
-    return {f.name for f in path.iterdir() if f.is_file()}
-
-
-def ls_dirs(local_path: t.Union[Path, str]) -> t.Set[str]:
-    path = Path(local_path)
-    assert path.is_dir(), f"path {path} does not exist"
-    return {f.name for f in path.iterdir() if f.is_dir()}
+    return {
+        p.name
+        for p in path.iterdir()
+        # if p.is_file() and
+        if not hidden or not p.name.startswith(".")
+    }

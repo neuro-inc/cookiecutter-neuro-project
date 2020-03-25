@@ -82,7 +82,6 @@ from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import (
     finalize,
     ls,
-    ls_files,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -338,7 +337,7 @@ def test_import_code_in_notebooks(
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_code() -> None:
-    assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
+    assert ls(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -352,7 +351,7 @@ def test_make_upload_code() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_data() -> None:
-    assert len(ls_files(MK_DATA_DIR)) == N_FILES
+    assert len(ls(MK_DATA_DIR, hidden=False)) == N_FILES
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
     )
@@ -361,7 +360,7 @@ def test_make_upload_data() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
         run(make_cmd)
 
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
 
@@ -370,7 +369,7 @@ def test_make_upload_data() -> None:
 def test_make_upload_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
-    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls(MK_CONFIG_DIR, hidden=False) == PROJECT_CONFIG_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
@@ -380,13 +379,13 @@ def test_make_upload_config(
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
         run(make_cmd)
 
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}", hidden=False)
     assert actual == PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_notebooks() -> None:
-    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
         timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
@@ -425,7 +424,7 @@ def test_make_upload_all() -> None:
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_data() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
     assert len(actual_remote) == N_FILES
 
     # Download:
@@ -434,7 +433,7 @@ def test_make_download_data() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
         run(make_cmd)
 
-    assert len(ls_files(MK_DATA_DIR)) == N_FILES
+    assert len(ls(MK_DATA_DIR, hidden=False)) == N_FILES
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -447,7 +446,7 @@ def test_make_download_noteboooks() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
         run(make_cmd)
 
-    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -460,7 +459,7 @@ def test_make_download_config() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
         run(make_cmd)
 
-    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -845,7 +844,7 @@ def test_make_clean_config(
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_data() -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
     assert len(actual) == N_FILES
     assert all(name.endswith(".tmp") for name in actual)
 
