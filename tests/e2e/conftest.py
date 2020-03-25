@@ -31,9 +31,7 @@ from tests.e2e.configuration import (
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
     PROJECT_APT_FILE_NAME,
-    PROJECT_NOTEBOOKS_DIR_CONTENT,
     PROJECT_PIP_FILE_NAME,
-    PROJECT_RESULTS_DIR_CONTENT,
     SECRET_FILE_ENC_PATTERN,
     TIMEOUT_NEURO_LOGIN,
     TIMEOUT_NEURO_RUN_CPU,
@@ -42,7 +40,7 @@ from tests.e2e.configuration import (
     WANDB_KEY_FILE,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.runners import ls, run
+from tests.e2e.helpers.runners import run
 from tests.e2e.helpers.utils import copy_local_files, generate_random_file
 from tests.utils import inside_dir
 

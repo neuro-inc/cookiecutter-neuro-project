@@ -412,7 +412,7 @@ def test_make_upload_results() -> None:
         run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_POST_UPLOAD)
@@ -815,73 +815,68 @@ def test_make_kill_all() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_code() -> None:
-    assert neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}"
+    assert neuro_ls(path, hidden=False)
 
     # just check exit code
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
         run(make_cmd)
 
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-    assert actual == PROJECT_CONFIG_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}"
+    assert neuro_ls(path, hidden=False)
 
     make_cmd = "make clean-config"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_data() -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}"
+    actual = neuro_ls(path, hidden=False)
     assert len(actual) == N_FILES
-    assert all(name.endswith(".tmp") for name in actual)
 
     make_cmd = "make clean-data"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_notebooks() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}"
+    assert neuro_ls(path)
 
     make_cmd = "make clean-notebooks"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_results() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}"
+    assert neuro_ls(path)
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
         run(make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
