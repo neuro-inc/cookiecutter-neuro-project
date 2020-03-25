@@ -209,21 +209,17 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     assert data_dir.is_dir()
     for _ in range(N_FILES):
         generate_random_file(data_dir, FILE_SIZE_B)
-    assert len(list(data_dir.iterdir())) >= N_FILES
 
     code_dir = Path(MK_CODE_DIR)
     assert code_dir.is_dir()
-    assert list(code_dir.iterdir())
 
     notebooks_dir = Path(MK_NOTEBOOKS_DIR)
     assert notebooks_dir.is_dir()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "notebooks", notebooks_dir)
-    assert ls(notebooks_dir) == PROJECT_NOTEBOOKS_DIR_CONTENT
 
     results_dir = Path(MK_RESULTS_DIR)
     assert results_dir.is_dir()
     copy_local_files(LOCAL_TESTS_SAMPLES_PATH / "results", results_dir)
-    assert ls(results_dir) == PROJECT_RESULTS_DIR_CONTENT
 
     # Save project directory on storage for further cleanup:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)

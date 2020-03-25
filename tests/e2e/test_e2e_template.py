@@ -876,7 +876,7 @@ def test_make_clean_notebooks() -> None:
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_results() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
