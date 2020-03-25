@@ -463,7 +463,7 @@ def parse_job_url(out: str) -> str:
 
 def neuro_ls(path: str) -> t.Set[str]:
     out = run(
-        f"neuro ls {path}",
+        f"neuro ls -a {path}",
         timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
