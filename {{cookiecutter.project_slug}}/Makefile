@@ -330,7 +330,9 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs=`neuro -q ps --tag "target:train" $(_TAGS) | tr -d "\r"` && \
+	jobs_train=`neuro -q ps -a  --tag="target:train"` \
+	jobs_proj=`neuro -q ps  -a $(_TAGS)` \
+	jobs=`comm -1 -2 <(echo $jobs_train | tr " " "\n" | sort) <(echo $jobs_proj | tr " " "\n" | sort)` \
 	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 # Number of hyper-parameter search jobs
