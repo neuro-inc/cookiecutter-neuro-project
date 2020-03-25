@@ -97,9 +97,6 @@ AWS_KEY_FILE = "aws-credentials.txt"
 WANDB_KEY_FILE = "wandb-token.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
-# TODO(artem): hidden files is a hack, see issue #93
-PROJECT_HIDDEN_FILES = {".gitkeep", ".ipynb_checkpoints", ".mypy_cache", "__pycache__"}
-
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py", WANDB_SWEEP_FILE}
 PROJECT_CONFIG_DIR_CONTENT = {"test-config", GCP_KEY_FILE, AWS_KEY_FILE, WANDB_KEY_FILE}
 PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb"}

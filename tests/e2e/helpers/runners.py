@@ -17,7 +17,6 @@ from tests.e2e.configuration import (
     LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
-    PROJECT_HIDDEN_FILES,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
     VERBS_SECRET,
@@ -468,11 +467,7 @@ def neuro_ls(path: str) -> t.Set[str]:
         timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    result = set(out.split())
-    for hidden in PROJECT_HIDDEN_FILES:
-        if hidden in result:
-            result.remove(hidden)
-    return result
+    return set(out.split())
 
 
 def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
@@ -525,18 +520,10 @@ def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
 def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
-    return {
-        f.name
-        for f in path.iterdir()
-        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
-    }
+    return {f.name for f in path.iterdir() if f.is_file()}
 
 
 def ls_dirs(local_path: t.Union[Path, str]) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
-    return {
-        f.name
-        for f in path.iterdir()
-        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
-    }
+    return {f.name for f in path.iterdir() if f.is_dir()}
