@@ -1,0 +1,2 @@
+[storage]
+cp-exclude = ["*.pyc", "*.log", "__pycache__", ".ipynb_checkpoints", "wandb"]
