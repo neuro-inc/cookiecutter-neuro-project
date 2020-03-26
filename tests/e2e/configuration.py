@@ -97,16 +97,20 @@ AWS_KEY_FILE = "aws-credentials.txt"
 WANDB_KEY_FILE = "wandb-token.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
-PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py", WANDB_SWEEP_FILE, ".gitkeep"}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py", WANDB_SWEEP_FILE}
 PROJECT_CONFIG_DIR_CONTENT = {
     "test-config",
     GCP_KEY_FILE,
     AWS_KEY_FILE,
     WANDB_KEY_FILE,
-    ".gitkeep",
 }
-PROJECT_NOTEBOOKS_DIR_CONTENT = {"demo.ipynb", "00_notebook_tutorial.ipynb", ".gitkeep"}
-PROJECT_RESULTS_DIR_CONTENT = {"sample.log", ".gitkeep"}
+PROJECT_NOTEBOOKS_DIR_CONTENT = {
+    "demo.ipynb",
+    "00_notebook_tutorial.ipynb",
+}
+PROJECT_RESULTS_DIR_CONTENT = {
+    "sample.log",
+}
 
 
 # == tests constants ==
