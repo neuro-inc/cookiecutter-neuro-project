@@ -517,12 +517,10 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
 
 
 def ls(local_path: t.Union[Path, str], hidden: bool = True) -> t.Set[str]:
-    # return ls_files(local_path, hidden) | ls_dirs(local_path, hidden)
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
     return {
         p.name
         for p in path.iterdir()
-        # if p.is_file() and
         if not hidden or not p.name.startswith(".")
     }
