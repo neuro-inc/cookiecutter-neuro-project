@@ -77,6 +77,8 @@ WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
+_STREAM_CMD=tail -f /output
+
 ##### COMMANDS #####
 
 NEURO?=neuro
@@ -285,8 +287,12 @@ connect-develop:  ### Connect to the remote shell running on the development job
 	$(NEURO) exec --no-key-check $(DEVELOP_JOB) bash
 
 .PHONY: logs-develop
-logs-develop:  ### Connect to the remote shell running on the development job
+logs-develop:  ### Output logs of the development job
 	$(NEURO) logs $(DEVELOP_JOB)
+
+.PHONY: stream-develop
+stream-develop:  ### Live-stream development job's output
+	$(NEURO) exec --no-key-check -T $(DEVELOP_JOB) $(_STREAM_CMD)
 
 .PHONY: port-forward-develop
 port-forward-develop:  ### Forward SSH port to localhost for remote debugging
@@ -319,8 +325,12 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
-	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
+	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) $(_STREAM_CMD) || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
 endif
+
+.PHONY: stream-train
+stream-train:  ### Live-stream training job's output (set up env var 'RUN' to specify the training job)
+	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) $(_STREAM_CMD)
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)

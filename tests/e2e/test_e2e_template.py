@@ -573,6 +573,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
         log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
         monkeypatch.setenv("TRAIN_CMD", cmd)
 
+        tqdm_pattern = r"\d+%.*\d+/10000"
         cmd = "make train"
         with measure_time(cmd):
             run(
@@ -581,11 +582,19 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
                 expect_patterns=[
                     _get_pattern_status_running(),
                     r"Streaming logs of the job",
-                    r"\d+%.*\d+/10000",
+                    tqdm_pattern,
                 ],
                 error_patterns=["[Ee]rror"],
                 assert_exit_code=False,
             )
+
+        run(
+            "make stream-train",
+            detect_new_jobs=False,
+            expect_patterns=[tqdm_pattern],
+            error_patterns=["[Ee]rror"],
+            assert_exit_code=False,
+        )
 
         run("make kill-train", detect_new_jobs=False)
 
@@ -758,6 +767,15 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
         #  and then reading it via `make logs-develop` (needs improvements of runners)
 
         cmd = "make logs-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                expect_patterns=["Starting SSH server"],
+                timeout_s=TIMEOUT_NEURO_LOGS,
+                assert_exit_code=False,
+            )
+
+        cmd = "make stream-develop"
         with measure_time(cmd):
             run(
                 cmd,
