@@ -534,22 +534,14 @@ def test_make_train_multiple_experiments(
             if exp != MK_RUN_DEFAULT:
                 cmd += f" RUN={exp}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
-                out = run(
+                run(
                     cmd,
                     expect_patterns=[_get_pattern_status_running()],
                     attempts=3,
                     attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                     assert_exit_code=False,
                 )
-        ps_cmd = f'neuro -q ps --description="{neuro_project_id}:train"'
-
-        out = run(ps_cmd, detect_new_jobs=False)
-        assert len(out.split()) == len(jobs)
-
         run("make kill-train-all", detect_new_jobs=False)
-
-        out = run(ps_cmd, detect_new_jobs=False)
-        assert not out.strip()
 
 
 @pytest.mark.run(order=STEP_RUN)
