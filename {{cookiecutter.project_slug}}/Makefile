@@ -468,13 +468,13 @@ kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tens
 setup-local:  ### Install pip requirements locally
 	pip install -r requirements.txt
 
-.PHONY: format
-format:  ### Automatically format the code
+.PHONY: format-local
+format-local:  ### Automatically format the code
 	isort -rc {{cookiecutter.code_directory}}
 	black {{cookiecutter.code_directory}}
 
-.PHONY: lint
-lint:  ### Run static code analysis locally
+.PHONY: lint-local
+lint-local:  ### Run static code analysis locally
 	isort -c -rc {{cookiecutter.code_directory}}
 	black --check {{cookiecutter.code_directory}}
 	mypy {{cookiecutter.code_directory}}
