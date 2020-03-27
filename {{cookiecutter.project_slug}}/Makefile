@@ -127,9 +127,9 @@ setup: ### Setup remote environment
 	$(NEURO) mkdir --parents $(PROJECT_PATH_STORAGE) \
 		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) \
 		$(DATA_DIR_STORAGE) \
-		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) \
+		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/ \
 		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) \
-		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/
 	$(NEURO) cp requirements.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
@@ -160,11 +160,11 @@ _check_setup:
 
 .PHONY: upload-code
 upload-code: _check_setup  ### Upload code directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR)/ $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/
 
 .PHONY: download-code
 download-code: _check_setup  ### Download code directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/ $(CODE_DIR)/
 
 .PHONY: clean-code
 clean-code: _check_setup  ### Delete code directory from the platform storage
@@ -184,11 +184,11 @@ clean-data: _check_setup  ### Delete data directory from the platform storage
 
 .PHONY: upload-config
 upload-config: _check_setup  ### Upload config directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR)/ $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/
 
 .PHONY: download-config
 download-config: _check_setup  ### Download config directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/ $(CONFIG_DIR)/
 
 .PHONY: clean-config
 clean-config: _check_setup  ### Delete config directory from the platform storage
@@ -196,11 +196,11 @@ clean-config: _check_setup  ### Delete config directory from the platform storag
 
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR)/ $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/
 
 .PHONY: download-notebooks
 download-notebooks: _check_setup  ### Download notebooks directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/ $(NOTEBOOKS_DIR)/
 
 .PHONY: clean-notebooks
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
@@ -208,11 +208,11 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR)/ $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/ $(RESULTS_DIR)/
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
@@ -270,9 +270,9 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--preset $(PRESET) \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/:$(PROJECT_PATH_ENV)/$(CODE_DIR)/:rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/:$(PROJECT_PATH_ENV)/$(CONFIG_DIR)/:ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/:$(PROJECT_PATH_ENV)/$(RESULTS_DIR)/:rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=1d \
@@ -308,9 +308,9 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--detach \
 		$(TRAIN_WAIT_START_OPTION) \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/:$(PROJECT_PATH_ENV)/$(CODE_DIR)/:ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/:$(PROJECT_PATH_ENV)/$(CONFIG_DIR)/:ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/:$(PROJECT_PATH_ENV)/$(RESULTS_DIR)/:rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--env JOB_TIMEOUT=0 \
@@ -341,8 +341,8 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	WANDB_PROJECT=$(PROJECT) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee /proc/self/fd/2 | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
-	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR)/ $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/
+	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR)/ $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/
 	@echo "Uploading wandb config file './wandb/settings' to Neuro Storage..."
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
@@ -357,8 +357,8 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--preset $(PRESET) \
 			--detach \
 			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
-			--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
-			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/:$(PROJECT_PATH_ENV)/$(CODE_DIR)/:ro \
+			--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/:$(PROJECT_PATH_ENV)/$(CONFIG_DIR)/:ro \
 			--volume $(PROJECT_PATH_STORAGE)/sweep-$$sweep:$(PROJECT_PATH_ENV)/sweep-$$sweep:rw \
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
@@ -401,10 +401,10 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--browse \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
-		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR)/:$(PROJECT_PATH_ENV)/$(CODE_DIR)/:rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)/:$(PROJECT_PATH_ENV)/$(CONFIG_DIR)/:ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)/:$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR)/:rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/:$(PROJECT_PATH_ENV)/$(RESULTS_DIR)/:rw \
 		--env JOB_TIMEOUT=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
@@ -433,9 +433,9 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		$(HTTP_AUTH) \
 		--browse \
 		--env JOB_TIMEOUT=1d \
-		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/:$(PROJECT_PATH_ENV)/$(RESULTS_DIR)/:ro \
 		$(CUSTOM_ENV_NAME) \
-		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
+		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)/
 
 .PHONY: kill-tensorboard
 kill-tensorboard:  ### Terminate the job with TensorBoard
@@ -497,7 +497,7 @@ _upgrade:
 		--checkout release \
 		gh:neuromation/cookiecutter-neuro-project \
 		project_slug=$(PROJECT) \
-		code_directory=$(CODE_DIR)
-	git checkout -- $(DATA_DIR) $(CODE_DIR) $(CONFIG_DIR) $(NOTEBOOKS_DIR) $(RESULTS_DIR)
+		code_directory=$(CODE_DIR)/
+	git checkout -- $(DATA_DIR) $(CODE_DIR)/ $(CONFIG_DIR)/ $(NOTEBOOKS_DIR)/ $(RESULTS_DIR)/
 	git checkout -- .gitignore requirements.txt apt.txt setup.cfg README.md
 	@echo "Some files are successfully changed. Please review the changes using git diff."
