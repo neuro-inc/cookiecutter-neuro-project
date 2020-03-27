@@ -27,6 +27,7 @@ FILEBROWSER_JOB?=filebrowser-$(PROJECT)
 
 BASE_ENV_NAME?=neuromation/base:$(BASE_ENV_VERSION)
 CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT):$(VERSION)
+DEV_ENV?=image:neuromation-$(PROJECT):$(VERSION)-dev
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
@@ -55,7 +56,6 @@ TRAIN_STREAM_LOGS?=yes
 TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
 LOCAL_PORT?=2211
-
 
 ##### SECRETS ######
 
@@ -292,6 +292,11 @@ logs-develop:  ### Connect to the remote shell running on the development job
 port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 	@test $(LOCAL_PORT) || { echo 'Please set up env var LOCAL_PORT'; false; }
 	$(NEURO) port-forward $(DEVELOP_JOB) $(LOCAL_PORT):22
+
+.PHONY: save-develop
+save-develop:  ### Create an image from the development job
+	@test $(DEV_ENV) || { echo 'Please set up env var DEV_ENV'; false; }
+	$(NEURO) save $(DEVELOP_JOB) $(DEV_ENV)
 
 .PHONY: kill-develop
 kill-develop:  ### Terminate the development job

@@ -732,6 +732,24 @@ def test_gpu_available(environment: str) -> None:
             with measure_time(cmd):
                 run(cmd, attempts=2, timeout_s=TIMEOUT_NEURO_EXEC)
 
+        cmd = "make save-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                detect_new_jobs=False,
+                expect_patterns=[
+                    rf"Saving .*{JOB_ID_PATTERN}",
+                    r"Creating image",
+                    r"Image created",
+                    r"Pushing image",
+                    r"image://.*",
+                ],
+            )
+
+        run(
+            "make kill-develop", detect_new_jobs=False,
+        )
+
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_develop_all(env_neuro_run_timeout: int) -> None:
