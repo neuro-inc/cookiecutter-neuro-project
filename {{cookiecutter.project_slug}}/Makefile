@@ -46,6 +46,10 @@ DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 #   make jupyter PRESET=cpu-small
 PRESET?=gpu-small
 
+# Extra options for `neuro run` targets:
+#   make train RUN_EXTRA="--env MYVAR=value"
+RUN_EXTRA?=
+
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Applied only to jupyter, tensorboard and filebrowser jobs.
 # Set `HTTP_AUTH=--no-http-auth` to disable any authentication.
@@ -154,7 +158,7 @@ setup: ### Setup remote environment
 	$(NEURO) cp requirements.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(SETUP_JOB) \
 		--description "$(PROJECT_ID):setup" \
 		--preset cpu-small \
@@ -285,7 +289,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 
 .PHONY: develop
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(DEVELOP_JOB) \
 		--description "$(PROJECT_ID):develop" \
 		--preset $(PRESET) \
@@ -320,7 +324,7 @@ kill-develop:  ### Terminate the development job
 
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--description "$(PROJECT_ID):train" \
 		--preset $(PRESET) \
@@ -367,7 +371,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	echo "Running $(N_HYPERPARAM_JOBS) jobs of sweep '$$sweep'..." && \
 	for index in `seq 1 $(N_HYPERPARAM_JOBS)` ; do \
 		echo -e "\nStarting job $$index..." ; \
-		$(NEURO) run \
+		$(NEURO) run $(RUN_EXTRA) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
 			--description "$(PROJECT_ID):train:$$sweep" \
 			--preset $(PRESET) \
@@ -408,7 +412,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 
 .PHONY: jupyter
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(JUPYTER_JOB) \
 		--description "$(PROJECT_ID):jupyter" \
 		--preset $(PRESET) \
@@ -441,7 +445,7 @@ kill-jupyterlab:  ### Terminate the job with JupyterLab
 
 .PHONY: tensorboard
 tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
 		--description "$(PROJECT_ID):tensorboard" \
@@ -459,7 +463,7 @@ kill-tensorboard:  ### Terminate the job with TensorBoard
 
 .PHONY: filebrowser
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(FILEBROWSER_JOB) \
 		--description "$(PROJECT_ID):filebrowser" \
 		--preset cpu-small \
