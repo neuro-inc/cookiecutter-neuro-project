@@ -491,17 +491,17 @@ lint:  ### Run static code analysis locally
 ps:  ### List all running and pending jobs
 	$(NEURO) ps $(_TAGS)
 
-.PHONY: ps-train-all
-ps-train-all:  ### List all running and pending training jobs
+.PHONY: ps-train
+ps-train:  ### List all running and pending training jobs
 	$(NEURO) ps --tag "target:train" $(_TAGS)
 
 .PHONY: ps-hypertrain
-ps-hypertrain:  ### List all running and pending training jobs
+ps-hypertrain:  ### List running and pending jobs of the latest hyper-parameter search sweep
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
 	$(NEURO) ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_TAGS)
 
 .PHONY: ps-hypertrain-all
-ps-hypertrain-all:  ### List all running and pending training jobs
+ps-hypertrain-all:  ### List running and pending jobs of all hyper-parameter search sweeps
 	$(NEURO) ps --tag "target:hypertrain" $(_TAGS)
 
 
