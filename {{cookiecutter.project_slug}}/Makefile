@@ -330,9 +330,7 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 
 .PHONY: kill-train-all
 kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs_train=`neuro -q ps -a  --tag="target:train"` \
-	jobs_proj=`neuro -q ps  -a $(_TAGS)` \
-	jobs=`comm -1 -2 <(echo $jobs_train | tr " " "\n" | sort) <(echo $jobs_proj | tr " " "\n" | sort)` \
+	jobs=`neuro -q ps --tag "target:train" $(_TAGS) | tr -d "\r"` && \
 	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 # Number of hyper-parameter search jobs
@@ -467,7 +465,7 @@ kill-filebrowser:  ### Terminate the job with File Browser
 .PHONY: kill-all
 kill-all:  ### Terminate all jobs of this project
 	jobs=`neuro -q ps $(_TAGS) | tr -d "\r"` && \
-	$(NEURO) kill $${jobs:-placeholder}
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 ##### LOCAL #####
 
