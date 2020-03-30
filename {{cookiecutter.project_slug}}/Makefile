@@ -81,7 +81,7 @@ WANDB_SWEEPS_FILE=.wandb_sweeps
 
 NEURO?=neuro
 
-_TAGS=--tag "project-slug:$(PROJECT)" --tag "project-id:$(PROJECT_ID)"
+_TAGS=--tag "kind:project" --tag "project-slug:$(PROJECT)" --tag "project-id:$(PROJECT_ID)"
 
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
