@@ -102,16 +102,16 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
-def test_make_lint() -> None:
+def test_make_lint_local() -> None:
     # just check exit code
-    cmd = "make lint"
+    cmd = "make lint-local"
     run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_LOCAL + 1)
-def test_make_format() -> None:
+def test_make_format_local() -> None:
     # just check exit code
-    cmd = "make format"
+    cmd = "make format-local"
     run(cmd, detect_new_jobs=False)
 
 
