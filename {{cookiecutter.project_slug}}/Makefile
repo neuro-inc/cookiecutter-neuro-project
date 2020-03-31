@@ -160,7 +160,7 @@ _check_setup:
 
 .PHONY: upload-code
 upload-code: _check_setup  ### Upload code directory to the platform storage
-    $(NEURO) cp \
+	$(NEURO) cp \
 		--recursive \
 		--update \
 		--no-target-directory \
@@ -168,7 +168,7 @@ upload-code: _check_setup  ### Upload code directory to the platform storage
 
 .PHONY: download-code
 download-code: _check_setup  ### Download code directory from the platform storage
-    $(NEURO) cp \
+	$(NEURO) cp \
 		--recursive \
 		--update \
 		--no-target-directory \
@@ -180,7 +180,7 @@ clean-code: _check_setup  ### Delete code directory from the platform storage
 
 .PHONY: upload-data
 upload-data: _check_setup  ### Upload data directory to the platform storage
-    $(NEURO) cp \
+	$(NEURO) cp \
 		--recursive \
 		--update \
 		--no-target-directory \
