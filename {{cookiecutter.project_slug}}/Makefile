@@ -409,7 +409,12 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
-		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
+		jupyter $(JUPYTER_MODE) \
+			--no-browser \
+			--ip=0.0.0.0 \
+			--allow-root \
+			--NotebookApp.token= \
+			--notebook-dir=$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR)
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
