@@ -1,4 +1,3 @@
-# import sys
 from pathlib import Path
 from typing import Any
 
@@ -51,9 +50,6 @@ from tests.e2e.configuration import (
     TIMEOUT_NEURO_LOGS,
     TIMEOUT_NEURO_PORT_FORWARD,
     TIMEOUT_NEURO_RMDIR_CODE,
-    TIMEOUT_NEURO_RMDIR_CONFIG,
-    TIMEOUT_NEURO_RMDIR_DATA,
-    TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
     TIMEOUT_NEURO_RUN_CPU,
     TIMEOUT_NEURO_RUN_GPU,
     WANDB_KEY_FILE,
@@ -82,7 +78,6 @@ from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import (
     finalize,
     ls,
-    ls_files,
     neuro_ls,
     neuro_rm_dir,
     parse_job_id,
@@ -338,7 +333,7 @@ def test_import_code_in_notebooks(
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_code() -> None:
-    assert ls_files(MK_CODE_DIR) == PROJECT_CODE_DIR_CONTENT
+    assert ls(MK_CODE_DIR) >= PROJECT_CODE_DIR_CONTENT
     neuro_rm_dir(
         f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
     )
@@ -347,73 +342,61 @@ def test_make_upload_code() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CODE):
         run(make_cmd)
     actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
-    assert actual == PROJECT_CODE_DIR_CONTENT
+    assert actual >= PROJECT_CODE_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_data() -> None:
-    assert len(ls_files(MK_DATA_DIR)) == N_FILES
-    neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_DATA
-    )
+    assert len(ls(MK_DATA_DIR, hidden=False)) >= N_FILES
+    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
 
     make_cmd = "make upload-data"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
         run(make_cmd)
 
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
-    assert len(actual) == N_FILES
-    assert all(name.endswith(".tmp") for name in actual)
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
+    assert len(actual) >= N_FILES
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
-    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
-    neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}",
-        timeout_s=TIMEOUT_NEURO_RMDIR_CONFIG,
-    )
+    assert ls(MK_CONFIG_DIR, hidden=False) >= PROJECT_CONFIG_DIR_CONTENT
+    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
 
     make_cmd = "make upload-config"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
         run(make_cmd)
 
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-    assert actual == PROJECT_CONFIG_DIR_CONTENT
+    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}", hidden=False)
+    assert actual >= PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_notebooks() -> None:
-    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
-    neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",
-        timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
-    )
+    assert ls(MK_NOTEBOOKS_DIR) >= PROJECT_NOTEBOOKS_DIR_CONTENT
+    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",)
 
     make_cmd = "make upload-notebooks"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_NOTEBOOKS):
         run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert actual_remote >= PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_results() -> None:
-    assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
-    neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}",
-        timeout_s=TIMEOUT_NEURO_RMDIR_NOTEBOOKS,
-    )
+    assert ls(MK_RESULTS_DIR) >= PROJECT_RESULTS_DIR_CONTENT
+    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}",)
 
     make_cmd = "make upload-results"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_RESULTS):
         run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_POST_UPLOAD)
@@ -425,8 +408,8 @@ def test_make_upload_all() -> None:
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_data() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
-    assert len(actual_remote) == N_FILES
+    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
+    assert len(actual_remote) >= N_FILES
 
     # Download:
     make_cmd = "make download-data"
@@ -434,39 +417,39 @@ def test_make_download_data() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
         run(make_cmd)
 
-    assert len(ls_files(MK_DATA_DIR)) == N_FILES
+    assert len(ls(MK_DATA_DIR, hidden=False)) >= N_FILES
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_noteboooks() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert actual_remote >= PROJECT_NOTEBOOKS_DIR_CONTENT
 
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
         run(make_cmd)
 
-    assert ls_files(MK_NOTEBOOKS_DIR) == PROJECT_NOTEBOOKS_DIR_CONTENT
+    assert ls(MK_NOTEBOOKS_DIR) >= PROJECT_NOTEBOOKS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_config() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-    assert actual_remote == PROJECT_CONFIG_DIR_CONTENT
+    assert actual_remote >= PROJECT_CONFIG_DIR_CONTENT
 
     make_cmd = "make download-config"
     cleanup_local_dirs(MK_CONFIG_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
         run(make_cmd)
 
-    assert ls_files(MK_CONFIG_DIR) == PROJECT_CONFIG_DIR_CONTENT
+    assert ls(MK_CONFIG_DIR) >= PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_results() -> None:
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote == PROJECT_RESULTS_DIR_CONTENT
+    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
     # Download:
     make_cmd = "make download-results"
@@ -474,7 +457,7 @@ def test_make_download_results() -> None:
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_RESULTS):
         run(make_cmd)
 
-    assert ls(MK_RESULTS_DIR) == PROJECT_RESULTS_DIR_CONTENT
+    assert ls(MK_RESULTS_DIR) >= PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -816,73 +799,68 @@ def test_make_kill_all() -> None:
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_code() -> None:
-    assert neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}"
+    assert neuro_ls(path, hidden=False)
 
     # just check exit code
     make_cmd = "make clean-code"
     with measure_time(make_cmd):
         run(make_cmd)
 
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-    assert actual == PROJECT_CONFIG_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}"
+    assert neuro_ls(path, hidden=False)
 
     make_cmd = "make clean-config"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_UPLOAD_CONFIG,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_data() -> None:
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}"
+    actual = neuro_ls(path, hidden=False)
     assert len(actual) == N_FILES
-    assert all(name.endswith(".tmp") for name in actual)
 
     make_cmd = "make clean-data"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_DATA,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_notebooks() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote == PROJECT_NOTEBOOKS_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}"
+    assert neuro_ls(path)
 
     make_cmd = "make clean-notebooks"
     with measure_time(make_cmd):
         run(
-            make_cmd,
-            timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
-            # TODO: add clean-specific error patterns
+            make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_NOTEBOOKS,
         )
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
 def test_make_clean_results() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
+    path = f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}"
+    assert neuro_ls(path)
 
     make_cmd = "make clean-results"
     with measure_time(make_cmd):
         run(make_cmd, timeout_s=TIMEOUT_MAKE_CLEAN_RESULTS)
-    assert not neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
+    assert not neuro_ls(path, hidden=False)
 
 
 @pytest.mark.run(order=STEP_CLEANUP)
