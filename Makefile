@@ -16,7 +16,7 @@ version:
 
 .PHONY: lint
 lint:
-	isort -c -rc ${LINTER_DIRS}
+	isort -c -rc $(LINTER_DIRS)
 	black --check $(LINTER_DIRS)
 	mypy $(LINTER_DIRS)
 	flake8 $(LINTER_DIRS)

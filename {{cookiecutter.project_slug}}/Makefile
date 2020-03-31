@@ -21,9 +21,8 @@ JUPYTER_JOB=jupyter-$(PROJECT)
 TENSORBOARD_JOB=tensorboard-$(PROJECT)
 FILEBROWSER_JOB=filebrowser-$(PROJECT)
 
-BASE_ENV_NAME=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV_NAME=image:neuromation-$(PROJECT):$(VERSION)
-
+BASE_ENV=neuromation/base:$(BASE_ENV_VERSION)
+CUSTOM_ENV=image:neuromation-$(PROJECT):$(VERSION)
 
 ##### VARIABLES #####
 
@@ -163,13 +162,13 @@ setup: ### Setup remote environment
 		--description "$(PROJECT_ID):setup" \
 		--preset cpu-small \
 		--detach \
-		--env JOB_TIMEOUT=1h \
+		--life-span=1h \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
-		$(BASE_ENV_NAME) \
+		$(BASE_ENV) \
 		'sleep infinity'
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -qq update && cat $(PROJECT_PATH_ENV)/apt.txt | tr -d \"\\r\" | xargs -I % apt-get -qq install --no-install-recommends % && apt-get -qq clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'pip install --progress-bar=off -U --no-cache-dir -r $(PROJECT_PATH_ENV)/requirements.txt'"
-	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
+	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV)
 	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done
 
@@ -185,11 +184,19 @@ _check_setup:
 
 .PHONY: upload-code
 upload-code: _check_setup  ### Upload code directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: download-code
 download-code: _check_setup  ### Download code directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
 
 .PHONY: clean-code
 clean-code: _check_setup  ### Delete code directory from the platform storage
@@ -197,11 +204,19 @@ clean-code: _check_setup  ### Delete code directory from the platform storage
 
 .PHONY: upload-data
 upload-data: _check_setup  ### Upload data directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(DATA_DIR) $(DATA_DIR_STORAGE)
 
 .PHONY: download-data
 download-data: _check_setup  ### Download data directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR_STORAGE) $(DATA_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(DATA_DIR_STORAGE) $(DATA_DIR)
 
 .PHONY: clean-data
 clean-data: _check_setup  ### Delete data directory from the platform storage
@@ -209,11 +224,19 @@ clean-data: _check_setup  ### Delete data directory from the platform storage
 
 .PHONY: upload-config
 upload-config: _check_setup  ### Upload config directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
 
 .PHONY: download-config
 download-config: _check_setup  ### Download config directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
 
 .PHONY: clean-config
 clean-config: _check_setup  ### Delete config directory from the platform storage
@@ -221,11 +244,23 @@ clean-config: _check_setup  ### Delete config directory from the platform storag
 
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		--exclude="*" \
+		--include="*.ipynb" \
+		$(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
 download-notebooks: _check_setup  ### Download notebooks directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		--exclude="*" \
+		--include="*.ipynb" \
+		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
@@ -233,11 +268,19 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(RESULTS_DIR)/ $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+		$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/ $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
@@ -300,9 +343,9 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
+		$(CUSTOM_ENV) \
 		sleep infinity
 
 .PHONY: connect-develop
@@ -336,9 +379,9 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=0 \
+		--life-span=0 \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
+		$(CUSTOM_ENV) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
@@ -383,9 +426,9 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
-			--env JOB_TIMEOUT=0 \
+			--life-span=0 \
 			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-			$(CUSTOM_ENV_NAME) \
+			$(CUSTOM_ENV) \
 			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
 	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
@@ -425,11 +468,16 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
-		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
+		$(CUSTOM_ENV) \
+		jupyter $(JUPYTER_MODE) \
+			--no-browser \
+			--ip=0.0.0.0 \
+			--allow-root \
+			--NotebookApp.token= \
+			--notebook-dir=$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR)
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
@@ -452,9 +500,9 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
-		$(CUSTOM_ENV_NAME) \
+		tensorflow/tensorflow:latest \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
@@ -470,9 +518,9 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		filebrowser/filebrowser \
+		filebrowser/filebrowser:latest \
 		--noauth
 
 .PHONY: kill-filebrowser
@@ -488,13 +536,13 @@ kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tens
 setup-local:  ### Install pip requirements locally
 	pip install -r requirements.txt
 
-.PHONY: format
-format:  ### Automatically format the code
+.PHONY: format-local
+format-local:  ### Automatically format the code
 	isort -rc {{cookiecutter.code_directory}}
 	black {{cookiecutter.code_directory}}
 
-.PHONY: lint
-lint:  ### Run static code analysis locally
+.PHONY: lint-local
+lint-local:  ### Run static code analysis locally
 	isort -c -rc {{cookiecutter.code_directory}}
 	black --check {{cookiecutter.code_directory}}
 	mypy {{cookiecutter.code_directory}}
