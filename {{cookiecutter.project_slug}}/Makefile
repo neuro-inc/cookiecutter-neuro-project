@@ -439,7 +439,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 		--browse \
 		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
-		$(CUSTOM_ENV) \
+		tensorflow/tensorflow:latest \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
@@ -457,7 +457,7 @@ filebrowser: _check_setup  ### Run a job with File Browser and open UI in the de
 		--browse \
 		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		filebrowser/filebrowser \
+		filebrowser/filebrowser:latest \
 		--noauth
 
 .PHONY: kill-filebrowser
