@@ -42,11 +42,14 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
+        pip show neuromation || true
         python -m pip install -U pip wandb neuromation
+        pip show neuromation
         make init
       displayName: 'Install dependencies'
 
     - script: |
+        pip show neuromation
         make $(e2e.target)
       displayName: 'Run e2e against $(e2e.url)'
       env:
