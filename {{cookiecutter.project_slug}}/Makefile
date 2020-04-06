@@ -1,95 +1,124 @@
-##### PATHS #####
-
 VERSION=v1.4
 BASE_ENV_VERSION=v1.4
 PROJECT_ID=placeholder
 
-DATA_DIR?=data
-CONFIG_DIR?=config
-CODE_DIR?={{cookiecutter.code_directory}}
-NOTEBOOKS_DIR?=notebooks
-RESULTS_DIR?=results
+##### CONSTANTS #####
 
-PROJECT_PATH_STORAGE?=storage:{{cookiecutter.project_slug}}
+DATA_DIR=data
+CONFIG_DIR=config
+CODE_DIR={{cookiecutter.code_directory}}
+NOTEBOOKS_DIR=notebooks
+RESULTS_DIR=results
 
-PROJECT_PATH_ENV?=/project
+PROJECT_PATH_STORAGE=storage:{{cookiecutter.project_slug}}
+PROJECT_PATH_ENV=/project
 
-##### JOB NAMES #####
-PROJECT?={{cookiecutter.project_slug}}
-SETUP_JOB?=setup-$(PROJECT)
-TRAIN_JOB?=train-$(PROJECT)
-DEVELOP_JOB?=develop-$(PROJECT)
-JUPYTER_JOB?=jupyter-$(PROJECT)
-TENSORBOARD_JOB?=tensorboard-$(PROJECT)
-FILEBROWSER_JOB?=filebrowser-$(PROJECT)
+PROJECT={{cookiecutter.project_slug}}
+SETUP_JOB=setup-$(PROJECT)
+TRAIN_JOB=train-$(PROJECT)
+DEVELOP_JOB=develop-$(PROJECT)
+JUPYTER_JOB=jupyter-$(PROJECT)
+TENSORBOARD_JOB=tensorboard-$(PROJECT)
+FILEBROWSER_JOB=filebrowser-$(PROJECT)
+_TAGS=--tag "kind:project" --tag "project-slug:$(PROJECT)" --tag "project-id:$(PROJECT_ID)"
 
-##### ENVIRONMENTS #####
+BASE_ENV=neuromation/base:$(BASE_ENV_VERSION)
+CUSTOM_ENV=image:neuromation-$(PROJECT):$(VERSION)
 
-BASE_ENV_NAME?=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT):$(VERSION)
+##### VARIABLES #####
 
-##### VARIABLES YOU MAY WANT TO MODIFY #####
+# To overload a variable use either way:
+# - change its default value in Makefile,
+# - export variable: `export VAR=value`,
+# - or change its value for a single run only: `make <target> VAR=value`.
 
-# Jupyter mode. Available options: notebook (to run Jupyter Notebook), lab (to run JupyterLab).
-JUPYTER_MODE?=notebook
+# Allows to set the `neuro` executable:
+#   make setup NEURO=/usr/bin/neuro
+#   make setup NEURO="neuro --verbose --show-traceback"
+NEURO=neuro
 
-# Location of your dataset on the platform storage. Example:
-# DATA_DIR_STORAGE?=storage:datasets/cifar10
+
+# Location of your dataset on the platform storage:
+#   make setup DATA_DIR_STORAGE=storage:datasets/cifar10
 DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
 
-# The type of the training machine (run `neuro config show` to see the list of available types).
+# The type of the training machine (run `neuro config show`
+# to see the list of available types):
+#   make jupyter PRESET=cpu-small
 PRESET?=gpu-small
+
+# Extra options for `neuro run` targets:
+#   make train RUN_EXTRA="--env MYVAR=value"
+RUN_EXTRA?=
 
 # HTTP authentication (via cookies) for the job's HTTP link.
 # Applied only to jupyter, tensorboard and filebrowser jobs.
 # Set `HTTP_AUTH=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
+#   make jupyter HTTP_AUTH=--no-http-auth
 HTTP_AUTH?=--http-auth
 
-# When running the training job, wait until it gets actually running,
-# and stream logs to the standard output.
-# Set any other value to disable this feature: `TRAIN_STREAM_LOGS=no`.
+# If set to `yes`, then wait until the training job gets actually running,
+# and stream logs to the standard output:
+#   make train TRAIN_STREAM_LOGS=nope
 TRAIN_STREAM_LOGS?=yes
 
-# Command to run training inside the environment. Example:
+# Command to run training inside the environment:
+#   make train TRAIN_CMD="python ./train.py"
 TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
 
+# Postfix of training jobs:
+#   make train RUN=experiment-2
+#   make kill RUN=experiment-2
+RUN?=base
+
+# Local port to use in `port-forward`:
+#   make port-forward-develop LOCAL_PORT=2233
 LOCAL_PORT?=2211
 
+# Jupyter mode. Available options: `notebook` (to
+# run Jupyter Notebook), `lab` (to run JupyterLab):
+#   make jupyter JUPYTER_MODE=LAB
+JUPYTER_MODE?=notebook
 
-##### SECRETS ######
+# Number of hyper-parameter search jobs:
+#   make hypertrain N_HYPERPARAM_JOBS=5
+N_HYPERPARAM_JOBS?=3
 
 # Google Cloud integration settings:
+#   make gcloud-check-auth GCP_SECRET_FILE=name-of-gcp-key-file.json
 GCP_SECRET_FILE?=neuro-job-key.json
-GCP_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(GCP_SECRET_FILE)
-GCP_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(GCP_SECRET_PATH_LOCAL)
 
 # AWS integration settings:
+#   make aws-check-auth AWS_SECRET_FILE=name-of-aws-key-file.json
 AWS_SECRET_FILE?=aws-credentials.txt
-AWS_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(AWS_SECRET_FILE)
-AWS_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(AWS_SECRET_PATH_LOCAL)
 
 # Weights and Biases integration settings:
+#   make wandb-check-auth WANDB_SECRET_FILE=name-of-wandb-key-file.json
 WANDB_SECRET_FILE?=wandb-token.txt
+
+# Weights and Biases hyperparameter search configuration file:
+#   make hypertrain WANDB_SECRET_FILE=name-of-wandb-sweep-file.json
+WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
+
+
+##### CONSTANTS #####
+
+GCP_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(GCP_SECRET_FILE)
+GCP_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(GCP_SECRET_PATH_LOCAL)
+AWS_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(AWS_SECRET_FILE)
+AWS_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(AWS_SECRET_PATH_LOCAL)
 WANDB_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(WANDB_SECRET_FILE)
 WANDB_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(WANDB_SECRET_PATH_LOCAL)
-WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
-##### COMMANDS #####
-
-NEURO?=neuro
-
-_TAGS=--tag "kind:project" --tag "project-slug:$(PROJECT)" --tag "project-id:$(PROJECT_ID)"
 
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
 	TRAIN_WAIT_START_OPTION=
 endif
-
-# Check if GCP authentication file exists, then set up variables
 ifneq ($(wildcard $(GCP_SECRET_PATH_LOCAL)),)
 	OPTION_GCP_CREDENTIALS=\
 		--env GOOGLE_APPLICATION_CREDENTIALS="$(GCP_SECRET_PATH_ENV)" \
@@ -97,8 +126,6 @@ ifneq ($(wildcard $(GCP_SECRET_PATH_LOCAL)),)
 else
 	OPTION_GCP_CREDENTIALS=
 endif
-
-# Check if AWS authentication file exists, then set up variables
 ifneq ($(wildcard $(AWS_SECRET_PATH_LOCAL)),)
 	OPTION_AWS_CREDENTIALS=\
 		--env AWS_CONFIG_FILE="$(AWS_SECRET_PATH_ENV)" \
@@ -106,8 +133,6 @@ ifneq ($(wildcard $(AWS_SECRET_PATH_LOCAL)),)
 else
 	OPTION_AWS_CREDENTIALS=
 endif
-
-# Check if Weights & Biases key file exists, then set up variables
 ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
 	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="$(WANDB_SECRET_PATH_ENV)"
 else
@@ -135,18 +160,18 @@ setup: ### Setup remote environment
 	$(NEURO) cp requirements.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(SETUP_JOB) \
 		--tag "target:setup" $(_TAGS) \
 		--preset cpu-small \
 		--detach \
-		--env JOB_TIMEOUT=1h \
+		--life-span=1h \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
-		$(BASE_ENV_NAME) \
+		$(BASE_ENV) \
 		'sleep infinity'
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -qq update && cat $(PROJECT_PATH_ENV)/apt.txt | tr -d \"\\r\" | xargs -I % apt-get -qq install --no-install-recommends % && apt-get -qq clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'pip install --progress-bar=off -U --no-cache-dir -r $(PROJECT_PATH_ENV)/requirements.txt'"
-	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
+	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV)
 	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done
 
@@ -162,11 +187,19 @@ _check_setup:
 
 .PHONY: upload-code
 upload-code: _check_setup  ### Upload code directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
 .PHONY: download-code
 download-code: _check_setup  ### Download code directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(CODE_DIR) $(CODE_DIR)
 
 .PHONY: clean-code
 clean-code: _check_setup  ### Delete code directory from the platform storage
@@ -174,11 +207,19 @@ clean-code: _check_setup  ### Delete code directory from the platform storage
 
 .PHONY: upload-data
 upload-data: _check_setup  ### Upload data directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(DATA_DIR) $(DATA_DIR_STORAGE)
 
 .PHONY: download-data
 download-data: _check_setup  ### Download data directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR_STORAGE) $(DATA_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(DATA_DIR_STORAGE) $(DATA_DIR)
 
 .PHONY: clean-data
 clean-data: _check_setup  ### Delete data directory from the platform storage
@@ -186,11 +227,19 @@ clean-data: _check_setup  ### Delete data directory from the platform storage
 
 .PHONY: upload-config
 upload-config: _check_setup  ### Upload config directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(CONFIG_DIR) $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR)
 
 .PHONY: download-config
 download-config: _check_setup  ### Download config directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(CONFIG_DIR) $(CONFIG_DIR)
 
 .PHONY: clean-config
 clean-config: _check_setup  ### Delete config directory from the platform storage
@@ -198,11 +247,23 @@ clean-config: _check_setup  ### Delete config directory from the platform storag
 
 .PHONY: upload-notebooks
 upload-notebooks: _check_setup  ### Upload notebooks directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		--exclude="*" \
+		--include="*.ipynb" \
+		$(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
 download-notebooks: _check_setup  ### Download notebooks directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		--exclude="*" \
+		--include="*.ipynb" \
+		$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
 clean-notebooks: _check_setup  ### Delete notebooks directory from the platform storage
@@ -210,11 +271,19 @@ clean-notebooks: _check_setup  ### Delete notebooks directory from the platform 
 
 .PHONY: upload-results
 upload-results: _check_setup  ### Upload results directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(RESULTS_DIR) $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
+	$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(RESULTS_DIR)/ $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)
 
 .PHONY: download-results
 download-results: _check_setup  ### Download results directory from the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR) $(RESULTS_DIR)
+		$(NEURO) cp \
+		--recursive \
+		--update \
+		--no-target-directory \
+		$(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/ $(RESULTS_DIR)
 
 .PHONY: clean-results
 clean-results: _check_setup  ### Delete results directory from the platform storage
@@ -266,7 +335,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 
 .PHONY: develop
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(DEVELOP_JOB) \
 		--tag "target:develop" $(_TAGS) \
 		--preset $(PRESET) \
@@ -277,9 +346,9 @@ develop: _check_setup upload-code upload-config upload-notebooks  ### Run a deve
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
+		$(CUSTOM_ENV) \
 		sleep infinity
 
 .PHONY: connect-develop
@@ -299,11 +368,9 @@ port-forward-develop:  ### Forward SSH port to localhost for remote debugging
 kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB) || :
 
-RUN?=base
-
 .PHONY: train
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--tag "target:train" $(_TAGS) \
 		--preset $(PRESET) \
@@ -315,9 +382,9 @@ train: _check_setup upload-code upload-config   ### Run a training job (set up e
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
-		--env JOB_TIMEOUT=0 \
+		--life-span=0 \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
+		$(CUSTOM_ENV) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
@@ -332,9 +399,6 @@ kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the
 kill-train-all:  ### Terminate all training jobs you have submitted
 	jobs=`neuro -q ps --tag "target:train" $(_TAGS) | tr -d "\r"` && \
 	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
-
-# Number of hyper-parameter search jobs
-N_HYPERPARAM_JOBS?=3
 
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
@@ -358,7 +422,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	echo "Running $(N_HYPERPARAM_JOBS) jobs of sweep '$$sweep'..." && \
 	for index in `seq 1 $(N_HYPERPARAM_JOBS)` ; do \
 		echo -e "\nStarting job $$index..." ; \
-		$(NEURO) run \
+		$(NEURO) run $(RUN_EXTRA) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
 			--tag "target:hypertrain" --tag "sweep:$$sweep" $(_TAGS) \
 			--preset $(PRESET) \
@@ -370,9 +434,9 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--volume $(PROJECT_PATH_STORAGE)/wandb:$(PROJECT_PATH_ENV)/wandb:rw \
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
-			--env JOB_TIMEOUT=0 \
+			--life-span=0 \
 			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-			$(CUSTOM_ENV_NAME) \
+			$(CUSTOM_ENV) \
 			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
 	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
@@ -395,7 +459,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 
 .PHONY: jupyter
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(JUPYTER_JOB) \
 		--tag "target:jupyter" --tag "jupyter-mode:$(JUPYTER_MODE)" $(_TAGS) \
 		--preset $(PRESET) \
@@ -408,11 +472,16 @@ jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job w
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
-		$(CUSTOM_ENV_NAME) \
-		jupyter $(JUPYTER_MODE) --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)
+		$(CUSTOM_ENV) \
+		jupyter $(JUPYTER_MODE) \
+			--no-browser \
+			--ip=0.0.0.0 \
+			--allow-root \
+			--NotebookApp.token= \
+			--notebook-dir=$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR)
 
 .PHONY: kill-jupyter
 kill-jupyter:  ### Terminate the job with Jupyter Notebook
@@ -428,16 +497,16 @@ kill-jupyterlab:  ### Terminate the job with JupyterLab
 
 .PHONY: tensorboard
 tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
 		--tag "target:tensorboard" $(_TAGS) \
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
-		$(CUSTOM_ENV_NAME) \
+		tensorflow/tensorflow:latest \
 		tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)
 
 .PHONY: kill-tensorboard
@@ -446,16 +515,16 @@ kill-tensorboard:  ### Terminate the job with TensorBoard
 
 .PHONY: filebrowser
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
-	$(NEURO) run \
+	$(NEURO) run $(RUN_EXTRA) \
 		--name $(FILEBROWSER_JOB) \
 		--tag "target:filebrowser" $(_TAGS) \
 		--preset cpu-small \
 		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
-		--env JOB_TIMEOUT=1d \
+		--life-span=1d \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		filebrowser/filebrowser \
+		filebrowser/filebrowser:latest \
 		--noauth
 
 .PHONY: kill-filebrowser
@@ -473,13 +542,13 @@ kill-all:  ### Terminate all jobs of this project
 setup-local:  ### Install pip requirements locally
 	pip install -r requirements.txt
 
-.PHONY: format
-format:  ### Automatically format the code
+.PHONY: format-local
+format-local:  ### Automatically format the code
 	isort -rc {{cookiecutter.code_directory}}
 	black {{cookiecutter.code_directory}}
 
-.PHONY: lint
-lint:  ### Run static code analysis locally
+.PHONY: lint-local
+lint-local:  ### Run static code analysis locally
 	isort -c -rc {{cookiecutter.code_directory}}
 	black --check {{cookiecutter.code_directory}}
 	mypy {{cookiecutter.code_directory}}

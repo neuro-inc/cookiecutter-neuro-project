@@ -17,7 +17,6 @@ from tests.e2e.configuration import (
     LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
-    PROJECT_HIDDEN_FILES,
     TIMEOUT_NEURO_LS,
     TIMEOUT_NEURO_STATUS,
     VERBS_SECRET,
@@ -462,17 +461,16 @@ def parse_job_url(out: str) -> str:
     return search.group(1)
 
 
-def neuro_ls(path: str) -> t.Set[str]:
+def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
+    options: t.List[str] = []
+    if hidden:
+        options.append("-a")
     out = run(
-        f"neuro ls {path}",
+        f"neuro ls {' '.join(options)} {path}",
         timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    result = set(out.split())
-    for hidden in PROJECT_HIDDEN_FILES:
-        if hidden in result:
-            result.remove(hidden)
-    return result
+    return set(out.split())
 
 
 def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
@@ -518,25 +516,7 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
     return status
 
 
-def ls(local_path: t.Union[Path, str]) -> t.Set[str]:
-    return ls_files(local_path) | ls_dirs(local_path)
-
-
-def ls_files(local_path: t.Union[Path, str]) -> t.Set[str]:
+def ls(local_path: t.Union[Path, str], hidden: bool = True) -> t.Set[str]:
     path = Path(local_path)
     assert path.is_dir(), f"path {path} does not exist"
-    return {
-        f.name
-        for f in path.iterdir()
-        if f.is_file() and f.name not in PROJECT_HIDDEN_FILES
-    }
-
-
-def ls_dirs(local_path: t.Union[Path, str]) -> t.Set[str]:
-    path = Path(local_path)
-    assert path.is_dir(), f"path {path} does not exist"
-    return {
-        f.name
-        for f in path.iterdir()
-        if f.is_dir() and f.name not in PROJECT_HIDDEN_FILES
-    }
+    return {p.name for p in path.iterdir() if not hidden or not p.name.startswith(".")}
