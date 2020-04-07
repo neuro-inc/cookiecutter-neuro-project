@@ -426,7 +426,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run $(RUN_EXTRA) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
-			--tag "target:hypertrain" --tag "target:train" --tag "sweep:$$sweep" $(_PROJECT_TAGS) \
+			--tag "target:hypertrain" --tag "target:train" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS) \
 			--preset $(PRESET) \
 			--detach \
 			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -446,7 +446,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 .PHONY: kill-hypertrain
 kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
-	jobs=`neuro -q ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_PROJECT_TAGS) | tr -d "\r"` && \
+	jobs=`neuro -q ps --tag "target:hypertrain" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS) | tr -d "\r"` && \
 	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 .PHONY: kill-hypertrain-all
@@ -566,7 +566,7 @@ ps:  ### List all running and pending jobs
 ps-hypertrain:  ### List running and pending jobs of the latest hyper-parameter search sweep
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
 	echo "Using sweep '$$sweep'" && \
-	$(NEURO) ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_PROJECT_TAGS)
+	$(NEURO) ps --tag "target:hypertrain" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS)
 
 .PHONY: ps-train-all
 ps-train-all:  ### List all running and pending training jobs
