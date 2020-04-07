@@ -562,18 +562,15 @@ lint-local:  ### Run static code analysis locally
 ps:  ### List all running and pending jobs
 	$(NEURO) ps $(_PROJECT_TAGS)
 
-.PHONY: ps-train
-ps-train:  ### List all running and pending training jobs
-	$(NEURO) ps --tag "target:train" $(_PROJECT_TAGS)
-
 .PHONY: ps-hypertrain
 ps-hypertrain:  ### List running and pending jobs of the latest hyper-parameter search sweep
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	echo "Using sweep '$$sweep'" && \
 	$(NEURO) ps --tag "target:hypertrain" --tag "sweep:$$sweep" $(_PROJECT_TAGS)
 
-.PHONY: ps-hypertrain-all
-ps-hypertrain-all:  ### List running and pending jobs of all hyper-parameter search sweeps
-	$(NEURO) ps --tag "target:hypertrain" $(_PROJECT_TAGS)
+.PHONY: ps-train-all
+ps-train-all:  ### List all running and pending training jobs
+	$(NEURO) ps --tag "target:train" $(_PROJECT_TAGS)
 
 
 .PHONY: _upgrade

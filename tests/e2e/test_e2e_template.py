@@ -777,7 +777,7 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
                 assert_exit_code=False,
             )
 
-        cmd = "make ps-train"
+        cmd = "make ps-train-all"
         with measure_time(cmd):
             run(
                 cmd, detect_new_jobs=False, expect_patterns=[mk_train_job()],
