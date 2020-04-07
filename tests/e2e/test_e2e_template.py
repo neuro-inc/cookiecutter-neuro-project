@@ -517,22 +517,14 @@ def test_make_train_multiple_experiments(
             if exp != MK_RUN_DEFAULT:
                 cmd += f" RUN={exp}"
             with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
-                out = run(
+                run(
                     cmd,
                     expect_patterns=[_get_pattern_status_running()],
                     attempts=3,
                     attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                     assert_exit_code=False,
                 )
-        ps_cmd = f'neuro -q ps --description="{neuro_project_id}:train"'
-
-        out = run(ps_cmd, detect_new_jobs=False)
-        assert len(out.split()) == len(jobs)
-
         run("make kill-train-all", detect_new_jobs=False)
-
-        out = run(ps_cmd, detect_new_jobs=False)
-        assert not out.strip()
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -587,7 +579,7 @@ def test_make_hypertrain(
     # Print wandb status for debugging reasons
     run("wandb status")
 
-    n = 2
+    n = 1
     with finalize("make kill-hypertrain-all"):
         out = run(
             f"make hypertrain N_JOBS={n}",
@@ -597,6 +589,7 @@ def test_make_hypertrain(
             ),
         )
         jobs = parse_jobs_ids(out, expect_num=n)
+        run("make ps-hypertrain", expect_patterns=jobs)
 
         with finalize(*(f"neuro kill {job}" for job in jobs)):
             for job in jobs:
@@ -764,7 +757,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
-def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
+def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
     with finalize(f"neuro kill {mk_train_job()}"):
         cmd = 'make train TRAIN_CMD="sleep 3h"'
         with measure_time(cmd):
@@ -782,6 +775,12 @@ def test_make_connect_train_kill_train(env_var_preset_cpu_small: None) -> None:
                 detect_new_jobs=False,
                 expect_patterns=[_get_pattern_connected_ssh()],
                 assert_exit_code=False,
+            )
+
+        cmd = "make ps-train-all"
+        with measure_time(cmd):
+            run(
+                cmd, detect_new_jobs=False, expect_patterns=[mk_train_job()],
             )
 
         cmd = "make kill-train"

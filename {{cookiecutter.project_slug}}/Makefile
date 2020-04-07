@@ -20,6 +20,9 @@ DEVELOP_JOB=develop-$(PROJECT)
 JUPYTER_JOB=jupyter-$(PROJECT)
 TENSORBOARD_JOB=tensorboard-$(PROJECT)
 FILEBROWSER_JOB=filebrowser-$(PROJECT)
+_PROJECT_TAGS=--tag "kind:project" \
+              --tag "project:$(PROJECT)" \
+              --tag "project-id:$(PROJECT_ID)"
 
 BASE_ENV=neuromation/base:$(BASE_ENV_VERSION)
 CUSTOM_ENV=image:neuromation-$(PROJECT):$(VERSION)
@@ -34,7 +37,8 @@ CUSTOM_ENV=image:neuromation-$(PROJECT):$(VERSION)
 # Allows to set the `neuro` executable:
 #   make setup NEURO=/usr/bin/neuro
 #   make setup NEURO="neuro --verbose --show-traceback"
-NEURO?=neuro
+NEURO=neuro
+
 
 # Location of your dataset on the platform storage:
 #   make setup DATA_DIR_STORAGE=storage:datasets/cifar10
@@ -111,6 +115,7 @@ WANDB_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
+
 ifeq ($(TRAIN_STREAM_LOGS), yes)
 	TRAIN_WAIT_START_OPTION=--wait-start --detach
 else
@@ -159,7 +164,7 @@ setup: ### Setup remote environment
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(SETUP_JOB) \
-		--description "$(PROJECT_ID):setup" \
+		--tag "target:setup" $(_PROJECT_TAGS) \
 		--preset cpu-small \
 		--detach \
 		--life-span=1h \
@@ -334,7 +339,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(DEVELOP_JOB) \
-		--description "$(PROJECT_ID):develop" \
+		--tag "target:develop" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
 		--detach \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -369,7 +374,7 @@ kill-develop:  ### Terminate the development job
 train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TRAIN_JOB)-$(RUN) \
-		--description "$(PROJECT_ID):train" \
+		--tag "target:train" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
 		--detach \
 		$(TRAIN_WAIT_START_OPTION) \
@@ -391,6 +396,11 @@ endif
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
 	$(NEURO) kill $(TRAIN_JOB)-$(RUN) || :
+
+.PHONY: kill-train-all
+kill-train-all:  ### Terminate all training jobs you have submitted
+	jobs=`neuro -q ps --tag "target:train" $(_PROJECT_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 .PHONY: hypertrain
 hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
@@ -416,7 +426,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run $(RUN_EXTRA) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
-			--description "$(PROJECT_ID):train:$$sweep" \
+			--tag "target:hypertrain" --tag "target:train" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS) \
 			--preset $(PRESET) \
 			--detach \
 			--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
@@ -433,21 +443,17 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	done; \
 	echo -e "\nStarted $(N_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
+.PHONY: kill-hypertrain
+kill-hypertrain:  ### Terminate hyper-parameter search training jobs of the latest sweep
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	jobs=`neuro -q ps --tag "target:hypertrain" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
+
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
-	@[ ! -f "$(WANDB_SWEEPS_FILE)" ] && echo "File '$(WANDB_SWEEPS_FILE)' does not exist. Abort." || { \
-		for sweep in `tac $(WANDB_SWEEPS_FILE)`; do \
-			jobs=`neuro --quiet ps --description="$(PROJECT_ID):train:$$sweep"` && \
-			echo "Killing jobs of the sweep '$$sweep'..." && \
-			$(NEURO) kill $${jobs:-placeholder} ||: ; \
-		done; \
-		echo "Please remove unused sweeps from the file '$(WANDB_SWEEPS_FILE)'." ; \
-	}
-
-.PHONY: kill-train-all
-kill-train-all:  ### Terminate all training jobs you have submitted
-	jobs=`neuro --quiet ps --description="$(PROJECT_ID):train" | tr -d "\r"` && \
-	$(NEURO) kill $${jobs:-placeholder} || :
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	jobs=`neuro -q ps --tag "target:hypertrain" $(_PROJECT_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 .PHONY: connect-train
 connect-train: _check_setup  ### Connect to the remote shell running on the training job (set up env var 'RUN' to specify the training job)
@@ -457,7 +463,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(JUPYTER_JOB) \
-		--description "$(PROJECT_ID):jupyter" \
+		--tag "target:jupyter" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
 		--http 8888 \
 		$(HTTP_AUTH) \
@@ -496,7 +502,7 @@ tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the def
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
-		--description "$(PROJECT_ID):tensorboard" \
+		--tag "target:tensorboard" $(_PROJECT_TAGS) \
 		--http 6006 \
 		$(HTTP_AUTH) \
 		--browse \
@@ -513,7 +519,7 @@ kill-tensorboard:  ### Terminate the job with TensorBoard
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(FILEBROWSER_JOB) \
-		--description "$(PROJECT_ID):filebrowser" \
+		--tag "target:filebrowser" $(_PROJECT_TAGS) \
 		--preset cpu-small \
 		--http 80 \
 		$(HTTP_AUTH) \
@@ -528,7 +534,9 @@ kill-filebrowser:  ### Terminate the job with File Browser
 	$(NEURO) kill $(FILEBROWSER_JOB) || :
 
 .PHONY: kill-all
-kill-all: kill-develop kill-train-all kill-hypertrain-all kill-jupyter kill-tensorboard kill-filebrowser kill-setup  ### Terminate all jobs of this project
+kill-all:  ### Terminate all jobs of this project
+	jobs=`neuro -q ps $(_PROJECT_TAGS) | tr -d "\r"` && \
+	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 ##### LOCAL #####
 
@@ -552,7 +560,18 @@ lint-local:  ### Run static code analysis locally
 
 .PHONY: ps
 ps:  ### List all running and pending jobs
-	$(NEURO) ps
+	$(NEURO) ps $(_PROJECT_TAGS)
+
+.PHONY: ps-hypertrain
+ps-hypertrain:  ### List running and pending jobs of the latest hyper-parameter search sweep
+	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	echo "Using sweep '$$sweep'" && \
+	$(NEURO) ps --tag "target:hypertrain" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS)
+
+.PHONY: ps-train-all
+ps-train-all:  ### List all running and pending training jobs
+	$(NEURO) ps --tag "target:train" $(_PROJECT_TAGS)
+
 
 .PHONY: _upgrade
 _upgrade:

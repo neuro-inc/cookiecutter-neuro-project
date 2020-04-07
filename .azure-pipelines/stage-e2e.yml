@@ -42,12 +42,8 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
-        python -m pip install -U pip
-      displayName: 'Install pre-requirements'
-
-    - script: |
+        python -m pip install -U pip wandb neuromation
         make init
-        python -m pip install -U wandb
       displayName: 'Install dependencies'
 
     - script: |
