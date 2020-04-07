@@ -590,7 +590,7 @@ def test_make_hypertrain(
     n = 2
     with finalize("make kill-hypertrain-all"):
         out = run(
-            f"make hypertrain N_HYPERPARAM_JOBS={n}",
+            f"make hypertrain N_JOBS={n}",
             expect_patterns=(
                 [_get_pattern_status_running()] * n
                 + [f"Started {n} hyper-parameter search jobs"]
