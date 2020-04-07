@@ -281,6 +281,6 @@ This list of hyper-parameters corresponds to the default configuration we provid
 
 You also need to put your WandB token in `config/wandb-token.txt` file.
 
-After that, you can run `make hypertrain`, which submits `N_HYPERPARAMETER_JOBS` (`3` by default) jobs on Neuro Platform (number of jobs can be modified in `Makefile` or as corresponding environment variable). To monitor the hyperparameter tuning process, follow the link which `wandb` provides at the beginning of the process.
+After that, you can run `make hypertrain`, which submits `N_JOBS` (`3` by default) jobs on Neuro Platform (number of jobs can be modified in `Makefile` or as corresponding environment variable). Use `make ps-hypertrain` to list active jobs of the latest sweep. To monitor the hyperparameter tuning process, follow the link which `wandb` provides at the beginning of the process.
 
 To terminate all jobs over all hyperparameter tuning sweeps, run `make kill-hypertrain-all`. After that, verify that the jobs were killed `make ps`, and then delete unused sweeps from the local file `.wandb_sweeps`.

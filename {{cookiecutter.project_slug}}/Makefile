@@ -80,8 +80,8 @@ LOCAL_PORT?=2211
 JUPYTER_MODE?=notebook
 
 # Number of hyper-parameter search jobs:
-#   make hypertrain N_HYPERPARAM_JOBS=5
-N_HYPERPARAM_JOBS?=3
+#   make hypertrain N_JOBS=5
+N_JOBS?=3
 
 # Google Cloud integration settings:
 #   make gcloud-check-auth GCP_SECRET_FILE=name-of-gcp-key-file.json
@@ -411,8 +411,8 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
-	echo "Running $(N_HYPERPARAM_JOBS) jobs of sweep '$$sweep'..." && \
-	for index in `seq 1 $(N_HYPERPARAM_JOBS)` ; do \
+	echo "Running $(N_JOBS) jobs of sweep '$$sweep'..." && \
+	for index in `seq 1 $(N_JOBS)` ; do \
 		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run $(RUN_EXTRA) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
@@ -431,7 +431,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			$(CUSTOM_ENV) \
 			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
-	echo -e "\nStarted $(N_HYPERPARAM_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
+	echo -e "\nStarted $(N_JOBS) hyper-parameter search jobs of sweep '$$sweep'.\nUse 'neuro ps' and 'neuro status <job>' to check."
 
 .PHONY: kill-hypertrain-all
 kill-hypertrain-all:  ### Terminate all hyper-parameter search training jobs of all the sweeps
