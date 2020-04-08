@@ -55,7 +55,7 @@ PRESET?=gpu-small
 RUN_EXTRA?=
 
 # HTTP authentication (via cookies) for the job's HTTP link.
-# Applied only to jupyter, tensorboard and filebrowser jobs.
+# Applied only to jupyter, vscode, tensorboard and filebrowser jobs.
 # Set `HTTP_AUTH=--no-http-auth` to disable any authentication.
 # WARNING: removing authentication might disclose your sensitive data stored in the job.
 #   make jupyter HTTP_AUTH=--no-http-auth
@@ -343,6 +343,7 @@ vscode: _check_setup upload-code upload-config  ### Run a VSCode job
 		--name $(VSCODE_JOB) \
 		--tag "target:vscode" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
+		$(HTTP_AUTH) \
 		--http 8080 \
 		--browse \
 		--detach \
