@@ -16,6 +16,7 @@ PROJECT_PATH_ENV=/project
 PROJECT={{cookiecutter.project_slug}}
 SETUP_JOB=setup-$(PROJECT)
 TRAIN_JOB=train-$(PROJECT)
+VSCODE_JOB=vscode-$(PROJECT)
 DEVELOP_JOB=develop-$(PROJECT)
 JUPYTER_JOB=jupyter-$(PROJECT)
 TENSORBOARD_JOB=tensorboard-$(PROJECT)
@@ -334,6 +335,31 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 			false; }
 
 ##### JOBS #####
+
+.PHONY: vscode
+vscode: PRESET=cpu-small
+vscode: _check_setup upload-code upload-config  ### Run a VSCode job
+	$(NEURO) run $(RUN_EXTRA) \
+		--name $(VSCODE_JOB) \
+		--tag "target:vscode" $(_PROJECT_TAGS) \
+		--preset $(PRESET) \
+		--http 8080 \
+		--browse \
+		--detach \
+		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):rw \
+		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
+		--env EXPOSE_SSH=yes \
+		--life-span=1d \
+		--entrypoint="sudo dumb-init fixuid -q /usr/local/bin/code-server --host 0.0.0.0 ." \
+		codercom/code-server \
+		    --disable-updates \
+		    --disable-telemetry \
+		    --auth=none \
+		    $(PROJECT_PATH_ENV)
+
+.PHONY: kill-vscode
+kill-vscode: download-code download-config download-results  ### Terminate the VSCode job
+	$(NEURO) kill $(VSCODE_JOB)
 
 .PHONY: develop
 develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job

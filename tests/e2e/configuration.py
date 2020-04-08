@@ -68,6 +68,7 @@ MK_DEVELOP_JOB = f"develop-{MK_PROJECT}"
 MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT}"
 MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT}"
 MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT}"
+MK_VSCODE_JOB = f"vscode-{MK_PROJECT}"
 
 MK_RUN_DEFAULT = "base"  # env var 'RUN'
 

@@ -25,6 +25,7 @@ from tests.e2e.configuration import (
     MK_RUN_DEFAULT,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
+    MK_VSCODE_JOB,
     N_FILES,
     PACKAGES_APT_CUSTOM,
     PACKAGES_PIP_CUSTOM,
@@ -644,6 +645,12 @@ def test_make_filebrowser(env_var_no_http_auth: None) -> None:
         _test_run_something_useful(
             "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
         )
+
+
+@pytest.mark.run(order=STEP_RUN)
+def test_make_vscode(env_var_no_http_auth: None) -> None:
+    with finalize(f"neuro kill {MK_VSCODE_JOB}"):
+        _test_run_something_useful("vscode", "/", TIMEOUT_NEURO_RUN_CPU)
 
 
 def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None:
