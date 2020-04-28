@@ -3,6 +3,7 @@
 /config/*.txt
 /config/*.conf
 /config/*.json
+/config/*.yml
 /.setup_done
 /.wandb_sweeps
 
