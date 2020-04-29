@@ -421,6 +421,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
+	echo "$$sweep" && [ "$$sweep" ] && \
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
 	echo "Running $(N_JOBS) jobs of sweep '$$sweep'..." && \
 	for index in `seq 1 $(N_JOBS)` ; do \
