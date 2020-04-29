@@ -412,7 +412,8 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	@[ -f "$(WANDB_SWEEP_CONFIG_PATH)" ] \
 		&& echo "Using W&B sweep file: ./$(WANDB_SWEEP_CONFIG_PATH)" \
 		|| { echo "ERROR: W&B sweep config file not found: '$$PWD/$(WANDB_SWEEP_CONFIG_PATH)'" >&2; false; }
-	WANDB_PROJECT=$(PROJECT) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee -a $(WANDB_SWEEPS_FILE).log | grep 'Created sweep with ID: ' | awk 'NF{ print $$NF }' >> $(WANDB_SWEEPS_FILE)
+	sweep=`WANDB_PROJECT=$(PROJECT) wandb sweep $(WANDB_SWEEP_CONFIG_PATH) 2>&1 | tee -a $(WANDB_SWEEPS_FILE).log | awk '/sweep with ID/{ print $$NF }'` && \
+	echo "sweep: $$sweep" && [ "$$sweep" ] && echo $$sweep >> $(WANDB_SWEEPS_FILE)
 	@echo "Sweep created and saved to '$(WANDB_SWEEPS_FILE)'"
 	@echo "Updating code and config directories on Neuro Storage..."
 	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
@@ -421,7 +422,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/wandb
 	$(NEURO) cp ./wandb/settings $(PROJECT_PATH_STORAGE)/wandb/
 	sweep=`tail -1 $(WANDB_SWEEPS_FILE)` && \
-	echo "$$sweep" && [ "$$sweep" ] && \
+	echo "sweep: $$sweep" && [ "$$sweep" ] && \
 	$(NEURO) mkdir -p $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR)/sweep-$$sweep && \
 	echo "Running $(N_JOBS) jobs of sweep '$$sweep'..." && \
 	for index in `seq 1 $(N_JOBS)` ; do \
