@@ -256,7 +256,7 @@ def neuro_login(
     yield
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def set_custom_env(monkeypatch: t.Any) -> None:
     monkeypatch.setenv("CUSTOM_ENV", MK_CUSTOM_ENV_NAME)
 
