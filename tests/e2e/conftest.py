@@ -22,6 +22,7 @@ from tests.e2e.configuration import (
     LOGGER_NAME,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
+    MK_CUSTOM_ENV_NAME,
     MK_DATA_DIR,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT,
@@ -253,6 +254,11 @@ def neuro_login(
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_custom_env(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("CUSTOM_ENV", MK_CUSTOM_ENV_NAME)
 
 
 @pytest.fixture()
