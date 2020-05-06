@@ -53,6 +53,7 @@ stages:
         CI: true
         COOKIECUTTER_TEST_E2E_TOKEN: $(e2e.token)
         COOKIECUTTER_TEST_E2E_URL: $(e2e.url)
+        COOKIECUTTER_TEST_E2E_CLUSTER: $(e2e.cluster)
         COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
 
     - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output
