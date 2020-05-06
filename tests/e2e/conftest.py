@@ -242,8 +242,8 @@ def neuro_login(
         timeout_s=TIMEOUT_NEURO_LOGIN,
         verbose=False,
     )
-    captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
+    captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
