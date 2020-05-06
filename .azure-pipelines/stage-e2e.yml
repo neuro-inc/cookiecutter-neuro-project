@@ -24,10 +24,12 @@ stages:
       ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
         e2e.token: $(e2e.token_staging)
         e2e.url: 'https://staging.neu.ro/api/v1'
+        e2e.cluster: 'neuro-public'
         e2e.target: 'test_e2e_staging'
       ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
         e2e.token: $(e2e.token_dev)
         e2e.url: 'https://dev.neu.ro/api/v1'
+        e2e.cluster: 'default'
         e2e.target: 'test_e2e_dev'
 
 
@@ -53,6 +55,7 @@ stages:
         CI: true
         COOKIECUTTER_TEST_E2E_TOKEN: $(e2e.token)
         COOKIECUTTER_TEST_E2E_URL: $(e2e.url)
+        COOKIECUTTER_TEST_E2E_CLUSTER: $(e2e.cluster)
         COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: $(e2e.enc_key)
 
     - publish: $(System.DefaultWorkingDirectory)/tests/e2e/output

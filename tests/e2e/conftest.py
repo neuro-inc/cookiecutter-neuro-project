@@ -69,7 +69,7 @@ def pytest_logger_config(logger_config: t.Any) -> None:
 
 # == fixtures ==
 
-ClientConfig = namedtuple("ClientConfig", "url token")
+ClientConfig = namedtuple("ClientConfig", "url token cluster")
 
 
 def pytest_addoption(parser: t.Any) -> None:
@@ -108,21 +108,14 @@ def environment(request: t.Any) -> str:
 @pytest.fixture(scope="session")
 def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
     def _f() -> ClientConfig:
-        # TODO: remove this section once we don't use CircleCI
-        if environment == "dev":
-            env_name_token = "COOKIECUTTER_TEST_E2E_DEV_TOKEN"
-            env_name_url = "COOKIECUTTER_TEST_E2E_DEV_URL"
-        else:
-            env_name_token = "COOKIECUTTER_TEST_E2E_STAGING_TOKEN"
-            env_name_url = "COOKIECUTTER_TEST_E2E_STAGING_URL"
-
-        if env_name_token not in os.environ:
-            # on Azure
-            env_name_token = "COOKIECUTTER_TEST_E2E_TOKEN"
-            env_name_url = "COOKIECUTTER_TEST_E2E_URL"
+        env_name_token = "COOKIECUTTER_TEST_E2E_TOKEN"
+        env_name_url = "COOKIECUTTER_TEST_E2E_URL"
+        env_name_cluster = "COOKIECUTTER_TEST_E2E_CLUSTER"
 
         return ClientConfig(
-            token=os.environ[env_name_token], url=os.environ[env_name_url]
+            token=os.environ[env_name_token],
+            url=os.environ[env_name_url],
+            cluster=os.environ[env_name_cluster],
         )
 
     return _f
@@ -250,6 +243,7 @@ def neuro_login(
         verbose=False,
     )
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
+    captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
     time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
     log_msg(run("neuro config show", verbose=False))
     yield
