@@ -103,6 +103,9 @@ WANDB_SECRET_FILE?=wandb-token.txt
 #   make hypertrain WANDB_SECRET_FILE=name-of-wandb-sweep-file.json
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 
+# Storage synchronization:
+#  make jupyter SYNC=""
+SYNC?=upload-code upload-config upload-notebooks
 
 ##### CONSTANTS #####
 
@@ -337,7 +340,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 ##### JOBS #####
 
 .PHONY: develop
-develop: _check_setup upload-code upload-config upload-notebooks  ### Run a development job
+develop: _check_setup $(SYNC)  ### Run a development job
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(DEVELOP_JOB) \
 		--tag "target:develop" $(_PROJECT_TAGS) \
@@ -372,7 +375,7 @@ kill-develop:  ### Terminate the development job
 	$(NEURO) kill $(DEVELOP_JOB) || :
 
 .PHONY: train
-train: _check_setup upload-code upload-config   ### Run a training job (set up env var 'RUN' to specify the training job),
+train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--tag "target:train" $(_PROJECT_TAGS) \
@@ -461,7 +464,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 	$(NEURO) exec --no-key-check $(TRAIN_JOB)-$(RUN) bash
 
 .PHONY: jupyter
-jupyter: _check_setup upload-config upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(JUPYTER_JOB) \
 		--tag "target:jupyter" $(_PROJECT_TAGS) \

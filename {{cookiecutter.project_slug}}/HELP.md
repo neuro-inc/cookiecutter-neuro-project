@@ -219,6 +219,13 @@ There are several machine types supported on the platform. Run `neuro config sho
 
 When jobs with HTTP interface are executed (for example, with Jupyter Notebooks or TensorBoard), this interface requires a user to be authenticated on the platform. However, if you want to share the link with someone who is not registered on the platform, you may disable the authentication updating this line to `HTTP_AUTH?=--no-http-auth`.
 
+### Storage synchronization
+
+By default, `develop`, `train` and `jupyter` commands sync code, config and notebooks directories before start.
+To control this, see `SYNC` environment variable:
+
+`make train SYNC=''  # will not sync` 
+
 ### Training command
 
 To tweak the training command, change the line in `Makefile`:
