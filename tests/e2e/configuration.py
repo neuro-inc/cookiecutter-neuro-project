@@ -48,7 +48,8 @@ TIMEOUT_NEURO_PORT_FORWARD = 15
 
 # all variables prefixed "MK_" are taken in Makefile (without prefix)
 # Project name is defined in cookiecutter.yaml, from `project_name`
-UNIQUE_PROJECT_NAME = f"Test Project {unique_label()}"
+_unique_label = unique_label()
+UNIQUE_PROJECT_NAME = f"Test Project {_unique_label}"
 EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
 MK_PROJECT = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
 
@@ -72,7 +73,7 @@ MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT}"
 MK_RUN_DEFAULT = "base"  # env var 'RUN'
 
 MK_BASE_ENV_NAME = "neuromation/base"
-MK_CUSTOM_ENV_NAME = f"image:neuromation-{MK_PROJECT}"
+MK_CUSTOM_ENV_NAME = f"image:cookiecutter-e2e:{_unique_label}"
 
 
 PROJECT_APT_FILE_NAME = "apt.txt"

@@ -25,7 +25,7 @@ _PROJECT_TAGS=--tag "kind:project" \
               --tag "project-id:$(PROJECT_ID)"
 
 BASE_ENV=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV=image:neuromation-$(PROJECT):$(VERSION)
+CUSTOM_ENV?=image:neuromation-$(PROJECT):$(VERSION)
 
 ##### VARIABLES #####
 
