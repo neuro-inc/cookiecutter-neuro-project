@@ -351,15 +351,15 @@ vscode: _check_setup upload-code upload-config  ### Run a VSCode job
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--life-span=1d \
-		--entrypoint="sudo dumb-init fixuid -q /usr/local/bin/code-server --host 0.0.0.0 ." \
-		codercom/code-server \
+		--entrypoint="sudo dumb-init fixuid -q /usr/bin/code-server --host 0.0.0.0 ." \
+		codercom/code-server:3.3.0-rc.7 \
 		    --disable-updates \
 		    --disable-telemetry \
 		    --auth=none \
 		    $(PROJECT_PATH_ENV)
 
 .PHONY: kill-vscode
-kill-vscode: download-code download-config download-results  ### Terminate the VSCode job
+kill-vscode:  ### Terminate the VSCode job
 	$(NEURO) kill $(VSCODE_JOB)
 
 .PHONY: develop
