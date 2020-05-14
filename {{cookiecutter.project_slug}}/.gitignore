@@ -15,6 +15,9 @@
 # Weights & Biases folders
 wandb/
 
+# awk
+awkvars.out*
+
 # Mac OS: Finder's system file
 .DS_Store
 
