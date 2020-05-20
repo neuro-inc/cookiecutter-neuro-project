@@ -72,7 +72,6 @@ def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
     >>> assert elapsed >= 0.1
     """
     start_time = time.time()
-    log_msg(f"Measuring time for command: `{cmd}`")
     try:
         yield
     finally:
