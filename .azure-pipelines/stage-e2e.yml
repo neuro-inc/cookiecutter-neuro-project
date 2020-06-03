@@ -47,7 +47,7 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
-        python -m pip install -U pip wandb neuromation
+        pip install -r {{cookiecutter.project_slug}}/requirements.txt
         make init
       displayName: 'Install dependencies'
 
