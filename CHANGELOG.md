@@ -5,6 +5,11 @@ Command to bulid changelog from git:
 $ git log --oneline v1.5..HEAD  # if current version is v1.6
 -->
 
+### v1.6.1 (17-06-2020)
+e3d910b [Makefile] No upload-notebooks before each command (#396)
+70ba4a3 Disable life-span for Jupyter job (#397)
+
+
 ### v1.6 (18-05-2020)
 ```
 4b0b20b [Makefile] Stabilize W&B Hypertrain + Set up CI for MacOS (#390)
