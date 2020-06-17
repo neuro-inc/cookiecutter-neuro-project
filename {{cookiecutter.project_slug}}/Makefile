@@ -105,7 +105,7 @@ WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 
 # Storage synchronization:
 #  make jupyter SYNC=""
-SYNC?=upload-code upload-config upload-notebooks
+SYNC?=upload-code upload-config
 
 ##### CONSTANTS #####
 
