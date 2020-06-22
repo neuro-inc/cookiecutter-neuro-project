@@ -23,17 +23,10 @@ stages:
 
     variables:
       PYTHONUTF8: 1
-#      ${{ if eq('true', 'true') }}:
-      ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
         e2e.token: $(e2e.token_staging)
         e2e.url: 'https://staging.neu.ro/api/v1'
         e2e.cluster: 'neuro-public'
         e2e.target: 'test_e2e_staging'
-      ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
-        e2e.token: $(e2e.token_dev)
-        e2e.url: 'https://dev.neu.ro/api/v1'
-        e2e.cluster: 'default'
-        e2e.target: 'test_e2e_dev'
 
 
     steps:
@@ -47,7 +40,8 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
-        python -m pip install -U pip wandb neuromation
+        python -m pip install -U pip wandb
+        pip install git+https://github.com/neuromation/platform-client-python.git@master
         make init
       displayName: 'Install dependencies'
 
