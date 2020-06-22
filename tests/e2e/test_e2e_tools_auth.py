@@ -112,10 +112,7 @@ def test_wandb_auth_works_from_cli(
 ) -> None:
     monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
 
-    make_cmd = (
-        "make train "
-        "TRAIN_CMD=\"wandb status | grep -e 'Logged in.* True'\""
-    )
+    make_cmd = "make train " "TRAIN_CMD=\"wandb status | grep -e 'Logged in.* True'\""
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
             run(make_cmd)
