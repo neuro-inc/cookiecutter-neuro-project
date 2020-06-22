@@ -13,6 +13,7 @@ from tests.e2e.configuration import (
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
     JOB_ID_DECLARATION_REGEX,
+    JOB_STATUSES_ALL,
     JOB_STATUSES_TERMINATED,
     LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
@@ -512,8 +513,7 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    log_msg(f"Response: ```{out}```")
-    search = re.search(r"Status[^\w\n]*(\w+)", out)
+    search = re.search(r"Status.*(" + "|".join(JOB_STATUSES_ALL) + ")", out)
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
     return status
