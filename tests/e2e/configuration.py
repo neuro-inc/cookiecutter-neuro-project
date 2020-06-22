@@ -152,7 +152,7 @@ JOB_ID_PATTERN = (
 )
 JOB_ID_DECLARATION_REGEX = re.compile(
     # pattern for UUID v4 taken here: https://stackoverflow.com/a/38191078
-    rf"Job ID.*: ({JOB_ID_PATTERN})",
+    JOB_ID_PATTERN,
     re.IGNORECASE,
 )
 
