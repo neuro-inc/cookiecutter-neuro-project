@@ -511,7 +511,7 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    search = re.search(r"Status: (\w+)", out)
+    search = re.search(r"Status[^:]*:[^\w\n]*(\w+)", out)
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
     return status
