@@ -1,5 +1,5 @@
 LINTER_DIRS := tests
-NEURO_COMMAND := "neuro --verbose --show-traceback"
+NEURO_COMMAND := "neuro --verbose --show-traceback --color=no"
 TMP_DIR := $(shell mktemp -d)
 
 .PHONY: init

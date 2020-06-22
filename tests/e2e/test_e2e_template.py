@@ -539,7 +539,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
     with finalize(f"neuro kill {mk_train_job()}"):
         cmd = (
             'python -c "import time, tqdm; '
-            '[time.sleep(0.1) for _ in tqdm.tqdm(range(10000))]"'
+            '[time.sleep(0.1) for _ in tqdm.tqdm(range(1000))]"'
         )
         assert "'" not in cmd, f"cmd contains single quotes: `{cmd}`"
         log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")

@@ -457,7 +457,7 @@ def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
 
 
 def parse_job_url(out: str) -> str:
-    search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
+    search = re.search(r"(Http URL|please open).*:[^\w]*(https://.+neu\.ro)", out)
     assert search, f"not found URL in output: `{out}`"
     return search.group(1)
 
@@ -485,12 +485,13 @@ def wait_job_change_status_to(
     target_status: str,
     timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
-    verbose: bool = False,
+    verbose: bool = True,
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status: '{target_status}'...")
     time_start = time.time()
     while True:
         status = get_job_status(job_id, verbose=verbose)
+        log_msg(f"Got status: `{status}`")
         if status == target_status:
             log_msg(f"Job {job_id} reached status '{target_status}'")
             return
@@ -511,7 +512,7 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    search = re.search(r"Status[^:]*:[^\w\n]*(\w+)", out)
+    search = re.search(r"Status[^\w\n]*(\w+)", out)
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
     return status

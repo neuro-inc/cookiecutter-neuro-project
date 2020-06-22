@@ -269,20 +269,6 @@ def env_var_no_http_auth(monkeypatch: t.Any) -> None:
     monkeypatch.setenv(key, val)
 
 
-@pytest.fixture()
-def env_var_train_stream_logs(monkeypatch: t.Any) -> None:
-    key, val = "TRAIN_STREAM_LOGS", "yes"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
-@pytest.fixture()
-def env_var_train_no_stream_logs(monkeypatch: t.Any) -> None:
-    key, val = "TRAIN_STREAM_LOGS", "no"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 def _decrypt_file(file_enc: Path, output: Path) -> None:
     log_msg(f"Decrypting `{file_enc}` to `{output}`")
     assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"

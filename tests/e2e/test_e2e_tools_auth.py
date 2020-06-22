@@ -64,7 +64,7 @@ def test_gsutil_auth_works_from_python_api(
     with measure_time(make_cmd):
         run(make_cmd, detect_new_jobs=False)
 
-    make_cmd = f'make train TRAIN_CMD="python {script_path}" TRAIN_STREAM_LOGS=no'
+    make_cmd = f'make train TRAIN_CMD="python {script_path}"'
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
             out = run(make_cmd)
@@ -114,8 +114,7 @@ def test_wandb_auth_works_from_cli(
 
     make_cmd = (
         "make train "
-        "TRAIN_CMD=\"wandb status | grep -e 'Logged in.* True'\" "
-        "TRAIN_STREAM_LOGS=no"
+        "TRAIN_CMD=\"wandb status | grep -e 'Logged in.* True'\""
     )
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
@@ -144,7 +143,7 @@ def test_wandb_auth_works_from_python_api(
     with measure_time(make_cmd):
         run(make_cmd, detect_new_jobs=False)
 
-    make_cmd = f'make train TRAIN_CMD="python {script_path}" TRAIN_STREAM_LOGS=no'
+    make_cmd = f'make train TRAIN_CMD="python {script_path}"'
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
             out = run(make_cmd)
