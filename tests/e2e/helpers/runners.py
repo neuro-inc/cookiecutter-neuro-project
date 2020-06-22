@@ -269,6 +269,7 @@ def _run_once(
 
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
+    expect_patterns = []
 
     output = ""
     need_dump = False
