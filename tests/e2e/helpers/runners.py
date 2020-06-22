@@ -459,7 +459,7 @@ def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
 def parse_job_url(out: str) -> str:
     search = re.search(r"(Http URL|please open).*:[^\w]*(https://.+neu\.ro)", out)
     assert search, f"not found URL in output: `{out}`"
-    return search.group(1)
+    return search.group(2)
 
 
 def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
@@ -512,6 +512,7 @@ def get_job_status(job_id: str, verbose: bool = False) -> str:
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
+    log_msg(f"Response: ```{out}```")
     search = re.search(r"Status[^\w\n]*(\w+)", out)
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
