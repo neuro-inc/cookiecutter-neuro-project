@@ -447,7 +447,7 @@ def finalize(*finally_commands: str):  # type: ignore
 def parse_job_id(out: str) -> str:
     search = re.search(JOB_ID_DECLARATION_REGEX, out)
     assert search, f"not found job-ID in output: `{out}`"
-    return search.group(1)
+    return search.group()
 
 
 def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
