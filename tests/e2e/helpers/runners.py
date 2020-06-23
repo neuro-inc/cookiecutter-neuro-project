@@ -270,7 +270,10 @@ def _run_once(
 
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
-    expect_patterns = []
+
+    # mute for all tests except on neuro-logs
+    if "Starting SSH server" not in expect_patterns:
+        expect_patterns = []
 
     output = ""
     need_dump = False
