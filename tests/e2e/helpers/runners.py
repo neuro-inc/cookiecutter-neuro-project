@@ -272,7 +272,7 @@ def _run_once(
     timeout_s = DEFAULT_TIMEOUT_LONG
 
     # mute for all tests except on neuro-logs
-    if "Starting SSH server" not in expect_patterns:
+    if not any(s in expect_patterns for s in ["Starting SSH server", "forwarding"]):
         expect_patterns = []
 
     output = ""
