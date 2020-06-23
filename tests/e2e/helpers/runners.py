@@ -271,8 +271,9 @@ def _run_once(
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
-    # mute for all tests except on neuro-logs
-    if not any(s in expect_patterns for s in ["Starting SSH server", "forwarding"]):
+    # mute for all tests except logs and connect
+    ex = expect_patterns
+    if "Starting SSH server" not in ex and "forwarding" not in ex:
         expect_patterns = []
 
     output = ""
