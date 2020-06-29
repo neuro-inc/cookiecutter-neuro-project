@@ -717,6 +717,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 attempts=3,
                 attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 timeout_s=env_neuro_run_timeout,
+                assert_patterns=True,
             )
 
         cmd = "make connect-develop"
@@ -726,6 +727,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 expect_patterns=[_get_pattern_connected_ssh()],
                 timeout_s=TIMEOUT_NEURO_EXEC,
                 assert_exit_code=False,
+                assert_patterns=True,
             )
         # TODO: improve this test by sending command `echo 123`
         #  and then reading it via `make logs-develop` (needs improvements of runners)
@@ -737,6 +739,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 expect_patterns=["Starting SSH server"],
                 timeout_s=TIMEOUT_NEURO_LOGS,
                 assert_exit_code=False,
+                assert_patterns=True,
             )
 
         cmd = "make port-forward-develop"
@@ -746,6 +749,7 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 expect_patterns=[r"Press \^C to stop forwarding"],
                 timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
                 assert_exit_code=False,
+                assert_patterns=True,
             )
 
         cmd = "make kill-develop"

@@ -78,6 +78,7 @@ def run(
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
     check_default_errors: bool = False,
+        assert_patterns: bool = False,
 ) -> str:
     """
     This procedure wraps method `_run`. If an exception raised, it repeats to run
@@ -129,6 +130,7 @@ def run(
                 timeout_s=timeout_s,
                 assert_exit_code=assert_exit_code,
                 check_default_errors=check_default_errors,
+                assert_patterns=assert_patterns,
             )
         except Exception as exc:
             errors.append(exc)
@@ -167,6 +169,7 @@ def _run(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
+        assert_patterns: bool = False,
 ) -> str:
     """
     This method wraps method `_run_once` and accepts all its named arguments.
@@ -184,6 +187,7 @@ def _run(
         detect_new_jobs=detect_new_jobs,
         assert_exit_code=assert_exit_code,
         timeout_s=timeout_s,
+        assert_patterns=assert_patterns,
     )
     all_error_patterns = list(error_patterns)
     if check_default_errors:
@@ -221,6 +225,7 @@ def _run_once(
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
+    assert_patterns: bool = False,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -271,9 +276,7 @@ def _run_once(
     # TODO (ayushkovskiy) Disable timeout, see issue #333
     timeout_s = DEFAULT_TIMEOUT_LONG
 
-    # mute for all tests except logs and connect
-    ex = expect_patterns
-    if "Starting SSH server" not in ex and "forwarding" not in ex:
+    if assert_patterns:
         expect_patterns = []
 
     output = ""
