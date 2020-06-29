@@ -15,7 +15,6 @@ from tests.e2e.configuration import (
     JOB_ID_DECLARATION_REGEX,
     JOB_STATUSES_ALL,
     JOB_STATUSES_TERMINATED,
-    LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
     VERBS_SECRET,
@@ -69,7 +68,6 @@ def run(
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
-    detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
 ) -> str:
@@ -86,7 +84,6 @@ def run(
         cmd,
         expect_patterns=expect_patterns,
         verbose=verbose,
-        detect_new_jobs=detect_new_jobs,
         assert_exit_code=assert_exit_code,
     )
     all_error_patterns = list(error_patterns)
@@ -122,7 +119,6 @@ def _run_once(
     *,
     expect_patterns: t.Sequence[str] = (),
     verbose: bool = True,
-    detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
 ) -> str:
     r"""
@@ -231,8 +227,6 @@ def _run_once(
                     )
                 raise ExitCodeException(child.exitstatus)
     finally:
-        if detect_new_jobs:
-            _dump_submitted_job_ids(_detect_job_ids(output))
         if need_dump:
             log_msg(f"DUMP: {repr(output)}")
         if logfile:
@@ -278,25 +272,6 @@ def detect_errors(
         log_msg(f"Overall {len(found)} patterns matched")
         log_msg(f"DUMP: {repr(output)}")
     return found
-
-
-def _detect_job_ids(stdout: str) -> t.Set[str]:
-    r"""
-    >>> output = "Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ..."
-    >>> _detect_job_ids(output)
-    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
-    >>> output = r"\x1b[1mJob ID\x1b[0m: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 ..."
-    >>> _detect_job_ids(output)
-    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
-    """
-    return set(JOB_ID_DECLARATION_REGEX.findall(stdout))
-
-
-def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
-    if jobs:
-        log_msg(f"Dumped jobs: {jobs}")
-        with LOCAL_CLEANUP_JOBS_FILE.open("a") as f:
-            f.write("\n" + "\n".join(jobs))
 
 
 def repeat_until_success(

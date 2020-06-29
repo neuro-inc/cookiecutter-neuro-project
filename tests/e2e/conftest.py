@@ -2,7 +2,6 @@ import locale
 import os
 import sys
 import tempfile
-import time
 import typing as t
 from collections import namedtuple
 from pathlib import Path
@@ -231,8 +230,7 @@ def neuro_login(
         f"neuro config login-with-token {config.token} {config.url}", verbose=False,
     )
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
-    captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
-    time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
+    run(f"neuro config switch-cluster {config.cluster}", verbose=False)
     log_msg(run("neuro config show", verbose=False))
     yield
 

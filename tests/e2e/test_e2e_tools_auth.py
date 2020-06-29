@@ -60,7 +60,7 @@ def test_gsutil_auth_works_from_python_api(
     )
     make_cmd = "make upload-code"
     with measure_time(make_cmd):
-        run(make_cmd, detect_new_jobs=False)
+        run(make_cmd)
 
     make_cmd = f'make train TRAIN_CMD="python {script_path}"'
     with finalize(f"neuro kill {mk_train_job()}"):
@@ -135,7 +135,7 @@ def test_wandb_auth_works_from_python_api(
     )
     make_cmd = "make upload-code"
     with measure_time(make_cmd):
-        run(make_cmd, detect_new_jobs=False)
+        run(make_cmd,)
 
     make_cmd = f'make train TRAIN_CMD="python {script_path}"'
     with finalize(f"neuro kill {mk_train_job()}"):

@@ -60,21 +60,19 @@ def test_make_help_works() -> None:
 @pytest.mark.run(order=STEP_LOCAL)
 def test_make_setup_local() -> None:
     cmd = "make setup-local"
-    run(
-        cmd, detect_new_jobs=False,
-    )
+    run(cmd,)
 
 
 @pytest.mark.run(order=STEP_LOCAL)
 def test_make_lint_local() -> None:
     cmd = "make lint-local"
-    run(cmd, detect_new_jobs=False)
+    run(cmd,)
 
 
 @pytest.mark.run(order=STEP_LOCAL + 1)
 def test_make_format_local() -> None:
     cmd = "make format-local"
-    run(cmd, detect_new_jobs=False)
+    run(cmd,)
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -194,7 +192,7 @@ def test_make_setup_full() -> None:
                     make_cmd,
                     expect_patterns=[_get_pattern_status_running(), JOB_ID_PATTERN],
                 )
-            run("make kill-setup", detect_new_jobs=False)
+            run("make kill-setup",)
     except Exception:
         pytest.exit(f"Test on `make setup` failed, aborting the whole test suite.")
         raise
@@ -222,10 +220,7 @@ def test_import_code_in_notebooks(
                 assert_exit_code=False,
             )
 
-        run(
-            f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "stat {nb_path}"',
-            detect_new_jobs=False,
-        )
+        run(f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "stat {nb_path}"',)
 
         expected_string = r"----\s+Your training script here\s+----"
 
@@ -240,12 +235,11 @@ def test_import_code_in_notebooks(
             cmd,
             expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
             error_patterns=["Error: ", "CRITICAL"],
-            detect_new_jobs=False,
         )
 
         cmd = "make kill-jupyter"
         with measure_time(cmd):
-            run(cmd, detect_new_jobs=False)
+            run(cmd,)
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
@@ -315,12 +309,11 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
         with measure_time(cmd):
             run(
                 cmd,
-                detect_new_jobs=True,
                 expect_patterns=[_get_pattern_status_running(), r"\d+%.*\d+/10000"],
                 assert_exit_code=False,
             )
 
-        run("make kill-train", detect_new_jobs=False)
+        run("make kill-train",)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -366,8 +359,8 @@ def test_make_hypertrain(
                 )
 
             # just check exit-code:
-            run("make kill-hypertrain-all", detect_new_jobs=False)
-            run("make kill-train-all", detect_new_jobs=False)
+            run("make kill-hypertrain-all",)
+            run("make kill-train-all",)
 
     # Check results of hyper-parameter search on storage
     results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
@@ -411,7 +404,7 @@ def _test_run_something_useful(target: str, job_name: str, path: str) -> None:
 
         cmd = "make ps"
         with measure_time(cmd):
-            out = run(cmd, detect_new_jobs=False)
+            out = run(cmd,)
         assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
 
         repeat_until_success(
@@ -467,7 +460,7 @@ def test_make_develop() -> None:
 
     cmd = "make kill-develop"
     with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
+        run(cmd,)
 
 
 @pytest.mark.run(order=STEP_KILL)
@@ -477,7 +470,6 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                detect_new_jobs=True,
                 expect_patterns=[_get_pattern_status_running()],
                 assert_exit_code=False,
             )
@@ -486,7 +478,6 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
         with measure_time(cmd):
             run(
                 cmd,
-                detect_new_jobs=False,
                 expect_patterns=[_get_pattern_connected_ssh()],
                 assert_exit_code=False,
             )
@@ -494,16 +485,16 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
         cmd = "make ps-train-all"
         with measure_time(cmd):
             run(
-                cmd, detect_new_jobs=False, expect_patterns=[mk_train_job()],
+                cmd, expect_patterns=[mk_train_job()],
             )
 
         cmd = "make kill-train"
         with measure_time(cmd):
-            run(cmd, detect_new_jobs=False)
+            run(cmd,)
 
 
 @pytest.mark.run(order=STEP_KILL)
 def test_make_kill_all() -> None:
     cmd = f"make kill-all"
     with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
+        run(cmd,)

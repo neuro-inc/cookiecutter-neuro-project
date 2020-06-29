@@ -46,6 +46,7 @@ stages:
       displayName: 'Install dependencies'
 
     - script: |
+        export RUN_EXTRA=--tag=build-$(Build.BuildNumber)
         make $(e2e.target)
       displayName: 'Run e2e against $(e2e.url)'
       env:
@@ -60,6 +61,11 @@ stages:
       condition: always()
 
     - script: |
-        make cleanup_e2e
+        # Cleanup jobs:
+        export jobs=`neuro ps --tag=build-$(Build.BuildNumber)`
+        echo "Killing stale jobs:\n$jobs\n"
+        neuro kill $jobs
+        # Cleanup storage:
+        make cleanup_e2e_storage
       displayName: 'Cleanup after e2e tests'
       condition:  always()

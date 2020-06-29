@@ -54,6 +54,6 @@ test_e2e_staging:
 get_e2e_failures:
 	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "(no data)"
 
-.PHONY: cleanup_e2e
-cleanup_e2e:
+.PHONY: cleanup_e2e_storage
+cleanup_e2e_storage:
 	bash -c tests/e2e/cleanup.sh
