@@ -47,7 +47,7 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
-        python -m pip install -U pip wandb neuromation
+        python -m pip install -U pip wandb neuromation==20.6.2
         make init
       displayName: 'Install dependencies'
 
