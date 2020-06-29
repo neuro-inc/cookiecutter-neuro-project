@@ -15,7 +15,7 @@ from tests.e2e.configuration import (
 )
 from tests.e2e.conftest import STEP_RUN
 from tests.e2e.helpers.runners import finalize, parse_job_id, run
-from tests.e2e.helpers.utils import measure_time
+from tests.e2e.helpers.utils import measure_time, retry
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -36,7 +36,7 @@ def test_gsutil_auth_works_from_cli(
 
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd):
+        with retry(3):
             run(cmd, expect_patterns=["Hello world!"])
 
 
@@ -98,7 +98,7 @@ def test_aws_auth_works(
 
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd):
+        with retry(3):
             run(cmd, expect_patterns=["Hello world!"])
 
 
