@@ -66,15 +66,3 @@ def measure_time(cmd: str) -> t.Iterator[None]:
         elapsed = time.time() - start_time
         msg = f"Time summary [{cmd}]: {elapsed:.2f} sec"
         log_msg("-" * len(msg), logger=LOGGER.info)
-
-
-@contextmanager
-def retry(attempts: int, callable: t.Callable[[], t.Any]) -> t.Any:
-    for attempt in range(1, attempts + 1):
-        try:
-            return callable()
-        except BaseException as e:
-            log_msg(f"Attempt {attempt}: Caught error {e}")
-            if attempt == attempts:
-                log_msg("Giving up.")
-                raise

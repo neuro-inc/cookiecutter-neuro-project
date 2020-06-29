@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from flaky import flaky
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
@@ -15,11 +16,12 @@ from tests.e2e.configuration import (
 )
 from tests.e2e.conftest import STEP_RUN
 from tests.e2e.helpers.runners import finalize, parse_job_id, run
-from tests.e2e.helpers.utils import measure_time, retry
+from tests.e2e.helpers.utils import measure_time
 
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
+@flaky(max_runs=3)
 def test_gsutil_auth_works_from_cli(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
@@ -36,7 +38,7 @@ def test_gsutil_auth_works_from_cli(
 
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        retry(3, lambda: run(cmd, expect_patterns=["Hello world!"]))
+        run(cmd, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -79,6 +81,7 @@ def test_gsutil_auth_works_from_python_api(
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
+@flaky(max_runs=3)
 def test_aws_auth_works(
     decrypt_aws_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
@@ -97,7 +100,7 @@ def test_aws_auth_works(
 
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        retry(3, lambda: run(cmd, expect_patterns=["Hello world!"]))
+        run(cmd, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
