@@ -72,7 +72,6 @@ def run(
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
-    assert_patterns: bool = False,
 ) -> str:
     """
     This method wraps method `_run_once` and accepts all its named arguments.
@@ -89,7 +88,6 @@ def run(
         verbose=verbose,
         detect_new_jobs=detect_new_jobs,
         assert_exit_code=assert_exit_code,
-        assert_patterns=assert_patterns,
     )
     all_error_patterns = list(error_patterns)
     if check_default_errors:
@@ -103,13 +101,13 @@ def run(
 
 def _expects_default_errors(expect_patterns: t.Sequence[str] = ()) -> bool:
     """
-    >>> _expects_default_errors(["ERROR: bla-bla"]) #, [r"ERROR[^:]*: .+"])
+    >>> _expects_default_errors(["ERROR: bla-bla"])
     True
-    >>> _expects_default_errors(["Error: bla-bla"]) #, [r"Error: .+",])
+    >>> _expects_default_errors(["Error: bla-bla"])
     True
     >>> _expects_default_errors([r"Makefile:.+ recipe for target '_check_setup' failed"])
     True
-    >>> _expects_default_errors(["Not an error"]) #, [r"Error: .+",])
+    >>> _expects_default_errors(["Not an error"])
     False
     """  # noqa
     return any(
@@ -126,7 +124,6 @@ def _run_once(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    assert_patterns: bool = False,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -173,11 +170,6 @@ def _run_once(
     ''
     """  # noqa
     log_msg(f"<<< {_hide_secret_cmd(cmd)}")
-
-    # TODO (ayushkovskiy) Disable timeout, see issue #333
-
-    if assert_patterns:
-        expect_patterns = []
 
     output = ""
     need_dump = False

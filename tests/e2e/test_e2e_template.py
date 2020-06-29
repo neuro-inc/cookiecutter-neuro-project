@@ -68,15 +68,21 @@ def test_make_help_works() -> None:
 
 
 @pytest.mark.run(order=STEP_LOCAL)
+def test_make_setup_local() -> None:
+    cmd = "make setup-local"
+    run(
+        cmd, detect_new_jobs=False,
+    )
+
+
+@pytest.mark.run(order=STEP_LOCAL)
 def test_make_lint_local() -> None:
-    # just check exit code
     cmd = "make lint-local"
     run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_LOCAL + 1)
 def test_make_format_local() -> None:
-    # just check exit code
     cmd = "make format-local"
     run(cmd, detect_new_jobs=False)
 
@@ -191,36 +197,17 @@ def test_make_wandb_check_auth_success(
 )
 def test_make_setup_full() -> None:
     try:
-        _run_make_setup_test()
+        with finalize(f"neuro kill {MK_SETUP_JOB}"):
+            make_cmd = "make setup"
+            with measure_time(make_cmd):
+                run(
+                    make_cmd,
+                    expect_patterns=[_get_pattern_status_running(), JOB_ID_PATTERN],
+                )
+            run("make kill-setup", detect_new_jobs=False)
     except Exception:
         pytest.exit(f"Test on `make setup` failed, aborting the whole test suite.")
         raise
-
-
-@finalize(f"neuro kill {MK_SETUP_JOB}")
-def _run_make_setup_test() -> None:
-    project_files_messages = []
-    for file in MK_PROJECT_FILES:
-        project_files_messages.append(_pattern_copy_file_started(file))
-        project_files_messages.append(_pattern_copy_file_finished(file))
-
-    expected_patterns = [
-        _get_pattern_status_running(),
-        JOB_ID_PATTERN,
-    ]
-
-    make_cmd = "make setup"
-    with measure_time(make_cmd):
-        run(
-            make_cmd, expect_patterns=expected_patterns,
-        )
-
-
-@pytest.mark.run(order=STEP_POST_SETUP)
-@finalize(f"neuro kill {MK_SETUP_JOB}")
-def test_make_kill_setup() -> None:
-    # just check exit code
-    run("make kill-setup", detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_PRE_RUN)
@@ -273,93 +260,23 @@ def test_import_code_in_notebooks(
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_code() -> None:
-    make_cmd = "make upload-code"
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_data() -> None:
-    make_cmd = "make upload-data"
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_config(
-    decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
-) -> None:
-    make_cmd = "make upload-config"
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_notebooks() -> None:
-    assert ls(MK_NOTEBOOKS_DIR) >= PROJECT_NOTEBOOKS_DIR_CONTENT
-    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",)
-
-    make_cmd = "make upload-notebooks"
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote >= PROJECT_NOTEBOOKS_DIR_CONTENT
-
-
-@pytest.mark.run(order=STEP_UPLOAD)
-def test_make_upload_results() -> None:
-    make_cmd = "make upload-results"
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_POST_UPLOAD)
-def test_make_upload_all() -> None:
-    # just check exit code
-    cmd = "make upload-all"
-    run(cmd, detect_new_jobs=False)
-
-
-@pytest.mark.run(order=STEP_DOWNLOAD)
-def test_make_download_data() -> None:
-    # Download:
-    make_cmd = "make download-data"
-    cleanup_local_dirs(MK_DATA_DIR)
+@pytest.mark.parametrize(
+    "what", ["code", "data", "config", "notebooks", "results", "all"]
+)
+def test_make_upload(what: str) -> None:
+    make_cmd = f"make upload-{what}"
     with measure_time(make_cmd):
         run(make_cmd)
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
-def test_make_download_noteboooks() -> None:
-    make_cmd = "make download-notebooks"
-    cleanup_local_dirs(MK_NOTEBOOKS_DIR)
+@pytest.mark.parametrize(
+    "what", ["code", "data", "config", "notebooks", "results", "all"]
+)
+def test_make_download(what: str) -> None:
+    make_cmd = f"make download-{what}"
     with measure_time(make_cmd):
         run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_DOWNLOAD)
-def test_make_download_config() -> None:
-    make_cmd = "make download-config"
-    cleanup_local_dirs(MK_CONFIG_DIR)
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_DOWNLOAD)
-def test_make_download_results() -> None:
-    make_cmd = "make download-results"
-    cleanup_local_dirs(MK_RESULTS_DIR)
-    with measure_time(make_cmd):
-        run(make_cmd)
-
-
-@pytest.mark.run(order=STEP_DOWNLOAD)
-def test_make_download_all() -> None:
-    cmd = "make download-all"
-    with measure_time(cmd):
-        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -392,36 +309,6 @@ def test_make_train_custom_command(
         )
         job_id = parse_job_id(out)
         wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_train_multiple_experiments(
-    env_var_preset_cpu_small: None, neuro_project_id: str
-) -> None:
-    experiments = [MK_RUN_DEFAULT, "new-idea"]
-    jobs = [mk_train_job(exp) for exp in experiments]
-    with finalize(*[f"neuro kill {job}" for job in jobs]):
-        for exp in experiments:
-            cmd = f'make train TRAIN_CMD="sleep 1h"'
-            if exp != MK_RUN_DEFAULT:
-                cmd += f" RUN={exp}"
-            with measure_time(cmd):
-                run(
-                    cmd,
-                    expect_patterns=[_get_pattern_status_running()],
-                    assert_exit_code=False,
-                )
-        run("make kill-train-all", detect_new_jobs=False)
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_train_invalid_name() -> None:
-    run(
-        "make train RUN=InVaLiD-NaMe",
-        expect_patterns=["Invalid job name"],
-        assert_exit_code=False,
-        check_default_errors=False,
-    )
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -560,37 +447,12 @@ def _test_run_something_useful(target: str, path: str) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_gpu_available(environment: str) -> None:
-    if environment in ["dev"]:
-        pytest.skip(f"Skipped as GPU is not available on {environment}")
-    with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
-        cmd = "make develop PRESET=gpu-small"
-        with measure_time(cmd):
-            run(
-                cmd, expect_patterns=[r"Status:[^\n]+running"],
-            )
-
-        py_commands = [
-            "import tensorflow as tf; assert tf.test.is_gpu_available()",
-            "import torch; print(torch.randn(2,2).cuda())",
-            "import torch; assert torch.cuda.is_available()",
-        ]
-        for py in py_commands:
-            cmd = (
-                f"neuro exec --no-key-check --no-tty {MK_DEVELOP_JOB} "
-                f"\"python -c '{py}'\""
-            )
-            with measure_time(cmd):
-                run(cmd)
-
-
-@pytest.mark.run(order=STEP_RUN)
 def test_make_develop() -> None:
     with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
         cmd = "make develop"
         with measure_time(cmd):
             run(
-                cmd, expect_patterns=[r"Status:[^\n]+running"], assert_patterns=True,
+                cmd, expect_patterns=[_get_pattern_status_running()],
             )
 
 
@@ -628,16 +490,6 @@ def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
 
 @pytest.mark.run(order=STEP_KILL)
 def test_make_kill_all() -> None:
-    # just check exit code
     cmd = f"make kill-all"
     with measure_time(cmd):
         run(cmd, detect_new_jobs=False)
-
-
-@pytest.mark.run(order=STEP_LOCAL)
-def test_make_setup_local() -> None:
-    # just check exit code
-    cmd = "make setup-local"
-    run(
-        cmd, detect_new_jobs=False,
-    )
