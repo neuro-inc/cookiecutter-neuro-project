@@ -11,34 +11,26 @@ from tests.e2e.configuration import (
     JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
     MK_CONFIG_DIR,
-    MK_DATA_DIR,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT,
-    MK_PROJECT_FILES,
     MK_PROJECT_PATH_ENV,
     MK_PROJECT_PATH_STORAGE,
     MK_RESULTS_DIR,
-    MK_RUN_DEFAULT,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    PROJECT_NOTEBOOKS_DIR_CONTENT,
     WANDB_KEY_FILE,
     _get_pattern_connected_ssh,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
-    _pattern_copy_file_finished,
-    _pattern_copy_file_started,
     mk_train_job,
 )
 from tests.e2e.conftest import (
     STEP_DOWNLOAD,
     STEP_KILL,
     STEP_LOCAL,
-    STEP_POST_SETUP,
-    STEP_POST_UPLOAD,
     STEP_PRE_RUN,
     STEP_PRE_SETUP,
     STEP_RUN,
@@ -48,9 +40,7 @@ from tests.e2e.conftest import (
 from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import (
     finalize,
-    ls,
     neuro_ls,
-    neuro_rm_dir,
     parse_job_id,
     parse_job_url,
     parse_jobs_ids,
@@ -58,7 +48,7 @@ from tests.e2e.helpers.runners import (
     run,
     wait_job_change_status_to,
 )
-from tests.e2e.helpers.utils import cleanup_local_dirs, measure_time
+from tests.e2e.helpers.utils import measure_time
 
 
 @pytest.mark.run(order=STEP_PRE_SETUP)
@@ -454,6 +444,37 @@ def test_make_develop() -> None:
             run(
                 cmd, expect_patterns=[_get_pattern_status_running()],
             )
+
+    with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
+        cmd = "make develop"
+        with measure_time(cmd):
+            run(
+                cmd, expect_patterns=[_get_pattern_status_running()],
+            )
+
+    cmd = "make connect-develop"
+    with measure_time(cmd):
+        run(
+            cmd, expect_patterns=[_get_pattern_connected_ssh()], assert_exit_code=False,
+        )
+
+    cmd = "make logs-develop"
+    with measure_time(cmd):
+        run(
+            cmd, expect_patterns=["Starting SSH server"], assert_exit_code=False,
+        )
+
+    cmd = "make port-forward-develop"
+    with measure_time(cmd):
+        run(
+            cmd,
+            expect_patterns=[r"Press \^C to stop forwarding"],
+            assert_exit_code=False,
+        )
+
+    cmd = "make kill-develop"
+    with measure_time(cmd):
+        run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_KILL)
