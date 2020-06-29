@@ -36,8 +36,7 @@ def test_gsutil_auth_works_from_cli(
 
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with retry(3):
-            run(cmd, expect_patterns=["Hello world!"])
+        retry(3, lambda: run(cmd, expect_patterns=["Hello world!"]))
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -98,8 +97,7 @@ def test_aws_auth_works(
 
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with retry(3):
-            run(cmd, expect_patterns=["Hello world!"])
+        retry(3, lambda: run(cmd, expect_patterns=["Hello world!"]))
 
 
 @pytest.mark.run(order=STEP_RUN)
