@@ -106,6 +106,8 @@ WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
 #  make jupyter SYNC=""
 SYNC?=upload-code upload-config
 
+SECRETS?=
+
 ##### CONSTANTS #####
 
 GCP_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(GCP_SECRET_FILE)
@@ -159,6 +161,7 @@ setup: ### Setup remote environment
 	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
 	$(NEURO) run $(RUN_EXTRA) \
+	  	$(SECRETS) \
 		--name $(SETUP_JOB) \
 		--tag "target:setup" $(_PROJECT_TAGS) \
 		--preset cpu-small \
@@ -335,6 +338,7 @@ wandb-check-auth:  ### Check if the file Weights and Biases authentication file 
 .PHONY: develop
 develop: _check_setup $(SYNC)  ### Run a development job
 	$(NEURO) run $(RUN_EXTRA) \
+	  	$(SECRETS) \
 		--name $(DEVELOP_JOB) \
 		--tag "target:develop" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
@@ -370,6 +374,7 @@ kill-develop:  ### Terminate the development job
 .PHONY: train
 train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run $(RUN_EXTRA) \
+	  	$(SECRETS) \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--tag "target:train" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
@@ -419,6 +424,7 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 	for index in `seq 1 $(N_JOBS)` ; do \
 		echo -e "\nStarting job $$index..." ; \
 		$(NEURO) run $(RUN_EXTRA) \
+			$(SECRETS) \
 			--name $(TRAIN_JOB)-$$sweep-$$index \
 			--tag "target:hypertrain" --tag "target:train" --tag "wandb-sweep:$$sweep" $(_PROJECT_TAGS) \
 			--preset $(PRESET) \
@@ -456,6 +462,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 .PHONY: jupyter
 jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
+	  	$(SECRETS) \
 		--name $(JUPYTER_JOB) \
 		--tag "target:jupyter" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
@@ -494,6 +501,7 @@ kill-jupyterlab:  ### Terminate the job with JupyterLab
 .PHONY: tensorboard
 tensorboard: _check_setup  ### Run a job with TensorBoard and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
+		$(SECRETS) \
 		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
 		--tag "target:tensorboard" $(_PROJECT_TAGS) \
@@ -512,6 +520,7 @@ kill-tensorboard:  ### Terminate the job with TensorBoard
 .PHONY: filebrowser
 filebrowser: _check_setup  ### Run a job with File Browser and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
+		$(SECRETS) \
 		--name $(FILEBROWSER_JOB) \
 		--tag "target:filebrowser" $(_PROJECT_TAGS) \
 		--preset cpu-small \
