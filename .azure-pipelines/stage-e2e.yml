@@ -27,6 +27,7 @@ stages:
       e2e.url: 'https://staging.neu.ro/api/v1'
       e2e.cluster: 'neuro-public'
       e2e.target: 'test_e2e_staging'
+      neuro_tag: 'build-$(Build.BuildId)
 
 
     steps:
@@ -46,7 +47,7 @@ stages:
       displayName: 'Install dependencies'
 
     - script: |
-        export RUN_EXTRA=--tag=build-$(Build.BuildNumber)
+        export RUN_EXTRA=--tag=$(e2e.neuro_tag)
         make $(e2e.target)
       displayName: 'Run e2e against $(e2e.url)'
       env:
@@ -62,7 +63,7 @@ stages:
 
     - script: |
         # Cleanup jobs:
-        export jobs=`neuro ps --tag=build-$(Build.BuildNumber)`
+        export jobs=`neuro ps --tag=$(e2e.neuro_tag)`
         echo "Killing stale jobs:\n$jobs\n"
         neuro kill $jobs
         # Cleanup storage:
