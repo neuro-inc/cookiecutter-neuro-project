@@ -309,7 +309,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
         with measure_time(cmd):
             run(
                 cmd,
-                expect_patterns=[_get_pattern_status_running(), r"\d+%.*\d+/10000"],
+                expect_patterns=[_get_pattern_status_running(), r"1000/1000"],
                 assert_exit_code=False,
             )
 
