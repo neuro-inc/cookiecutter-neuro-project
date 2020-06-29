@@ -27,7 +27,7 @@ stages:
       e2e.url: 'https://staging.neu.ro/api/v1'
       e2e.cluster: 'neuro-public'
       e2e.target: 'test_e2e_staging'
-      neuro_tag: 'build-$(Build.BuildId)
+      neuro_tag: 'build-$(Build.BuildId)'
 
 
     steps:
