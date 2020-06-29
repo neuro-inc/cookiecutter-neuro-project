@@ -224,7 +224,6 @@ def test_import_code_in_notebooks(
 
         run(
             f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "stat {nb_path}"',
-            expect_patterns=[fr"File: {nb_path}"],
             detect_new_jobs=False,
         )
 
@@ -317,12 +316,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
             run(
                 cmd,
                 detect_new_jobs=True,
-                expect_patterns=[
-                    _get_pattern_status_running(),
-                    r"Streaming logs of the job",
-                    r"\d+%.*\d+/10000",
-                ],
-                error_patterns=["[Ee]rror"],
+                expect_patterns=[_get_pattern_status_running(), r"\d+%.*\d+/10000"],
                 assert_exit_code=False,
             )
 
@@ -382,58 +376,57 @@ def test_make_hypertrain(
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter_notebook(env_var_no_http_auth: None) -> None:
-    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        _test_run_something_useful("jupyter", "/tree")
+    _test_run_something_useful("jupyter", MK_JUPYTER_JOB, "/tree")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_jupyter_lab(env_var_no_http_auth: None,) -> None:
-    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        _test_run_something_useful("jupyter", "/lab")
+    _test_run_something_useful("jupyter", MK_JUPYTER_JOB, "/lab")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_tensorboard(env_var_no_http_auth: None) -> None:
-    with finalize(f"neuro kill {MK_TENSORBOARD_JOB}"):
-        _test_run_something_useful("tensorboard", "/")
+    _test_run_something_useful("tensorboard", MK_TENSORBOARD_JOB, "/")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_filebrowser(env_var_no_http_auth: None) -> None:
-    with finalize(f"neuro kill {MK_FILEBROWSER_JOB}"):
-        _test_run_something_useful("filebrowser", "/files/requirements.txt")
-
-
-def _test_run_something_useful(target: str, path: str) -> None:
-    # Can't test web UI with HTTP auth
-    make_cmd = f"make {target}"
-    with measure_time(make_cmd):
-        out = run(
-            make_cmd,
-            expect_patterns=[_get_pattern_status_running()],
-            assert_exit_code=False,
-        )
-    job_id = parse_job_id(out)
-    url = parse_job_url(out)
-
-    cmd = "make ps"
-    with measure_time(cmd):
-        out = run(cmd, detect_new_jobs=False)
-    assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
-
-    repeat_until_success(
-        f"curl --fail {url}{path}",
-        job_id,
-        expect_patterns=[r"<[^>]*html.*>"],
-        error_patterns=["curl: .+"],
-        verbose=False,
-        assert_exit_code=False,
+    _test_run_something_useful(
+        "filebrowser", MK_FILEBROWSER_JOB, "/files/requirements.txt"
     )
 
-    make_cmd = f"make kill-{target}"
-    with measure_time(make_cmd):
-        run(make_cmd)
-    wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
+
+def _test_run_something_useful(target: str, job_name: str, path: str) -> None:
+    # Can't test web UI with HTTP auth
+    with finalize(f"neuro kill {job_name}"):
+        make_cmd = f"make {target}"
+        with measure_time(make_cmd):
+            out = run(
+                make_cmd,
+                expect_patterns=[_get_pattern_status_running()],
+                assert_exit_code=False,
+            )
+        job_id = parse_job_id(out)
+        url = parse_job_url(run(f"neuro status {job_name}"))
+
+        cmd = "make ps"
+        with measure_time(cmd):
+            out = run(cmd, detect_new_jobs=False)
+        assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
+
+        repeat_until_success(
+            f"curl --fail {url}{path}",
+            job_id,
+            expect_patterns=[r"<[^>]*html.*>"],
+            error_patterns=["curl: .+"],
+            verbose=False,
+            assert_exit_code=False,
+        )
+
+        make_cmd = f"make kill-{target}"
+        with measure_time(make_cmd):
+            run(make_cmd)
+        wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
 @pytest.mark.run(order=STEP_RUN)

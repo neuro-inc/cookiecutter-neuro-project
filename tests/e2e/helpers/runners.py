@@ -357,9 +357,13 @@ def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
 
 
 def parse_job_url(out: str) -> str:
-    search = re.search(r"(Http URL|please open).*:[^\w]*(https://.+neu\.ro)", out)
-    assert search, f"not found URL in output: `{out}`"
-    return search.group(2)
+    search = re.search(r"Http URL.*:.*(https://.+neu\.ro)", out)
+    if search:
+        url = search.group(1)
+        log_msg(f"Found URL: `{url}`")
+        return url
+    else:
+        raise RuntimeError(f"Not found URL in output: `{out}`")
 
 
 def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:

@@ -37,7 +37,7 @@ CUSTOM_ENV?=image:neuromation-$(PROJECT):$(VERSION)
 # Allows to set the `neuro` executable:
 #   make setup NEURO=/usr/bin/neuro
 #   make setup NEURO="neuro --verbose --show-traceback"
-NEURO=neuro
+NEURO?=neuro
 
 
 # Location of your dataset on the platform storage:
