@@ -5,7 +5,6 @@ import pytest
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
-    DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
     EXISTING_PROJECT_SLUG,
     GCP_KEY_FILE,
     JOB_ID_PATTERN,
@@ -261,10 +260,7 @@ def _run_make_setup_test() -> None:
     make_cmd = "make setup"
     with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
         run(
-            make_cmd,
-            expect_patterns=expected_patterns,
-            attempts=3,
-            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+            make_cmd, expect_patterns=expected_patterns,
         )
 
 
@@ -294,14 +290,11 @@ def test_import_code_in_notebooks(
                     "CellExecutionError",
                     "ModuleNotFoundError",
                 ],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 assert_exit_code=False,
             )
 
         run(
             f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "stat {nb_path}"',
-            attempts=2,
             expect_patterns=[fr"File: {nb_path}"],
             detect_new_jobs=False,
         )
@@ -317,7 +310,6 @@ def test_import_code_in_notebooks(
         cmd = f'neuro exec --no-key-check --no-tty {MK_JUPYTER_JOB} "{exec_cmd}"'
         run(
             cmd,
-            attempts=2,
             expect_patterns=[fr"Writing \d+ bytes to {out_file}", expected_string],
             error_patterns=["Error: ", "CRITICAL"],
             detect_new_jobs=False,
@@ -468,10 +460,7 @@ def test_make_download_all() -> None:
 def test_make_train_defaults(env_var_preset_cpu_small: None) -> None:
     with finalize(f"neuro kill {mk_train_job()}"):
         out = run(
-            "make train",
-            expect_patterns=[_get_pattern_status_succeeded_or_running()],
-            attempts=3,
-            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+            "make train", expect_patterns=[_get_pattern_status_succeeded_or_running()],
         )
         job_id = parse_job_id(out)
         wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
@@ -493,10 +482,7 @@ def test_make_train_custom_command(
     #  (note: currently, `make train` doesn't allow us to set custom env vars, see #227)
     with finalize(f"neuro kill {mk_train_job()}"):
         out = run(
-            "make train",
-            expect_patterns=[_get_pattern_status_succeeded_or_running()],
-            attempts=3,
-            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
+            "make train", expect_patterns=[_get_pattern_status_succeeded_or_running()],
         )
         job_id = parse_job_id(out)
         wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
@@ -517,8 +503,6 @@ def test_make_train_multiple_experiments(
                 run(
                     cmd,
                     expect_patterns=[_get_pattern_status_running()],
-                    attempts=3,
-                    attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                     assert_exit_code=False,
                 )
         run("make kill-train-all", detect_new_jobs=False)
@@ -650,8 +634,6 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
         out = run(
             make_cmd,
             expect_patterns=[_get_pattern_status_running()],
-            attempts=3,
-            attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
             assert_exit_code=False,
         )
     job_id = parse_job_id(out)
@@ -687,8 +669,6 @@ def test_gpu_available(environment: str) -> None:
             run(
                 cmd,
                 expect_patterns=[r"Status:[^\n]+running"],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 timeout_s=TIMEOUT_NEURO_RUN_GPU,
             )
 
@@ -703,7 +683,7 @@ def test_gpu_available(environment: str) -> None:
                 f"\"python -c '{py}'\""
             )
             with measure_time(cmd):
-                run(cmd, attempts=2, timeout_s=TIMEOUT_NEURO_EXEC)
+                run(cmd, timeout_s=TIMEOUT_NEURO_EXEC)
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -714,8 +694,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
             run(
                 cmd,
                 expect_patterns=[r"Status:[^\n]+running"],
-                attempts=3,
-                attempt_substrings=DEFAULT_ERROR_SUBSTRINGS_JOB_RUN,
                 timeout_s=env_neuro_run_timeout,
                 assert_patterns=True,
             )
