@@ -39,7 +39,7 @@ def test_gsutil_auth_works_from_cli(
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, expect_patterns=["Hello world!"])
+            run(cmd, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -75,7 +75,6 @@ def test_gsutil_auth_works_from_python_api(
         with measure_time(cmd):
             run(
                 cmd,
-                attempts=2,
                 expect_patterns=["Hello world!"],
                 error_patterns=["Errno", "No such file or directory"],
             )
@@ -102,7 +101,7 @@ def test_aws_auth_works(
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
         with measure_time(cmd, TIMEOUT_NEURO_EXEC):
-            run(cmd, attempts=2, expect_patterns=["Hello world!"])
+            run(cmd, expect_patterns=["Hello world!"])
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -155,7 +154,6 @@ def test_wandb_auth_works_from_python_api(
         with measure_time(cmd):
             run(
                 cmd,
-                attempts=2,
                 expect_patterns=["<Runs art-em/cookiecutter-neuro-project"],
                 error_patterns=["TypeError", "Permission denied"],
             )
