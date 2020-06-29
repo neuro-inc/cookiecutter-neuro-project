@@ -263,7 +263,8 @@ def test_make_download(what: str) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_defaults(env_var_preset_cpu_small: None) -> None:
+def test_make_train_defaults(monkeypatch: Any, env_var_preset_cpu_small: None) -> None:
+    monkeypatch.setenv("RUN_EXTRA", "--detach")
     with finalize(f"neuro kill {mk_train_job()}"):
         out = run(
             "make train", expect_patterns=[_get_pattern_status_succeeded_or_running()],
@@ -282,6 +283,7 @@ def test_make_train_custom_command(
     cmd = f'bash -c "sleep 5 && python -W ignore -c \\"{py_cmd}\\""'
     log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
     monkeypatch.setenv("TRAIN_CMD", cmd)
+    monkeypatch.setenv("RUN_EXTRA", "--detach")
 
     # NOTE: tensorflow outputs a lot of debug info even with `python -W ignore`.
     #  To disable this, export env var `TF_CPP_MIN_LOG_LEVEL=3`
@@ -427,40 +429,37 @@ def test_make_develop() -> None:
     with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
         cmd = "make develop"
         with measure_time(cmd):
-            run(
-                cmd, expect_patterns=[_get_pattern_status_running()],
-            )
+            run(cmd, expect_patterns=[_get_pattern_status_running()])
 
-    with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
         cmd = "make develop"
         with measure_time(cmd):
+            run(cmd, expect_patterns=[_get_pattern_status_running()])
+
+        cmd = "make connect-develop"
+        with measure_time(cmd):
             run(
-                cmd, expect_patterns=[_get_pattern_status_running()],
+                cmd,
+                expect_patterns=[_get_pattern_connected_ssh()],
+                assert_exit_code=False,
             )
 
-    cmd = "make connect-develop"
-    with measure_time(cmd):
-        run(
-            cmd, expect_patterns=[_get_pattern_connected_ssh()], assert_exit_code=False,
-        )
+        cmd = "make logs-develop"
+        with measure_time(cmd):
+            run(
+                cmd, expect_patterns=["Starting SSH server"], assert_exit_code=False,
+            )
 
-    cmd = "make logs-develop"
-    with measure_time(cmd):
-        run(
-            cmd, expect_patterns=["Starting SSH server"], assert_exit_code=False,
-        )
+        cmd = "make port-forward-develop"
+        with measure_time(cmd):
+            run(
+                cmd,
+                expect_patterns=[r"Press \^C to stop forwarding"],
+                assert_exit_code=False,
+            )
 
-    cmd = "make port-forward-develop"
-    with measure_time(cmd):
-        run(
-            cmd,
-            expect_patterns=[r"Press \^C to stop forwarding"],
-            assert_exit_code=False,
-        )
-
-    cmd = "make kill-develop"
-    with measure_time(cmd):
-        run(cmd,)
+        cmd = "make kill-develop"
+        with measure_time(cmd):
+            run(cmd)
 
 
 @pytest.mark.run(order=STEP_KILL)
