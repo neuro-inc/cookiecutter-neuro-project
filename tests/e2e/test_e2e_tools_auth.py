@@ -9,8 +9,6 @@ from tests.e2e.configuration import (
     GCP_KEY_FILE,
     MK_CODE_DIR,
     MK_JUPYTER_JOB,
-    TIMEOUT_NEURO_EXEC,
-    TIMEOUT_NEURO_RUN_CPU,
     WANDB_KEY_FILE,
     _get_pattern_status_running,
     mk_train_job,
@@ -28,7 +26,7 @@ def test_gsutil_auth_works_from_cli(
     monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
     make_cmd = "make jupyter"
     with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        with measure_time(make_cmd, TIMEOUT_NEURO_RUN_CPU):
+        with measure_time(make_cmd):
             out = run(
                 make_cmd,
                 expect_patterns=[_get_pattern_status_running()],
@@ -38,7 +36,7 @@ def test_gsutil_auth_works_from_cli(
 
         bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
+        with measure_time(cmd):
             run(cmd, expect_patterns=["Hello world!"])
 
 
@@ -90,7 +88,7 @@ def test_aws_auth_works(
     kill_job_cmd = f"neuro kill {MK_JUPYTER_JOB}"
 
     with finalize(kill_job_cmd):
-        with measure_time(run_job_cmd, TIMEOUT_NEURO_RUN_CPU):
+        with measure_time(run_job_cmd):
             out = run(
                 run_job_cmd,
                 expect_patterns=[_get_pattern_status_running()],
@@ -100,7 +98,7 @@ def test_aws_auth_works(
 
         bash_cmd = "aws s3 cp s3://cookiecutter-e2e/hello.txt -"
         cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        with measure_time(cmd, TIMEOUT_NEURO_EXEC):
+        with measure_time(cmd):
             run(cmd, expect_patterns=["Hello world!"])
 
 

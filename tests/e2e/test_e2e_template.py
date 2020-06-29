@@ -24,33 +24,9 @@ from tests.e2e.configuration import (
     MK_RUN_DEFAULT,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    N_FILES,
-    PACKAGES_APT_CUSTOM,
-    PACKAGES_PIP_CUSTOM,
-    PROJECT_CODE_DIR_CONTENT,
-    PROJECT_CONFIG_DIR_CONTENT,
     PROJECT_NOTEBOOKS_DIR_CONTENT,
-    PROJECT_RESULTS_DIR_CONTENT,
-    TIMEOUT_MAKE_DOWNLOAD_CONFIG,
-    TIMEOUT_MAKE_DOWNLOAD_DATA,
-    TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS,
-    TIMEOUT_MAKE_DOWNLOAD_RESULTS,
-    TIMEOUT_MAKE_SETUP,
-    TIMEOUT_MAKE_UPLOAD_CODE,
-    TIMEOUT_MAKE_UPLOAD_CONFIG,
-    TIMEOUT_MAKE_UPLOAD_DATA,
-    TIMEOUT_MAKE_UPLOAD_NOTEBOOKS,
-    TIMEOUT_MAKE_UPLOAD_RESULTS,
-    TIMEOUT_NEURO_EXEC,
-    TIMEOUT_NEURO_KILL,
-    TIMEOUT_NEURO_LOGS,
-    TIMEOUT_NEURO_PORT_FORWARD,
-    TIMEOUT_NEURO_RMDIR_CODE,
-    TIMEOUT_NEURO_RUN_CPU,
-    TIMEOUT_NEURO_RUN_GPU,
     WANDB_KEY_FILE,
     _get_pattern_connected_ssh,
-    _get_pattern_pip_installing,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
     _pattern_copy_file_finished,
@@ -58,7 +34,6 @@ from tests.e2e.configuration import (
     mk_train_job,
 )
 from tests.e2e.conftest import (
-    STEP_CLEANUP,
     STEP_DOWNLOAD,
     STEP_KILL,
     STEP_LOCAL,
@@ -228,15 +203,6 @@ def _run_make_setup_test() -> None:
     for file in MK_PROJECT_FILES:
         project_files_messages.append(_pattern_copy_file_started(file))
         project_files_messages.append(_pattern_copy_file_finished(file))
-    # TODO: test also pre-installed APT packages
-    apt_deps_messages = [
-        f"Selecting previously unselected package {entry}"
-        for entry in PACKAGES_APT_CUSTOM
-    ]
-    pip_deps_messages = [
-        r"(Successfully installed|Collecting|Requirement already)[^\n]*" + pip
-        for pip in PACKAGES_PIP_CUSTOM
-    ]
 
     expected_patterns = [
         _get_pattern_status_running(),
@@ -244,7 +210,7 @@ def _run_make_setup_test() -> None:
     ]
 
     make_cmd = "make setup"
-    with measure_time(make_cmd, TIMEOUT_MAKE_SETUP):
+    with measure_time(make_cmd):
         run(
             make_cmd, expect_patterns=expected_patterns,
         )
@@ -267,7 +233,7 @@ def test_import_code_in_notebooks(
 
         cmd = "make jupyter"
         nb_path = f"{MK_PROJECT_PATH_ENV}/{MK_NOTEBOOKS_DIR}/demo.ipynb"
-        with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+        with measure_time(cmd):
             run(
                 cmd,
                 expect_patterns=[_get_pattern_status_running()],
@@ -309,14 +275,14 @@ def test_import_code_in_notebooks(
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_code() -> None:
     make_cmd = "make upload-code"
-    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CODE):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_data() -> None:
     make_cmd = "make upload-data"
-    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -325,7 +291,7 @@ def test_make_upload_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
     make_cmd = "make upload-config"
-    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -335,7 +301,7 @@ def test_make_upload_notebooks() -> None:
     neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}",)
 
     make_cmd = "make upload-notebooks"
-    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_NOTEBOOKS):
+    with measure_time(make_cmd):
         run(make_cmd)
 
     actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
@@ -345,7 +311,7 @@ def test_make_upload_notebooks() -> None:
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_results() -> None:
     make_cmd = "make upload-results"
-    with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_RESULTS):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -361,7 +327,7 @@ def test_make_download_data() -> None:
     # Download:
     make_cmd = "make download-data"
     cleanup_local_dirs(MK_DATA_DIR)
-    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -369,7 +335,7 @@ def test_make_download_data() -> None:
 def test_make_download_noteboooks() -> None:
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
-    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -377,7 +343,7 @@ def test_make_download_noteboooks() -> None:
 def test_make_download_config() -> None:
     make_cmd = "make download-config"
     cleanup_local_dirs(MK_CONFIG_DIR)
-    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -385,7 +351,7 @@ def test_make_download_config() -> None:
 def test_make_download_results() -> None:
     make_cmd = "make download-results"
     cleanup_local_dirs(MK_RESULTS_DIR)
-    with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_RESULTS):
+    with measure_time(make_cmd):
         run(make_cmd)
 
 
@@ -439,7 +405,7 @@ def test_make_train_multiple_experiments(
             cmd = f'make train TRAIN_CMD="sleep 1h"'
             if exp != MK_RUN_DEFAULT:
                 cmd += f" RUN={exp}"
-            with measure_time(cmd, TIMEOUT_NEURO_RUN_CPU):
+            with measure_time(cmd):
                 run(
                     cmd,
                     expect_patterns=[_get_pattern_status_running()],
@@ -538,39 +504,33 @@ def test_make_hypertrain(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_run_jupyter_notebook(
-    env_neuro_run_timeout: int, env_var_no_http_auth: None
-) -> None:
+def test_make_run_jupyter_notebook(env_var_no_http_auth: None) -> None:
     with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        _test_run_something_useful("jupyter", "/tree", env_neuro_run_timeout)
+        _test_run_something_useful("jupyter", "/tree")
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_jupyter_lab(
-    env_var_no_http_auth: None, env_neuro_run_timeout: int
-) -> None:
+def test_make_jupyter_lab(env_var_no_http_auth: None,) -> None:
     with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        _test_run_something_useful("jupyter", "/lab", env_neuro_run_timeout)
+        _test_run_something_useful("jupyter", "/lab")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_tensorboard(env_var_no_http_auth: None) -> None:
     with finalize(f"neuro kill {MK_TENSORBOARD_JOB}"):
-        _test_run_something_useful("tensorboard", "/", TIMEOUT_NEURO_RUN_CPU)
+        _test_run_something_useful("tensorboard", "/")
 
 
 @pytest.mark.run(order=STEP_RUN)
 def test_make_filebrowser(env_var_no_http_auth: None) -> None:
     with finalize(f"neuro kill {MK_FILEBROWSER_JOB}"):
-        _test_run_something_useful(
-            "filebrowser", "/files/requirements.txt", TIMEOUT_NEURO_RUN_CPU
-        )
+        _test_run_something_useful("filebrowser", "/files/requirements.txt")
 
 
-def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None:
+def _test_run_something_useful(target: str, path: str) -> None:
     # Can't test web UI with HTTP auth
     make_cmd = f"make {target}"
-    with measure_time(make_cmd, timeout_run):
+    with measure_time(make_cmd):
         out = run(
             make_cmd,
             expect_patterns=[_get_pattern_status_running()],
@@ -595,7 +555,7 @@ def _test_run_something_useful(target: str, path: str, timeout_run: int) -> None
 
     make_cmd = f"make kill-{target}"
     with measure_time(make_cmd):
-        run(make_cmd, timeout_s=TIMEOUT_NEURO_KILL)
+        run(make_cmd)
     wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
 
 
@@ -607,9 +567,7 @@ def test_gpu_available(environment: str) -> None:
         cmd = "make develop PRESET=gpu-small"
         with measure_time(cmd):
             run(
-                cmd,
-                expect_patterns=[r"Status:[^\n]+running"],
-                timeout_s=TIMEOUT_NEURO_RUN_GPU,
+                cmd, expect_patterns=[r"Status:[^\n]+running"],
             )
 
         py_commands = [
@@ -623,19 +581,16 @@ def test_gpu_available(environment: str) -> None:
                 f"\"python -c '{py}'\""
             )
             with measure_time(cmd):
-                run(cmd, timeout_s=TIMEOUT_NEURO_EXEC)
+                run(cmd)
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_develop(env_neuro_run_timeout: int) -> None:
+def test_make_develop() -> None:
     with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
         cmd = "make develop"
         with measure_time(cmd):
             run(
-                cmd,
-                expect_patterns=[r"Status:[^\n]+running"],
-                timeout_s=env_neuro_run_timeout,
-                assert_patterns=True,
+                cmd, expect_patterns=[r"Status:[^\n]+running"], assert_patterns=True,
             )
 
 

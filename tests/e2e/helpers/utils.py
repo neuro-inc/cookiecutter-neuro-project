@@ -58,49 +58,11 @@ def copy_local_files(from_dir: Path, to_dir: Path) -> None:
 
 
 @contextmanager
-def measure_time(cmd: str, timeout: float = 0.0) -> t.Iterator[None]:
-    """
-    >>> t_0 = time.time()
-    >>> try:
-    ...     with measure_time("sleep", timeout=0.01):
-    ...         time.sleep(0.1)
-    ...     #assert False, "should not be here"
-    ...     # TODO (ayushkovskiy) Unignore the assert above once #333 is resolved
-    ... except TimeoutError as e:
-    ...     assert str(e) == "Time summary [sleep]: 0.10 sec (timeout: 0.01 sec)", e
-    >>> elapsed = time.time() - t_0
-    >>> assert elapsed >= 0.1
-    """
+def measure_time(cmd: str) -> t.Iterator[None]:
     start_time = time.time()
     try:
         yield
     finally:
         elapsed = time.time() - start_time
-        msg = f"Time summary [{cmd}]: {elapsed:.2f} sec (timeout: {timeout:.2f} sec)"
-        exceeded = 0 < timeout < elapsed
-        logger = LOGGER.info if not exceeded else LOGGER.error
-        log_msg("-" * len(msg), logger=logger)
-
-        if exceeded:
-            # TODO (ayushkovskiy) Once issue #333 is resolved, raise TimeoutError again.
-            #   Also, don't forget to unignore the doctest for this function.
-            # raise TimeoutError(msg)
-            log_msg(
-                f"WARNING: Temporarily ignoring timeout error, see issue #333",
-                logger=LOGGER.warning,
-            )
-
-
-def merge_similars(collection: t.Iterable[str]) -> t.Iterable[str]:
-    """
-    >>> list(merge_similars("a b b c c c d d e".split()))
-    ['a', 'b', 'c', 'd', 'e']
-    >>> list(merge_similars("a b b c c c d d e e".split()))
-    ['a', 'b', 'c', 'd', 'e']
-    """
-    prev: t.Optional[str] = None
-    for el in collection:
-        assert isinstance(el, str), f"expected 'str', got {type(el)}"
-        if el != prev:
-            yield el
-        prev = el
+        msg = f"Time summary [{cmd}]: {elapsed:.2f} sec"
+        log_msg("-" * len(msg), logger=LOGGER.info)

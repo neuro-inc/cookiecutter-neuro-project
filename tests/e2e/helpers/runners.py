@@ -18,8 +18,6 @@ from tests.e2e.configuration import (
     LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
-    TIMEOUT_NEURO_LS,
-    TIMEOUT_NEURO_STATUS,
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
@@ -72,7 +70,6 @@ def run(
     error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
     detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
     assert_patterns: bool = False,
@@ -92,7 +89,6 @@ def run(
         verbose=verbose,
         detect_new_jobs=detect_new_jobs,
         assert_exit_code=assert_exit_code,
-        timeout_s=timeout_s,
         assert_patterns=assert_patterns,
     )
     all_error_patterns = list(error_patterns)
@@ -130,7 +126,6 @@ def _run_once(
     verbose: bool = True,
     detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_patterns: bool = False,
 ) -> str:
     r"""
@@ -180,7 +175,6 @@ def _run_once(
     log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
     # TODO (ayushkovskiy) Disable timeout, see issue #333
-    timeout_s = DEFAULT_TIMEOUT_LONG
 
     if assert_patterns:
         expect_patterns = []
@@ -192,7 +186,6 @@ def _run_once(
         logfile = LOGFILE_PATH.open("a")
         child = _pexpect_spawn(
             cmd,
-            timeout=timeout_s,
             logfile=logfile,
             maxread=PEXPECT_BUFFER_SIZE_BYTES,
             searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
@@ -382,15 +375,14 @@ def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
         options.append("-a")
     out = run(
         f"neuro ls {' '.join(options)} {path}",
-        timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     return set(out.split())
 
 
-def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
+def neuro_rm_dir(path: str) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(f"neuro rm -r {path}", timeout_s=timeout_s)
+    run(f"neuro rm -r {path}")
     log_msg("Done.")
 
 
@@ -422,7 +414,6 @@ def wait_job_change_status_to(
 def get_job_status(job_id: str, verbose: bool = False) -> str:
     out = run(
         f"neuro status {job_id}",
-        timeout_s=TIMEOUT_NEURO_STATUS,
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )

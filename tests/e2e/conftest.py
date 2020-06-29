@@ -34,9 +34,6 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     SECRET_FILE_ENC_PATTERN,
-    TIMEOUT_NEURO_LOGIN,
-    TIMEOUT_NEURO_RUN_CPU,
-    TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
     WANDB_KEY_FILE,
 )
@@ -120,14 +117,6 @@ def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
         )
 
     return _f
-
-
-@pytest.fixture(scope="session")
-def env_neuro_run_timeout(environment: str) -> int:
-    if environment == "dev":
-        return TIMEOUT_NEURO_RUN_CPU
-    else:
-        return TIMEOUT_NEURO_RUN_GPU
 
 
 @pytest.fixture(scope="session")
@@ -239,9 +228,7 @@ def neuro_login(
 ) -> t.Iterator[None]:
     config = client_setup_factory()
     captured = run(
-        f"neuro config login-with-token {config.token} {config.url}",
-        timeout_s=TIMEOUT_NEURO_LOGIN,
-        verbose=False,
+        f"neuro config login-with-token {config.token} {config.url}", verbose=False,
     )
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
     captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
