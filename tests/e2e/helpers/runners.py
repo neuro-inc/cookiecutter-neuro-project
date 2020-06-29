@@ -75,7 +75,7 @@ def run(
     timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
-        assert_patterns: bool = False,
+    assert_patterns: bool = False,
 ) -> str:
     """
     This method wraps method `_run_once` and accepts all its named arguments.

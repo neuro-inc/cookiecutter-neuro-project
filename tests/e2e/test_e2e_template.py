@@ -239,21 +239,7 @@ def _run_make_setup_test() -> None:
     ]
 
     expected_patterns = [
-        # run
         _get_pattern_status_running(),
-        # apt-get install
-        *apt_deps_messages,
-        # pip install
-        # (pip works either with stupid progress bars, or completely silently)
-        *pip_deps_messages,
-        # neuro save
-        rf"Saving .*{JOB_ID_PATTERN}",
-        r"Creating image",
-        r"Image created",
-        r"Pushing image",
-        r"image://.*",
-        # neuro kill
-        r"neuro[\w\- ]* kill ",
         JOB_ID_PATTERN,
     ]
 
@@ -322,44 +308,25 @@ def test_import_code_in_notebooks(
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_code() -> None:
-    assert ls(MK_CODE_DIR) >= PROJECT_CODE_DIR_CONTENT
-    neuro_rm_dir(
-        f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}", timeout_s=TIMEOUT_NEURO_RMDIR_CODE
-    )
-
     make_cmd = "make upload-code"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CODE):
         run(make_cmd)
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CODE_DIR}")
-    assert actual >= PROJECT_CODE_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_data() -> None:
-    assert len(ls(MK_DATA_DIR, hidden=False)) >= N_FILES
-    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}")
-
     make_cmd = "make upload-data"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_DATA):
         run(make_cmd)
-
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
-    assert len(actual) >= N_FILES
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_config(
     decrypt_gcp_key: None, decrypt_aws_key: None, decrypt_wandb_key: None
 ) -> None:
-    assert ls(MK_CONFIG_DIR, hidden=False) >= PROJECT_CONFIG_DIR_CONTENT
-    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-
     make_cmd = "make upload-config"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_CONFIG):
         run(make_cmd)
-
-    actual = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}", hidden=False)
-    assert actual >= PROJECT_CONFIG_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_UPLOAD)
@@ -377,15 +344,9 @@ def test_make_upload_notebooks() -> None:
 
 @pytest.mark.run(order=STEP_UPLOAD)
 def test_make_upload_results() -> None:
-    assert ls(MK_RESULTS_DIR) >= PROJECT_RESULTS_DIR_CONTENT
-    neuro_rm_dir(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}",)
-
     make_cmd = "make upload-results"
     with measure_time(make_cmd, TIMEOUT_MAKE_UPLOAD_RESULTS):
         run(make_cmd)
-
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_POST_UPLOAD)
@@ -397,56 +358,35 @@ def test_make_upload_all() -> None:
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_data() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_DATA_DIR}", hidden=False)
-    assert len(actual_remote) >= N_FILES
-
     # Download:
     make_cmd = "make download-data"
     cleanup_local_dirs(MK_DATA_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_DATA):
         run(make_cmd)
 
-    assert len(ls(MK_DATA_DIR, hidden=False)) >= N_FILES
-
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_noteboooks() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_NOTEBOOKS_DIR}")
-    assert actual_remote >= PROJECT_NOTEBOOKS_DIR_CONTENT
-
     make_cmd = "make download-notebooks"
     cleanup_local_dirs(MK_NOTEBOOKS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_NOTEBOOKS):
         run(make_cmd)
 
-    assert ls(MK_NOTEBOOKS_DIR) >= PROJECT_NOTEBOOKS_DIR_CONTENT
-
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_config() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_CONFIG_DIR}")
-    assert actual_remote >= PROJECT_CONFIG_DIR_CONTENT
-
     make_cmd = "make download-config"
     cleanup_local_dirs(MK_CONFIG_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_CONFIG):
         run(make_cmd)
 
-    assert ls(MK_CONFIG_DIR) >= PROJECT_CONFIG_DIR_CONTENT
-
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
 def test_make_download_results() -> None:
-    actual_remote = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert actual_remote >= PROJECT_RESULTS_DIR_CONTENT
-
-    # Download:
     make_cmd = "make download-results"
     cleanup_local_dirs(MK_RESULTS_DIR)
     with measure_time(make_cmd, TIMEOUT_MAKE_DOWNLOAD_RESULTS):
         run(make_cmd)
-
-    assert ls(MK_RESULTS_DIR) >= PROJECT_RESULTS_DIR_CONTENT
 
 
 @pytest.mark.run(order=STEP_DOWNLOAD)
@@ -687,7 +627,7 @@ def test_gpu_available(environment: str) -> None:
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_develop_all(env_neuro_run_timeout: int) -> None:
+def test_make_develop(env_neuro_run_timeout: int) -> None:
     with finalize(f"neuro kill {MK_DEVELOP_JOB}"):
         cmd = "make develop"
         with measure_time(cmd):
@@ -697,42 +637,6 @@ def test_make_develop_all(env_neuro_run_timeout: int) -> None:
                 timeout_s=env_neuro_run_timeout,
                 assert_patterns=True,
             )
-
-        cmd = "make connect-develop"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[_get_pattern_connected_ssh()],
-                timeout_s=TIMEOUT_NEURO_EXEC,
-                assert_exit_code=False,
-                assert_patterns=True,
-            )
-        # TODO: improve this test by sending command `echo 123`
-        #  and then reading it via `make logs-develop` (needs improvements of runners)
-
-        cmd = "make logs-develop"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=["Starting SSH server"],
-                timeout_s=TIMEOUT_NEURO_LOGS,
-                assert_exit_code=False,
-                assert_patterns=True,
-            )
-
-        cmd = "make port-forward-develop"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[r"Press \^C to stop forwarding"],
-                timeout_s=TIMEOUT_NEURO_PORT_FORWARD,
-                assert_exit_code=False,
-                assert_patterns=True,
-            )
-
-        cmd = "make kill-develop"
-        with measure_time(cmd):
-            run(cmd, detect_new_jobs=False)
 
 
 @pytest.mark.run(order=STEP_KILL)
@@ -775,23 +679,10 @@ def test_make_kill_all() -> None:
         run(cmd, detect_new_jobs=False)
 
 
-@pytest.mark.run(order=STEP_CLEANUP)
-def test_make_clean_all() -> None:
-    # just check exit code
-    for what in ["code", "config", "data", "notebooks", "results", "all"]:
-        make_cmd = f"make clean-{what}"
-        with measure_time(make_cmd):
-            run(make_cmd)
-
-
 @pytest.mark.run(order=STEP_LOCAL)
 def test_make_setup_local() -> None:
     # just check exit code
     cmd = "make setup-local"
     run(
-        cmd,
-        expect_patterns=[
-            _get_pattern_pip_installing(pip) for pip in PACKAGES_PIP_CUSTOM
-        ],
-        detect_new_jobs=False,
+        cmd, detect_new_jobs=False,
     )
