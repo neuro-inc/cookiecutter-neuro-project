@@ -182,6 +182,7 @@ def _run_once(
             maxread=PEXPECT_BUFFER_SIZE_BYTES,
             searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
             encoding="utf-8",
+            timeout=DEFAULT_TIMEOUT_LONG,
         )
         if not expect_patterns:
             # work until the process returns
