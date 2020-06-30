@@ -240,6 +240,11 @@ def set_custom_env(monkeypatch: t.Any) -> None:
     monkeypatch.setenv("CUSTOM_ENV", MK_CUSTOM_ENV_NAME)
 
 
+@pytest.fixture(autouse=True)
+def set_jupyter_life_span(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("JUPYTER_LIFE_SPAN", "1h")
+
+
 @pytest.fixture()
 def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
     key, val = "PRESET", "cpu-small"

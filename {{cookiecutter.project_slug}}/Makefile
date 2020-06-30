@@ -77,6 +77,10 @@ LOCAL_PORT?=2211
 # run Jupyter Notebook), `lab` (to run JupyterLab):
 #   make jupyter JUPYTER_MODE=LAB
 JUPYTER_MODE?=notebook
+# Maximum running time for Jupyter. Available opitons:
+# `1d`, `1h`, `8h`, `0` (to disable):
+#   make jupyter JUPYTER_LIFE_SPAN=4h
+JUPYTER_LIFE_SPAN?=0
 
 # Number of hyper-parameter search jobs:
 #   make hypertrain N_JOBS=5
@@ -464,7 +468,7 @@ jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--life-span=0 \
+		--life-span=$(JUPYTER_LIFE_SPAN) \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
