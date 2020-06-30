@@ -16,6 +16,9 @@ neuro ls
 echo "-------"
 for d in $dirs; do neuro rm -r $d; done
 echo "-------"
+echo "After:"
+neuro ls
+echo "-------"
 echo "Removing file $STORAGE_FILE"
 rm $STORAGE_FILE
 echo "OK"

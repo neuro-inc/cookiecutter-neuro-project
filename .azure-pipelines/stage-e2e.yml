@@ -23,11 +23,17 @@ stages:
 
     variables:
       PYTHONUTF8: 1
-      e2e.token: $(e2e.token_staging)
-      e2e.url: 'https://staging.neu.ro/api/v1'
-      e2e.cluster: 'neuro-public'
-      e2e.target: 'test_e2e_staging'
       e2e.neuro_tag: 'build-$(Build.BuildId)'
+      ${{ if in(variables['Build.SourceBranchName'], 'master', 'release') }}:
+        e2e.token: $(e2e.token_staging)
+        e2e.url: 'https://staging.neu.ro/api/v1'
+        e2e.cluster: 'neuro-public'
+        e2e.target: 'test_e2e_staging'
+      ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'release') }}:
+        e2e.token: $(e2e.token_dev)
+        e2e.url: 'https://dev.neu.ro/api/v1'
+        e2e.cluster: 'default'
+        e2e.target: 'test_e2e_dev'
 
 
     steps:
@@ -42,7 +48,7 @@ stages:
 
     - script: |
         python -m pip install -U pip wandb neuromation
-        #pip install git+https://github.com/neuromation/platform-client-python.git@master
+        # pip install git+https://github.com/neuromation/platform-client-python.git@master
         make init
       displayName: 'Install dependencies'
 
@@ -63,7 +69,8 @@ stages:
 
     - script: |
         # Cleanup jobs:
-        export jobs=`neuro ps --tag=$(e2e.neuro_tag)`
+        neuro ps
+        export jobs=`neuro -q ps --tag=$(e2e.neuro_tag)`
         echo "Killing stale jobs:\n$jobs\n"
         neuro kill $jobs
         # Cleanup storage:
