@@ -282,7 +282,7 @@ def detect_errors(
 def repeat_until_success(
     cmd: str,
     job_id: str,
-    timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
+    timeout_total_s: int = DEFAULT_TIMEOUT_SHORT,
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:

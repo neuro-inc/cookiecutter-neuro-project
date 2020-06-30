@@ -406,11 +406,6 @@ def _test_run_something_useful(target: str, job_name: str, path: str) -> None:
         job_id = parse_job_id(out)
         url = parse_job_url(run(f"neuro status {job_name}"))
 
-        cmd = "make ps"
-        with measure_time(cmd):
-            out = run(cmd,)
-        assert job_id in out, f"Not found job '{job_id}' in neuro-ps output: '{out}'"
-
         repeat_until_success(
             f"curl --fail {url}{path}",
             job_id,

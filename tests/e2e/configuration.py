@@ -15,7 +15,7 @@ LOGGER_NAME = "e2e"
 
 # == timeouts ==
 
-DEFAULT_TIMEOUT_SHORT = 10
+DEFAULT_TIMEOUT_SHORT = 3 * 10
 DEFAULT_TIMEOUT_LONG = 10 * 60
 
 # == Makefile constants ==
