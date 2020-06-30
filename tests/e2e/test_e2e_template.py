@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from flaky import flaky
 
 from tests.e2e.configuration import (
     AWS_KEY_FILE,
@@ -198,6 +199,7 @@ def test_make_setup_full() -> None:
 
 
 @pytest.mark.run(order=STEP_PRE_RUN)
+@flaky(max_runs=3)
 def test_import_code_in_notebooks(
     env_var_preset_cpu_small: None, env_var_no_http_auth: None
 ) -> None:

@@ -21,6 +21,7 @@ from tests.e2e.helpers.utils import measure_time
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
+@flaky(max_runs=3)
 def test_gsutil_auth_works_from_python_api(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
