@@ -431,10 +431,6 @@ def test_make_develop() -> None:
         with measure_time(cmd):
             run(cmd, expect_patterns=[_get_pattern_status_running()])
 
-        cmd = "make develop"
-        with measure_time(cmd):
-            run(cmd, expect_patterns=[_get_pattern_status_running()])
-
         cmd = "make connect-develop"
         with measure_time(cmd):
             run(
