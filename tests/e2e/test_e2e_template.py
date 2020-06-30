@@ -22,7 +22,6 @@ from tests.e2e.configuration import (
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
     WANDB_KEY_FILE,
-    _get_pattern_connected_ssh,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
     mk_train_job,
@@ -431,28 +430,6 @@ def test_make_develop() -> None:
         cmd = "make develop"
         with measure_time(cmd):
             run(cmd, expect_patterns=[_get_pattern_status_running()])
-
-        cmd = "make connect-develop"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[_get_pattern_connected_ssh()],
-                assert_exit_code=False,
-            )
-
-        cmd = "make logs-develop"
-        with measure_time(cmd):
-            run(
-                cmd, expect_patterns=["Starting SSH server"], assert_exit_code=False,
-            )
-
-        cmd = "make port-forward-develop"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[r"Press \^C to stop forwarding"],
-                assert_exit_code=False,
-            )
 
         cmd = "make kill-develop"
         with measure_time(cmd):

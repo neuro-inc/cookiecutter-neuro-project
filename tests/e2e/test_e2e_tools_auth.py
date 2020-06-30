@@ -21,28 +21,6 @@ from tests.e2e.helpers.utils import measure_time
 
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
-@flaky(max_runs=3)
-def test_gsutil_auth_works_from_cli(
-    decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
-) -> None:
-    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
-    make_cmd = "make jupyter"
-    with finalize(f"neuro kill {MK_JUPYTER_JOB}"):
-        with measure_time(make_cmd):
-            out = run(
-                make_cmd,
-                expect_patterns=[_get_pattern_status_running()],
-                assert_exit_code=False,
-            )
-        job_id = parse_job_id(out)
-
-        bash_cmd = "gsutil cat gs://cookiecutter-e2e/hello.txt"
-        cmd = f'neuro exec -T --no-key-check {job_id} "{bash_cmd}"'
-        run(cmd, expect_patterns=["Hello world!"])
-
-
-@pytest.mark.run(order=STEP_RUN)
-@pytest.mark.timeout(5 * 60)
 def test_gsutil_auth_works_from_python_api(
     decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:

@@ -207,7 +207,7 @@ def _run_once(
                     chunk += child.after
                 detected_jobs = JOB_ID_DECLARATION_REGEX.findall(chunk)
                 if detected_jobs:
-                    log_msg(f"Job IDs: {detected_jobs}")
+                    log_msg(f"Jobs: {detected_jobs}")
                 output += chunk
         if assert_exit_code:
             if _pexpect_isalive(child):
