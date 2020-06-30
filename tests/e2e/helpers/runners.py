@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pexpect
+from more_itertools import unique_everseen
 
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
@@ -205,9 +206,9 @@ def _run_once(
                 chunk = child.before
                 if isinstance(child.after, child.allowed_string_types):
                     chunk += child.after
-                detected_jobs = JOB_ID_DECLARATION_REGEX.findall(chunk)
-                if detected_jobs:
-                    log_msg(f"Jobs: {detected_jobs}")
+                detected = unique_everseen(JOB_ID_DECLARATION_REGEX.findall(chunk))
+                if detected:
+                    log_msg(f"Jobs: {detected}")
                 output += chunk
         if assert_exit_code:
             if _pexpect_isalive(child):
