@@ -202,9 +202,13 @@ def _run_once(
                 log_msg(err, logger=LOGGER.error)
                 raise RuntimeError(err)
             finally:
-                output += child.before
+                chunk = child.before
                 if isinstance(child.after, child.allowed_string_types):
-                    output += child.after
+                    chunk += child.after
+                detected_jobs = JOB_ID_DECLARATION_REGEX.findall(chunk)
+                if detected_jobs:
+                    log_msg(f"Job IDs: {detected_jobs}")
+                output += chunk
         if assert_exit_code:
             if _pexpect_isalive(child):
                 # flush process buffer

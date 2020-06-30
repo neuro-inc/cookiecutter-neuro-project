@@ -144,14 +144,13 @@ PEXPECT_BUFFER_SIZE_BYTES = 10 * 1024 * 1024
 LOGFILE_PATH: Path = LOCAL_TESTS_OUTPUT_PATH / LOG_FILE_NAME
 # note: ERROR, being the most general error, should go the last
 DEFAULT_NEURO_ERROR_PATTERNS = (
-    "404: Not Found",
     r"Status:[^\n]+failed",
     r"ERROR[^:]*: .+",
     r"Error: .+",
     r"Docker API error: .+",
     r"connection reset by peer",
 )
-DEFAULT_MAKE_ERROR_PATTERNS = ("Makefile:.+", "recipe for target .+ failed.+")
+DEFAULT_MAKE_ERROR_PATTERNS = ("recipe for target .+ failed.+",)
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
 
 

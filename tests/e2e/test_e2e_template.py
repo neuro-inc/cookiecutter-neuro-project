@@ -315,7 +315,7 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
                 assert_exit_code=False,
             )
 
-        run("make kill-train",)
+        run("make kill-train")
 
 
 @pytest.mark.run(order=STEP_RUN)
@@ -343,6 +343,7 @@ def test_make_hypertrain(
         )
         jobs = parse_jobs_ids(out, expect_num=n)
         run("make ps-hypertrain", expect_patterns=jobs)
+        run("make ps-train-all", expect_patterns=jobs)
 
         with finalize(*(f"neuro kill {job}" for job in jobs)):
             for job in jobs:
@@ -361,8 +362,8 @@ def test_make_hypertrain(
                 )
 
             # just check exit-code:
-            run("make kill-hypertrain-all",)
-            run("make kill-train-all",)
+            run("make kill-hypertrain-all")
+            run("make kill-train-all")
 
     # Check results of hyper-parameter search on storage
     results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
@@ -459,37 +460,7 @@ def test_make_develop() -> None:
 
 
 @pytest.mark.run(order=STEP_KILL)
-def test_make_ps_connect_kill_train(env_var_preset_cpu_small: None) -> None:
-    with finalize(f"neuro kill {mk_train_job()}"):
-        cmd = 'make train TRAIN_CMD="sleep 3h"'
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[_get_pattern_status_running()],
-                assert_exit_code=False,
-            )
-
-        cmd = "make connect-train"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[_get_pattern_connected_ssh()],
-                assert_exit_code=False,
-            )
-
-        cmd = "make ps-train-all"
-        with measure_time(cmd):
-            run(
-                cmd, expect_patterns=[mk_train_job()],
-            )
-
-        cmd = "make kill-train"
-        with measure_time(cmd):
-            run(cmd,)
-
-
-@pytest.mark.run(order=STEP_KILL)
 def test_make_kill_all() -> None:
     cmd = f"make kill-all"
     with measure_time(cmd):
-        run(cmd,)
+        run(cmd)
