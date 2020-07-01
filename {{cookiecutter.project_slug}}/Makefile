@@ -86,18 +86,6 @@ JUPYTER_LIFE_SPAN?=0
 #   make hypertrain N_JOBS=5
 N_JOBS?=3
 
-# Google Cloud integration settings:
-#   make gcloud-check-auth GCP_SECRET_FILE=name-of-gcp-key-file.json
-GCP_SECRET_FILE?=neuro-job-key.json
-
-# AWS integration settings:
-#   make aws-check-auth AWS_SECRET_FILE=name-of-aws-key-file.json
-AWS_SECRET_FILE?=aws-credentials.txt
-
-# Weights and Biases integration settings:
-#   make wandb-check-auth WANDB_SECRET_FILE=name-of-wandb-key-file.json
-WANDB_SECRET_FILE?=wandb-token.txt
-
 # Weights and Biases hyperparameter search configuration file:
 #   make hypertrain WANDB_SECRET_FILE=name-of-wandb-sweep-file.json
 WANDB_SWEEP_CONFIG_FILE?=wandb-sweep.yaml
@@ -110,34 +98,8 @@ SECRETS?=
 
 ##### CONSTANTS #####
 
-GCP_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(GCP_SECRET_FILE)
-GCP_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(GCP_SECRET_PATH_LOCAL)
-AWS_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(AWS_SECRET_FILE)
-AWS_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(AWS_SECRET_PATH_LOCAL)
-WANDB_SECRET_PATH_LOCAL=$(CONFIG_DIR)/$(WANDB_SECRET_FILE)
-WANDB_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
-
-ifneq ($(wildcard $(GCP_SECRET_PATH_LOCAL)),)
-	OPTION_GCP_CREDENTIALS=\
-		--env GOOGLE_APPLICATION_CREDENTIALS="$(GCP_SECRET_PATH_ENV)" \
-		--env GCP_SERVICE_ACCOUNT_KEY_PATH="$(GCP_SECRET_PATH_ENV)"
-else
-	OPTION_GCP_CREDENTIALS=
-endif
-ifneq ($(wildcard $(AWS_SECRET_PATH_LOCAL)),)
-	OPTION_AWS_CREDENTIALS=\
-		--env AWS_CONFIG_FILE="$(AWS_SECRET_PATH_ENV)" \
-		--env NM_AWS_CONFIG_FILE="$(AWS_SECRET_PATH_ENV)"
-else
-	OPTION_AWS_CREDENTIALS=
-endif
-ifneq ($(wildcard $(WANDB_SECRET_PATH_LOCAL)),)
-	OPTION_WANDB_CREDENTIALS=--env NM_WANDB_TOKEN_PATH="$(WANDB_SECRET_PATH_ENV)"
-else
-	OPTION_WANDB_CREDENTIALS=
-endif
 
 ##### HELP #####
 
@@ -300,39 +262,6 @@ download-all: download-code download-data download-config download-notebooks dow
 .PHONY: clean-all
 clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ### Delete code, data, config, notebooks, and results directories from the platform storage
 
-##### Google Cloud Integration #####
-
-.PHONY: gcloud-check-auth
-gcloud-check-auth:  ### Check if the file containing Google Cloud service account key exists
-	@echo "Using variable: GCP_SECRET_FILE='$(GCP_SECRET_FILE)'"
-	@test "$(OPTION_GCP_CREDENTIALS)" \
-		&& echo "Google Cloud will be authenticated via service account key file: '$$PWD/$(GCP_SECRET_PATH_LOCAL)'" \
-		|| { echo "ERROR: Not found Google Cloud service account key file: '$$PWD/$(GCP_SECRET_PATH_LOCAL)'"; \
-			echo "Please save the key file named GCP_SECRET_FILE='$(GCP_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
-			false; }
-
-##### AWS Integration #####
-
-.PHONY: aws-check-auth
-aws-check-auth:  ### Check if the file containing AWS user account credentials exists
-	@echo "Using variable: AWS_SECRET_FILE='$(AWS_SECRET_FILE)'"
-	@test "$(OPTION_AWS_CREDENTIALS)" \
-		&& echo "AWS will be authenticated via user account credentials file: '$$PWD/$(AWS_SECRET_PATH_LOCAL)'" \
-		|| { echo "ERROR: Not found AWS user account credentials file: '$$PWD/$(AWS_SECRET_PATH_LOCAL)'"; \
-			echo "Please save the key file named AWS_SECRET_FILE='$(AWS_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
-			false; }
-
-##### WandB Integration #####
-
-.PHONY: wandb-check-auth
-wandb-check-auth:  ### Check if the file Weights and Biases authentication file exists
-	@echo Using variable: WANDB_SECRET_FILE='$(WANDB_SECRET_FILE)'
-	@test "$(OPTION_WANDB_CREDENTIALS)" \
-		&& echo "Weights & Biases will be authenticated via key file: '$$PWD/$(WANDB_SECRET_PATH_LOCAL)'" \
-		|| { echo "ERROR: Not found Weights & Biases key file: '$$PWD/$(WANDB_SECRET_PATH_LOCAL)'"; \
-			echo "Please save the key file named WANDB_SECRET_FILE='$(WANDB_SECRET_FILE)' to './$(CONFIG_DIR)/'"; \
-			false; }
-
 ##### JOBS #####
 
 .PHONY: develop
@@ -350,7 +279,6 @@ develop: _check_setup $(SYNC)  ### Run a development job
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--life-span=1d \
-		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
 		sleep infinity
 
@@ -386,7 +314,6 @@ train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to sp
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		--env EXPOSE_SSH=yes \
 		--life-span=0 \
-		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
 
@@ -437,7 +364,6 @@ hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperpa
 			--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 			--env EXPOSE_SSH=yes \
 			--life-span=0 \
-			$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 			$(CUSTOM_ENV) \
 			bash -c "export WANDB_PROJECT=$(PROJECT) && cd $(PROJECT_PATH_ENV) && wandb status && wandb agent $$sweep"; \
 	done; \
@@ -477,7 +403,6 @@ jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		--life-span=$(JUPYTER_LIFE_SPAN) \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
-		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
 		jupyter $(JUPYTER_MODE) \
 			--no-browser \
