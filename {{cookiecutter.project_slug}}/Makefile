@@ -327,7 +327,7 @@ kill-train-all:  ### Terminate all training jobs you have submitted
 	[ ! "$$jobs" ] || $(NEURO) kill $$jobs
 
 .PHONY: hypertrain
-hypertrain: _check_setup wandb-check-auth   ### Run jobs in parallel for hyperparameters search using W&B
+hypertrain: _check_setup ### Run jobs in parallel for hyperparameters search using W&B
 	@echo "Initializing local wandb using config file './$(WANDB_SECRET_PATH_LOCAL)'"
 	@wandb login `cat "./$(WANDB_SECRET_PATH_LOCAL)"`
 	echo "Creating W&B Sweep..."
