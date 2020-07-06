@@ -37,7 +37,7 @@ CUSTOM_ENV?=image:neuromation-$(PROJECT):$(VERSION)
 # Allows to set the `neuro` executable:
 #   make setup NEURO=/usr/bin/neuro
 #   make setup NEURO="neuro --verbose --show-traceback"
-NEURO=neuro
+NEURO?=neuro
 
 
 # Location of your dataset on the platform storage:
@@ -60,11 +60,6 @@ RUN_EXTRA?=
 #   make jupyter HTTP_AUTH=--no-http-auth
 HTTP_AUTH?=--http-auth
 
-# If set to `yes`, then wait until the training job gets actually running,
-# and stream logs to the standard output:
-#   make train TRAIN_STREAM_LOGS=nope
-TRAIN_STREAM_LOGS?=yes
-
 # Command to run training inside the environment:
 #   make train TRAIN_CMD="python ./train.py"
 TRAIN_CMD?=python -u $(CODE_DIR)/train.py --data $(DATA_DIR)
@@ -82,6 +77,10 @@ LOCAL_PORT?=2211
 # run Jupyter Notebook), `lab` (to run JupyterLab):
 #   make jupyter JUPYTER_MODE=LAB
 JUPYTER_MODE?=notebook
+# Maximum running time for Jupyter. Available opitons:
+# `1d`, `1h`, `8h`, `0` (to disable):
+#   make jupyter JUPYTER_LIFE_SPAN=4h
+JUPYTER_LIFE_SPAN?=0
 
 # Number of hyper-parameter search jobs:
 #   make hypertrain N_JOBS=5
@@ -118,12 +117,6 @@ WANDB_SECRET_PATH_ENV=$(PROJECT_PATH_ENV)/$(WANDB_SECRET_PATH_LOCAL)
 WANDB_SWEEP_CONFIG_PATH=$(CODE_DIR)/$(WANDB_SWEEP_CONFIG_FILE)
 WANDB_SWEEPS_FILE=.wandb_sweeps
 
-
-ifeq ($(TRAIN_STREAM_LOGS), yes)
-	TRAIN_WAIT_START_OPTION=--wait-start --detach
-else
-	TRAIN_WAIT_START_OPTION=
-endif
 ifneq ($(wildcard $(GCP_SECRET_PATH_LOCAL)),)
 	OPTION_GCP_CREDENTIALS=\
 		--env GOOGLE_APPLICATION_CREDENTIALS="$(GCP_SECRET_PATH_ENV)" \
@@ -380,8 +373,7 @@ train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to sp
 		--name $(TRAIN_JOB)-$(RUN) \
 		--tag "target:train" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
-		--detach \
-		$(TRAIN_WAIT_START_OPTION) \
+		--wait-start \
 		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
@@ -392,10 +384,6 @@ train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to sp
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \
 		bash -c 'cd $(PROJECT_PATH_ENV) && $(TRAIN_CMD)'
-ifeq ($(TRAIN_STREAM_LOGS), yes)
-	@echo "Streaming logs of the job $(TRAIN_JOB)-$(RUN)"
-	$(NEURO) exec --no-key-check -T $(TRAIN_JOB)-$(RUN) "tail -f /output" || echo -e "Stopped streaming logs.\nUse 'neuro logs <job>' to see full logs."
-endif
 
 .PHONY: kill-train
 kill-train:  ### Terminate the training job (set up env var 'RUN' to specify the training job)
@@ -480,7 +468,7 @@ jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in
 		--volume $(PROJECT_PATH_STORAGE)/$(CONFIG_DIR):$(PROJECT_PATH_ENV)/$(CONFIG_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
-		--life-span=0 \
+		--life-span=$(JUPYTER_LIFE_SPAN) \
 		--env PYTHONPATH=$(PROJECT_PATH_ENV) \
 		$(OPTION_GCP_CREDENTIALS) $(OPTION_AWS_CREDENTIALS) $(OPTION_WANDB_CREDENTIALS) \
 		$(CUSTOM_ENV) \

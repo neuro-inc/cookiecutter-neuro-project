@@ -7,22 +7,21 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pexpect
+from more_itertools import unique_everseen
 
 from tests.e2e.configuration import (
     DEFAULT_ERROR_PATTERNS,
     DEFAULT_NEURO_ERROR_PATTERNS,
     DEFAULT_TIMEOUT_LONG,
+    DEFAULT_TIMEOUT_SHORT,
     JOB_ID_DECLARATION_REGEX,
+    JOB_STATUSES_ALL,
     JOB_STATUSES_TERMINATED,
-    LOCAL_CLEANUP_JOBS_FILE,
     LOGFILE_PATH,
     PEXPECT_BUFFER_SIZE_BYTES,
-    TIMEOUT_NEURO_LS,
-    TIMEOUT_NEURO_STATUS,
     VERBS_SECRET,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
-from tests.e2e.helpers.utils import merge_similars
 
 
 WIN = sys.platform == "win32"
@@ -68,102 +67,9 @@ def _pexpect_isalive(proc: t.Any) -> bool:
 def run(
     cmd: str,
     *,
-    attempts: int = 1,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
-    expect_patterns: t.Sequence[str] = (),
-    error_patterns: t.Sequence[str] = (),
-    attempt_substrings: t.Sequence[str] = (),
-    verbose: bool = True,
-    detect_new_jobs: bool = True,
-    assert_exit_code: bool = True,
-    check_default_errors: bool = False,
-) -> str:
-    """
-    This procedure wraps method `_run`. If an exception raised, it repeats to run
-    it so that overall the command `cmd` is executed not more than `attempts` times.
-    >>> run("foo", attempts=0, verbose=False)
-    Traceback (most recent call last):
-        ...
-    AssertionError: Invalid attempts number
-    >>> try:
-    ...     run("foo", attempts=1, verbose=False)
-    ...     assert False, "should not be here"
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Failed to run command `foo` in 1 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')", str(e)
-    >>> try:
-    ...     run("foo", attempts=3, verbose=False)
-    ...     assert False, "should not be here"
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Failed to run command `foo` in 3 attempts: ExceptionPexpect('The command was not found or was not executable: foo.')", str(e)
-    >>> try:
-    ...     run("false", attempts=3, attempt_substrings=["Non-zero exit code: 1"], verbose=False)
-    ...     assert False, "should not be here"
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Failed to run command `false` in 3 attempts: ExitCodeException(1)", str(e)
-    >>> # Do not repeat if not match attempt substrings:
-    >>> try:
-    ...     run("false", attempts=3, attempt_substrings=["not a substr"], verbose=False)
-    ...     assert False, "should not be here"
-    ... except RuntimeError as e:
-    ...     assert str(e) == "Failed to run command `false` in 1 attempts: ExitCodeException(1)", str(e)
-    """  # noqa
-    assert attempts > 0, "Invalid attempts number"
-    errors: t.List[Exception] = []
-    current_attempt = 1
-    while True:
-        try:
-            if attempts > 1:
-                details = (
-                    f" (will re-run for any of: {repr(attempt_substrings)})"
-                    if attempt_substrings
-                    else " (will re-run on any error)"
-                )
-                log_msg(f"Attempt {current_attempt}/{attempts}{details}")
-            return _run(
-                cmd,
-                expect_patterns=expect_patterns,
-                error_patterns=error_patterns,
-                verbose=verbose,
-                detect_new_jobs=detect_new_jobs,
-                timeout_s=timeout_s,
-                assert_exit_code=assert_exit_code,
-                check_default_errors=check_default_errors,
-            )
-        except Exception as exc:
-            errors.append(exc)
-            if current_attempt < attempts:
-                err = str(exc)
-                log_msg(f"Attempt to run `{cmd}` failed: {err}")
-
-                found = False
-                if not attempt_substrings:
-                    found = True
-                else:
-                    for substr in attempt_substrings:
-                        if substr in err:
-                            log_msg(f"Found substring '{substr}' in error '{err}'")
-                            found = True
-                            break
-                if found:
-                    current_attempt += 1
-                    log_msg("Retrying...")
-                    continue
-            err_det = ", ".join(merge_similars(repr(e) for e in errors))
-            err_msg = (
-                f"Failed to run command `{_hide_secret_cmd(cmd)}`"
-                f" in {current_attempt} attempts: {err_det}"
-            )
-            raise RuntimeError(err_msg)
-
-
-def _run(
-    cmd: str,
-    *,
     expect_patterns: t.Sequence[str] = (),
     error_patterns: t.Sequence[str] = (),
     verbose: bool = True,
-    detect_new_jobs: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
     assert_exit_code: bool = True,
     check_default_errors: bool = True,
 ) -> str:
@@ -180,9 +86,7 @@ def _run(
         cmd,
         expect_patterns=expect_patterns,
         verbose=verbose,
-        detect_new_jobs=detect_new_jobs,
         assert_exit_code=assert_exit_code,
-        timeout_s=timeout_s,
     )
     all_error_patterns = list(error_patterns)
     if check_default_errors:
@@ -196,13 +100,13 @@ def _run(
 
 def _expects_default_errors(expect_patterns: t.Sequence[str] = ()) -> bool:
     """
-    >>> _expects_default_errors(["ERROR: bla-bla"]) #, [r"ERROR[^:]*: .+"])
+    >>> _expects_default_errors(["ERROR: bla-bla"])
     True
-    >>> _expects_default_errors(["Error: bla-bla"]) #, [r"Error: .+",])
+    >>> _expects_default_errors(["Error: bla-bla"])
     True
     >>> _expects_default_errors([r"Makefile:.+ recipe for target '_check_setup' failed"])
     True
-    >>> _expects_default_errors(["Not an error"]) #, [r"Error: .+",])
+    >>> _expects_default_errors(["Not an error"])
     False
     """  # noqa
     return any(
@@ -217,9 +121,7 @@ def _run_once(
     *,
     expect_patterns: t.Sequence[str] = (),
     verbose: bool = True,
-    detect_new_jobs: bool = True,
     assert_exit_code: bool = True,
-    timeout_s: int = DEFAULT_TIMEOUT_LONG,
 ) -> str:
     r"""
     This method runs a command `cmd` via `pexpect.spawn()`, and iteratively
@@ -267,9 +169,6 @@ def _run_once(
     """  # noqa
     log_msg(f"<<< {_hide_secret_cmd(cmd)}")
 
-    # TODO (ayushkovskiy) Disable timeout, see issue #333
-    timeout_s = DEFAULT_TIMEOUT_LONG
-
     output = ""
     need_dump = False
     logfile: t.Optional[t.IO[str]] = None
@@ -277,11 +176,11 @@ def _run_once(
         logfile = LOGFILE_PATH.open("a")
         child = _pexpect_spawn(
             cmd,
-            timeout=timeout_s,
             logfile=logfile,
             maxread=PEXPECT_BUFFER_SIZE_BYTES,
             searchwindowsize=PEXPECT_BUFFER_SIZE_BYTES // 100,
             encoding="utf-8",
+            timeout=DEFAULT_TIMEOUT_LONG,
         )
         if not expect_patterns:
             # work until the process returns
@@ -305,9 +204,13 @@ def _run_once(
                 log_msg(err, logger=LOGGER.error)
                 raise RuntimeError(err)
             finally:
-                output += child.before
+                chunk = child.before
                 if isinstance(child.after, child.allowed_string_types):
-                    output += child.after
+                    chunk += child.after
+                detected = unique_everseen(JOB_ID_DECLARATION_REGEX.findall(chunk))
+                if detected:
+                    log_msg(f"Jobs: {detected}")
+                output += chunk
         if assert_exit_code:
             if _pexpect_isalive(child):
                 # flush process buffer
@@ -330,8 +233,6 @@ def _run_once(
                     )
                 raise ExitCodeException(child.exitstatus)
     finally:
-        if detect_new_jobs:
-            _dump_submitted_job_ids(_detect_job_ids(output))
         if need_dump:
             log_msg(f"DUMP: {repr(output)}")
         if logfile:
@@ -379,29 +280,10 @@ def detect_errors(
     return found
 
 
-def _detect_job_ids(stdout: str) -> t.Set[str]:
-    r"""
-    >>> output = "Job ID: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 Status: ..."
-    >>> _detect_job_ids(output)
-    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
-    >>> output = r"\x1b[1mJob ID\x1b[0m: job-d8262adf-0dbb-4c40-bd80-cb42743f2453 ..."
-    >>> _detect_job_ids(output)
-    {'job-d8262adf-0dbb-4c40-bd80-cb42743f2453'}
-    """
-    return set(JOB_ID_DECLARATION_REGEX.findall(stdout))
-
-
-def _dump_submitted_job_ids(jobs: t.Iterable[str]) -> None:
-    if jobs:
-        log_msg(f"Dumped jobs: {jobs}")
-        with LOCAL_CLEANUP_JOBS_FILE.open("a") as f:
-            f.write("\n" + "\n".join(jobs))
-
-
 def repeat_until_success(
     cmd: str,
     job_id: str,
-    timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
+    timeout_total_s: int = DEFAULT_TIMEOUT_SHORT,
     interval_s: float = 1,
     **kwargs: t.Any,
 ) -> str:
@@ -446,7 +328,7 @@ def finalize(*finally_commands: str):  # type: ignore
 def parse_job_id(out: str) -> str:
     search = re.search(JOB_ID_DECLARATION_REGEX, out)
     assert search, f"not found job-ID in output: `{out}`"
-    return search.group(1)
+    return search.group()
 
 
 def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
@@ -456,9 +338,13 @@ def parse_jobs_ids(out: str, expect_num: int) -> t.List[str]:
 
 
 def parse_job_url(out: str) -> str:
-    search = re.search(r"Http URL.*: (https://.+neu\.ro)", out)
-    assert search, f"not found URL in output: `{out}`"
-    return search.group(1)
+    search = re.search(r"Http URL.*:.*(https://.+neu\.ro)", out)
+    if search:
+        url = search.group(1)
+        log_msg(f"Found URL: `{url}`")
+        return url
+    else:
+        raise RuntimeError(f"Not found URL in output: `{out}`")
 
 
 def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
@@ -467,15 +353,14 @@ def neuro_ls(path: str, hidden: bool = True) -> t.Set[str]:
         options.append("-a")
     out = run(
         f"neuro ls {' '.join(options)} {path}",
-        timeout_s=TIMEOUT_NEURO_LS,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
     return set(out.split())
 
 
-def neuro_rm_dir(path: str, timeout_s: int = DEFAULT_TIMEOUT_LONG) -> None:
+def neuro_rm_dir(path: str) -> None:
     log_msg(f"Deleting remote directory `{path}`")
-    run(f"neuro rm -r {path}", timeout_s=timeout_s)
+    run(f"neuro rm -r {path}")
     log_msg("Done.")
 
 
@@ -484,12 +369,13 @@ def wait_job_change_status_to(
     target_status: str,
     timeout_total_s: int = DEFAULT_TIMEOUT_LONG,
     delay_s: int = 1,
-    verbose: bool = False,
+    verbose: bool = True,
 ) -> None:
     log_msg(f"Waiting for job {job_id} to get status: '{target_status}'...")
     time_start = time.time()
     while True:
         status = get_job_status(job_id, verbose=verbose)
+        log_msg(f"Got status: `{status}`")
         if status == target_status:
             log_msg(f"Job {job_id} reached status '{target_status}'")
             return
@@ -506,11 +392,10 @@ def wait_job_change_status_to(
 def get_job_status(job_id: str, verbose: bool = False) -> str:
     out = run(
         f"neuro status {job_id}",
-        timeout_s=TIMEOUT_NEURO_STATUS,
         verbose=verbose,
         error_patterns=DEFAULT_NEURO_ERROR_PATTERNS,
     )
-    search = re.search(r"Status: (\w+)", out)
+    search = re.search(r"Status.*(" + "|".join(JOB_STATUSES_ALL) + ")", out)
     assert search, f"not found job status in output: `{out}`"
     status = search.group(1)
     return status

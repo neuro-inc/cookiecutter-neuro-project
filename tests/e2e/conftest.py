@@ -2,7 +2,6 @@ import locale
 import os
 import sys
 import tempfile
-import time
 import typing as t
 from collections import namedtuple
 from pathlib import Path
@@ -34,9 +33,6 @@ from tests.e2e.configuration import (
     PROJECT_APT_FILE_NAME,
     PROJECT_PIP_FILE_NAME,
     SECRET_FILE_ENC_PATTERN,
-    TIMEOUT_NEURO_LOGIN,
-    TIMEOUT_NEURO_RUN_CPU,
-    TIMEOUT_NEURO_RUN_GPU,
     UNIQUE_PROJECT_NAME,
     WANDB_KEY_FILE,
 )
@@ -120,14 +116,6 @@ def client_setup_factory(environment: str) -> t.Callable[[], ClientConfig]:
         )
 
     return _f
-
-
-@pytest.fixture(scope="session")
-def env_neuro_run_timeout(environment: str) -> int:
-    if environment == "dev":
-        return TIMEOUT_NEURO_RUN_CPU
-    else:
-        return TIMEOUT_NEURO_RUN_GPU
 
 
 @pytest.fixture(scope="session")
@@ -229,7 +217,7 @@ def neuro_project_id() -> str:
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
-        run("pip install -U neuromation", verbose=False, check_default_errors=False)
+        run("pip install -U neuromation", verbose=True, check_default_errors=False)
     log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 
@@ -239,13 +227,10 @@ def neuro_login(
 ) -> t.Iterator[None]:
     config = client_setup_factory()
     captured = run(
-        f"neuro config login-with-token {config.token} {config.url}",
-        timeout_s=TIMEOUT_NEURO_LOGIN,
-        verbose=False,
+        f"neuro config login-with-token {config.token} {config.url}", verbose=False,
     )
     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
-    captured = run(f"neuro config switch-cluster {config.cluster}", verbose=False)
-    time.sleep(0.5)  # sometimes flakes  # TODO: remove this sleep
+    run(f"neuro config switch-cluster {config.cluster}", verbose=False)
     log_msg(run("neuro config show", verbose=False))
     yield
 
@@ -253,6 +238,11 @@ def neuro_login(
 @pytest.fixture(autouse=True)
 def set_custom_env(monkeypatch: t.Any) -> None:
     monkeypatch.setenv("CUSTOM_ENV", MK_CUSTOM_ENV_NAME)
+
+
+@pytest.fixture(autouse=True)
+def set_jupyter_life_span(monkeypatch: t.Any) -> None:
+    monkeypatch.setenv("JUPYTER_LIFE_SPAN", "1h")
 
 
 @pytest.fixture()
@@ -265,20 +255,6 @@ def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
 @pytest.fixture()
 def env_var_no_http_auth(monkeypatch: t.Any) -> None:
     key, val = "HTTP_AUTH", "--no-http-auth"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
-@pytest.fixture()
-def env_var_train_stream_logs(monkeypatch: t.Any) -> None:
-    key, val = "TRAIN_STREAM_LOGS", "yes"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
-@pytest.fixture()
-def env_var_train_no_stream_logs(monkeypatch: t.Any) -> None:
-    key, val = "TRAIN_STREAM_LOGS", "no"
     log_msg(f"Setting env var: {key}={val}")
     monkeypatch.setenv(key, val)
 
