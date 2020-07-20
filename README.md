@@ -11,6 +11,10 @@ Usage
 -----
 Generate a new Cookiecutter template layout: `cookiecutter gh:neuromation/cookiecutter-neuro-project` (or `make cook`)    
 
+Release
+-------
+see [Release instructions](/RELEASE.md)
+
 License
 -------
 This project is licensed under the terms of the [MIT License](/LICENSE)
