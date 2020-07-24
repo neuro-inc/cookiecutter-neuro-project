@@ -134,7 +134,6 @@ setup: ### Setup remote environment
 		'sleep infinity'
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -qq update && cat $(PROJECT_PATH_ENV)/apt.txt | tr -d \"\\r\" | xargs -I % apt-get -qq install --no-install-recommends % && apt-get -qq clean && apt-get autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'pip install --progress-bar=off -U --no-cache-dir -r $(PROJECT_PATH_ENV)/requirements.txt'"
-	$(NEURO) exec --no-key-check -T $(SETUP_JOB) "bash -c 'ssh-keygen -f /id_rsa -t rsa -N neuromation -q'"
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV)
 	$(NEURO) kill $(SETUP_JOB) || :
 	@touch .setup_done

@@ -1,17 +1,13 @@
-from pathlib import Path
 from typing import Any
 
 import pytest
 from flaky import flaky
 
 from tests.e2e.configuration import (
-    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
-    GCP_KEY_FILE,
     JOB_ID_PATTERN,
     JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
-    MK_CONFIG_DIR,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
