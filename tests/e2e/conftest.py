@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import locale
 import os
 import sys
@@ -269,6 +271,7 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
             f_dec.write(dec)
 
 
+@contextmanager
 def _decrypt_key(key_name: str) -> t.Iterator[str]:
     key = Path(MK_CONFIG_DIR) / key_name
     try:
@@ -289,13 +292,13 @@ def _decrypt_key(key_name: str) -> t.Iterator[str]:
 
 @pytest.fixture()
 def gcp_secret_mount() -> t.Iterator[str]:
-    key_file = _decrypt_key(GCP_KEY_FILE)
-    secret_name = "gcp-key"
-    run(f"neuro secret add {secret_name} {key_file}")
-    yield (
-        f"-v secrets:{secret_name}:/var/secrets/gcp.json "
-        "-e GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/gcp.json"
-    )
+    with _decrypt_key(GCP_KEY_FILE) as key_file:
+        secret_name = "gcp-key"
+        run(f"neuro secret add {secret_name} @{key_file}")
+        yield (
+            f"-v secret:{secret_name}:/var/secrets/gcp.json "
+            "-e GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/gcp.json"
+        )
 
 
 @pytest.fixture()
