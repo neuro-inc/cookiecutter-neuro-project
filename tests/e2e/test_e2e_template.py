@@ -1,13 +1,17 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
 from flaky import flaky
 
 from tests.e2e.configuration import (
+    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
+    GCP_KEY_FILE,
     JOB_ID_PATTERN,
     JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
+    MK_CONFIG_DIR,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
@@ -75,6 +79,68 @@ def test_make_setup_required() -> None:
         expect_patterns=["Please run 'make setup' first"],
         assert_exit_code=False,
         check_default_errors=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_gcloud_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found Google Cloud service account key file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_gcloud_check_auth_success(
+    decrypt_gcp_key: None, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
+
+    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make gcloud-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=[
+            "Google Cloud will be authenticated via service account key file"
+        ],
+        assert_exit_code=True,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP)
+def test_make_aws_check_auth_failure() -> None:
+    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    if key.exists():
+        key.unlink()  # key must not exist in this test
+
+    make_cmd = "make aws-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["ERROR: Not found AWS user account credentials file"],
+        assert_exit_code=False,
+    )
+
+
+@pytest.mark.run(order=STEP_PRE_SETUP + 1)
+def test_make_aws_check_auth_success(decrypt_aws_key: None, monkeypatch: Any) -> None:
+    monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
+
+    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
+    assert key.exists(), f"{key.absolute()} must exist"
+
+    make_cmd = "make aws-check-auth"
+    run(
+        make_cmd,
+        expect_patterns=["AWS will be authenticated via user account credentials file"],
+        assert_exit_code=True,
     )
 
 
