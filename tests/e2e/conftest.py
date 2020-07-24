@@ -34,7 +34,6 @@ from tests.e2e.configuration import (
     PROJECT_PIP_FILE_NAME,
     SECRET_FILE_ENC_PATTERN,
     UNIQUE_PROJECT_NAME,
-    WANDB_KEY_FILE,
 )
 from tests.e2e.helpers.logs import LOGGER, log_msg
 from tests.e2e.helpers.runners import run
@@ -296,8 +295,3 @@ def decrypt_gcp_key() -> t.Iterator[None]:
 @pytest.fixture()
 def decrypt_aws_key() -> t.Iterator[None]:
     yield from _decrypt_key(AWS_KEY_FILE)
-
-
-@pytest.fixture()
-def decrypt_wandb_key() -> t.Iterator[None]:
-    yield from _decrypt_key(WANDB_KEY_FILE)

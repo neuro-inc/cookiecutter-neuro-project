@@ -1,17 +1,13 @@
-from pathlib import Path
 from typing import Any
 
 import pytest
 from flaky import flaky
 
 from tests.e2e.configuration import (
-    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
-    GCP_KEY_FILE,
     JOB_ID_PATTERN,
     JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
-    MK_CONFIG_DIR,
     MK_DEVELOP_JOB,
     MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
@@ -19,10 +15,8 @@ from tests.e2e.configuration import (
     MK_PROJECT,
     MK_PROJECT_PATH_ENV,
     MK_PROJECT_PATH_STORAGE,
-    MK_RESULTS_DIR,
     MK_SETUP_JOB,
     MK_TENSORBOARD_JOB,
-    WANDB_KEY_FILE,
     _get_pattern_status_running,
     _get_pattern_status_succeeded_or_running,
     mk_train_job,
@@ -43,7 +37,6 @@ from tests.e2e.helpers.runners import (
     neuro_ls,
     parse_job_id,
     parse_job_url,
-    parse_jobs_ids,
     repeat_until_success,
     run,
     wait_job_change_status_to,
@@ -82,99 +75,6 @@ def test_make_setup_required() -> None:
         expect_patterns=["Please run 'make setup' first"],
         assert_exit_code=False,
         check_default_errors=False,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP)
-def test_make_gcloud_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
-    if key.exists():
-        key.unlink()  # key must not exist in this test
-
-    make_cmd = "make gcloud-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=["ERROR: Not found Google Cloud service account key file"],
-        assert_exit_code=False,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_gcloud_check_auth_success(
-    decrypt_gcp_key: None, monkeypatch: Any
-) -> None:
-    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
-
-    key = Path(MK_CONFIG_DIR) / GCP_KEY_FILE
-    assert key.exists(), f"{key.absolute()} must exist"
-
-    make_cmd = "make gcloud-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=[
-            "Google Cloud will be authenticated via service account key file"
-        ],
-        assert_exit_code=True,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP)
-def test_make_aws_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
-    if key.exists():
-        key.unlink()  # key must not exist in this test
-
-    make_cmd = "make aws-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=["ERROR: Not found AWS user account credentials file"],
-        assert_exit_code=False,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_aws_check_auth_success(decrypt_aws_key: None, monkeypatch: Any) -> None:
-    monkeypatch.setenv("AWS_SECRET_FILE", AWS_KEY_FILE)
-
-    key = Path(MK_CONFIG_DIR) / AWS_KEY_FILE
-    assert key.exists(), f"{key.absolute()} must exist"
-
-    make_cmd = "make aws-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=["AWS will be authenticated via user account credentials file"],
-        assert_exit_code=True,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP)
-def test_make_wandb_check_auth_failure() -> None:
-    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
-    if key.exists():
-        key.unlink()  # key must not exist in this test
-
-    make_cmd = "make wandb-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=["ERROR: Not found Weights & Biases key file"],
-        assert_exit_code=False,
-    )
-
-
-@pytest.mark.run(order=STEP_PRE_SETUP + 1)
-def test_make_wandb_check_auth_success(
-    decrypt_wandb_key: None, monkeypatch: Any
-) -> None:
-    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-
-    key = Path(MK_CONFIG_DIR) / WANDB_KEY_FILE
-    assert key.exists(), f"{key.absolute()} must exist"
-
-    make_cmd = "make wandb-check-auth"
-    run(
-        make_cmd,
-        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
-        assert_exit_code=True,
     )
 
 
@@ -317,58 +217,6 @@ def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> Non
             )
 
         run("make kill-train")
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_hypertrain(
-    decrypt_wandb_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
-) -> None:
-    monkeypatch.setenv("WANDB_SECRET_FILE", WANDB_KEY_FILE)
-
-    run(
-        "make wandb-check-auth",
-        expect_patterns=[r"Weights \& Biases will be authenticated via key file"],
-    )
-
-    # Print wandb status for debugging reasons
-    run("wandb status")
-
-    n = 1
-    with finalize("make kill-hypertrain-all"):
-        out = run(
-            f"make hypertrain N_JOBS={n}",
-            expect_patterns=(
-                [_get_pattern_status_running()] * n
-                + [f"Started {n} hyper-parameter search jobs"]
-            ),
-        )
-        jobs = parse_jobs_ids(out, expect_num=n)
-        run("make ps-hypertrain", expect_patterns=jobs)
-        run("make ps-train-all", expect_patterns=jobs)
-
-        with finalize(*(f"neuro kill {job}" for job in jobs)):
-            for job in jobs:
-                run(
-                    f"neuro logs {job}",
-                    expect_patterns=[
-                        "Successfully logged in to Weights",
-                        "wandb: Starting wandb agent",
-                        "Running runs:",
-                        "Agent received command: run",
-                        "Agent starting run with config:",
-                        "Your training script here",
-                    ],
-                    error_patterns=[r"ERROR", r"Error while calling W&B API"],
-                    assert_exit_code=False,  # do not wait till end
-                )
-
-            # just check exit-code:
-            run("make kill-hypertrain-all")
-            run("make kill-train-all")
-
-    # Check results of hyper-parameter search on storage
-    results = neuro_ls(f"{MK_PROJECT_PATH_STORAGE}/{MK_RESULTS_DIR}")
-    assert any(name.startswith("sweep-") for name in results), f"actual: {results}"
 
 
 @pytest.mark.run(order=STEP_RUN)

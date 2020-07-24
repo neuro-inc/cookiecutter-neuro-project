@@ -47,7 +47,7 @@ stages:
       displayName: "Use Python $(python.version)"
 
     - script: |
-        python -m pip install -U pip wandb neuromation
+        python -m pip install -U pip neuromation
         # pip install git+https://github.com/neuromation/platform-client-python.git@master
         make init
       displayName: 'Install dependencies'

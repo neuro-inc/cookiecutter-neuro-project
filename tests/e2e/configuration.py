@@ -66,18 +66,15 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 # note: apt package 'expect' requires user input during installation
 PACKAGES_APT_CUSTOM = ["figlet"]
 PACKAGES_PIP_CUSTOM = ["pexpect"]
-WANDB_SWEEP_FILE = "wandb-sweep.yaml"
 GCP_KEY_FILE = "gcp-key.json"
 AWS_KEY_FILE = "aws-credentials.txt"
-WANDB_KEY_FILE = "wandb-token.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
-PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py", WANDB_SWEEP_FILE}
+PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
 PROJECT_CONFIG_DIR_CONTENT = {
     "test-config",
     GCP_KEY_FILE,
     AWS_KEY_FILE,
-    WANDB_KEY_FILE,
 }
 PROJECT_NOTEBOOKS_DIR_CONTENT = {
     "demo.ipynb",
