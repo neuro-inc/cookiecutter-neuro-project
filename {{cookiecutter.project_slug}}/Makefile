@@ -123,7 +123,7 @@ setup: ### Setup remote environment
 	$(NEURO) cp apt.txt $(PROJECT_PATH_STORAGE)
 	$(NEURO) cp setup.cfg $(PROJECT_PATH_STORAGE)
 	$(NEURO) run $(RUN_EXTRA) \
-	  	$(SECRETS) \
+		$(SECRETS) \
 		--name $(SETUP_JOB) \
 		--tag "target:setup" $(_PROJECT_TAGS) \
 		--preset cpu-small \
@@ -267,7 +267,7 @@ clean-all: clean-code clean-data clean-config clean-notebooks clean-results  ###
 .PHONY: develop
 develop: _check_setup $(SYNC)  ### Run a development job
 	$(NEURO) run $(RUN_EXTRA) \
-	  	$(SECRETS) \
+		$(SECRETS) \
 		--name $(DEVELOP_JOB) \
 		--tag "target:develop" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
@@ -302,7 +302,7 @@ kill-develop:  ### Terminate the development job
 .PHONY: train
 train: _check_setup $(SYNC)   ### Run a training job (set up env var 'RUN' to specify the training job),
 	$(NEURO) run $(RUN_EXTRA) \
-	  	$(SECRETS) \
+		$(SECRETS) \
 		--name $(TRAIN_JOB)-$(RUN) \
 		--tag "target:train" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
@@ -388,7 +388,7 @@ connect-train: _check_setup  ### Connect to the remote shell running on the trai
 .PHONY: jupyter
 jupyter: _check_setup $(SYNC) ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
-	  	$(SECRETS) \
+		$(SECRETS) \
 		--name $(JUPYTER_JOB) \
 		--tag "target:jupyter" $(_PROJECT_TAGS) \
 		--preset $(PRESET) \
