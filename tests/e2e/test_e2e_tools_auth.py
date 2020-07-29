@@ -43,7 +43,7 @@ def test_gsutil_auth_works_from_python_api(
     with measure_time(make_cmd):
         run(make_cmd)
 
-    make_cmd = f'make train TRAIN_CMD="python {script_path}"'
+    make_cmd = f'make -d train TRAIN_CMD="python {script_path}"'
     with finalize(f"neuro kill {mk_train_job()}"):
         with measure_time(make_cmd):
             out = run(make_cmd)
