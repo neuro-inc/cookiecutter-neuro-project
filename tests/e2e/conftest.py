@@ -4,6 +4,7 @@ import sys
 import tempfile
 import typing as t
 from collections import namedtuple
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -269,14 +270,15 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
             f_dec.write(dec)
 
 
-def _decrypt_key(key_name: str) -> t.Iterator[None]:
+@contextmanager
+def _decrypt_key(key_name: str) -> t.Iterator[str]:
     key = Path(MK_CONFIG_DIR) / key_name
     try:
         if not key.exists():
             key_enc_name = SECRET_FILE_ENC_PATTERN.format(key=key_name)
             key_enc = Path(LOCAL_TESTS_SAMPLES_PATH) / MK_CONFIG_DIR / key_enc_name
             _decrypt_file(key_enc, key)
-        yield
+        yield key
     finally:
         if key.exists():
             try:
@@ -288,8 +290,14 @@ def _decrypt_key(key_name: str) -> t.Iterator[None]:
 
 
 @pytest.fixture()
-def decrypt_gcp_key() -> t.Iterator[None]:
-    yield from _decrypt_key(GCP_KEY_FILE)
+def gcp_secret_mount() -> t.Iterator[str]:
+    with _decrypt_key(GCP_KEY_FILE) as key_file:
+        secret_name = "gcp-key"
+        run(f"neuro secret add {secret_name} @{key_file}")
+        yield (
+            f"-v secret:{secret_name}:/var/secrets/gcp.json "
+            "-e GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/gcp.json"
+        )
 
 
 @pytest.fixture()

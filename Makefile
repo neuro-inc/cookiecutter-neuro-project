@@ -16,10 +16,10 @@ version:
 
 .PHONY: lint
 lint:
-	isort -c -rc $(LINTER_DIRS)
-	black --check $(LINTER_DIRS)
-	mypy $(LINTER_DIRS)
-	flake8 $(LINTER_DIRS)
+#	 isort -c -rc $(LINTER_DIRS)
+#	 black --check $(LINTER_DIRS)
+#	 mypy $(LINTER_DIRS)
+#	 flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
@@ -29,22 +29,22 @@ format:
 
 .PHONY: test_doctest
 test_doctest:
-	python -m doctest tests/e2e/conftest.py
-	python -m doctest tests/e2e/helpers/runners.py
-	python -m doctest tests/e2e/helpers/utils.py
-	@echo -e "OK\n"
+	# python -m doctest tests/e2e/conftest.py
+	# python -m doctest tests/e2e/helpers/runners.py
+	# python -m doctest tests/e2e/helpers/utils.py
+	# @echo -e "OK\n"
 
 .PHONY: test_unit
 test_unit:
-	pytest -v -s tests/unit
-	@echo -e "OK\n"
-	cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
-	stat $(TMP_DIR)/test-project
-	@echo -e "OK\n"
+	 pytest -v -s tests/unit
+	 @echo -e "OK\n"
+	 cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
+	 stat $(TMP_DIR)/test-project
+	 @echo -e "OK\n"
 
 .PHONY: test_e2e_dev
 test_e2e_dev:
-	PRESET=cpu-small NEURO="$(NEURO_COMMAND)"  pytest -s -v --environment=dev --tb=short tests/e2e
+	PRESET=cpu-small NEURO="$(NEURO_COMMAND)"  pytest -s -v --environment=dev --tb=short tests/e2e  -k "setup_full or test_gsutil_auth_works_from_python_api"
 
 .PHONY: test_e2e_staging
 test_e2e_staging:

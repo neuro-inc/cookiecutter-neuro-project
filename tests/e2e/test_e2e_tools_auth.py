@@ -1,3 +1,4 @@
+import sys
 import textwrap
 from pathlib import Path
 from typing import Any
@@ -21,10 +22,13 @@ from tests.e2e.helpers.utils import measure_time
 @pytest.mark.run(order=STEP_RUN)
 @pytest.mark.timeout(5 * 60)
 @flaky(max_runs=3)
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="FIXME: Incorrect secret path on Windows"
+)
 def test_gsutil_auth_works_from_python_api(
-    decrypt_gcp_key: None, env_var_preset_cpu_small: None, monkeypatch: Any
+    gcp_secret_mount: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
-    monkeypatch.setenv("GCP_SECRET_FILE", GCP_KEY_FILE)
+    monkeypatch.setenv("SECRETS", gcp_secret_mount)
 
     script_path = f"{MK_CODE_DIR}/check_gsutil.py"
     script = Path(script_path)

@@ -207,7 +207,9 @@ def _run_once(
                 chunk = child.before
                 if isinstance(child.after, child.allowed_string_types):
                     chunk += child.after
-                detected = unique_everseen(JOB_ID_DECLARATION_REGEX.findall(chunk))
+                detected = list(
+                    unique_everseen(JOB_ID_DECLARATION_REGEX.findall(chunk))
+                )
                 if detected:
                     log_msg(f"Jobs: {detected}")
                 output += chunk
