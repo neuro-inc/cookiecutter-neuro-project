@@ -14,6 +14,7 @@ from tests.e2e.configuration import (
     mk_train_job,
 )
 from tests.e2e.conftest import STEP_RUN
+from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import finalize, parse_job_id, run
 from tests.e2e.helpers.utils import measure_time
 
@@ -25,6 +26,7 @@ def test_gsutil_auth_works_from_python_api(
     gcp_secret_mount: None, env_var_preset_cpu_small: None, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("SECRETS", gcp_secret_mount)
+    log_msg(f"GCP = {gcp_secret_mount}")
 
     script_path = f"{MK_CODE_DIR}/check_gsutil.py"
     script = Path(script_path)
