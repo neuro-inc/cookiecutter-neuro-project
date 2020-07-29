@@ -296,7 +296,7 @@ def gcp_secret_mount() -> t.Iterator[str]:
         run(f"neuro secret add {secret_name} @{key_file}")
         yield (
             f"-v secret:{secret_name}:/var/secrets/gcp.json "
-            "-e GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/gcp.json"
+            "-e GOOGLE_APPLICATION_CREDENTIALS=\"/var/secrets/gcp.json\""
         )
 
 
