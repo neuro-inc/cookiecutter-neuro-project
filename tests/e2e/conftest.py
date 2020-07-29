@@ -1,11 +1,10 @@
-from contextlib import contextmanager
-
 import locale
 import os
 import sys
 import tempfile
 import typing as t
 from collections import namedtuple
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
