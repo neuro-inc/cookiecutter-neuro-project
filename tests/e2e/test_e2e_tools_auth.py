@@ -15,7 +15,6 @@ from tests.e2e.configuration import (
     mk_train_job,
 )
 from tests.e2e.conftest import STEP_RUN
-from tests.e2e.helpers.logs import log_msg
 from tests.e2e.helpers.runners import finalize, parse_job_id, run
 from tests.e2e.helpers.utils import measure_time
 
