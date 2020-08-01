@@ -28,7 +28,7 @@ stages:
         python -m pip install -U pip
       displayName: 'Install pre-requirements'
     - script: |
-        make init
+        make setup
       displayName: 'Install dependencies'
     - script: |
         make test_unit

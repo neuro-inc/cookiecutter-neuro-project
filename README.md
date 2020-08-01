@@ -1,11 +1,11 @@
 Neuro Platform Project Template
-====================
+===============================
 
 Base template for [Neuro Platform](https://neu.ro) projects
 
 Requirements
 ------------
-Install `cookiecutter` command line: `pip install cookiecutter` (or `make init`)    
+Install `cookiecutter` command line: `pip install cookiecutter` (or `make setup`)
 
 Usage
 -----
