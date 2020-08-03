@@ -2,8 +2,8 @@ LINTER_DIRS := tests
 NEURO_COMMAND=neuro --verbose --show-traceback --color=no
 TMP_DIR := $(shell mktemp -d)
 
-.PHONY: setup
-setup:
+.PHONY: setup init
+setup init:
 	pip install -r requirements-dev.txt
 
 .PHONY: cook
