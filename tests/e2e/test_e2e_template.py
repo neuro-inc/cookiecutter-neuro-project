@@ -1,3 +1,6 @@
+import sys
+import textwrap
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -279,6 +282,48 @@ def test_make_develop() -> None:
         cmd = "make kill-develop"
         with measure_time(cmd):
             run(cmd)
+
+
+@pytest.mark.run(order=STEP_RUN)
+@pytest.mark.timeout(5 * 60)
+@flaky(max_runs=3)
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="FIXME: Incorrect secret path on Windows"
+)
+def test_gsutil_auth_works_from_python_api(
+    gcp_secret_mount: None, env_var_preset_cpu_small: None, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("SECRETS", gcp_secret_mount)
+
+    script_path = f"{MK_CODE_DIR}/check_gsutil.py"
+    script = Path(script_path)
+    script.write_text(
+        textwrap.dedent(
+            """
+            from google.cloud import storage
+            bucket = storage.Client().get_bucket("cookiecutter-e2e")
+            print(bucket.get_blob("hello.txt").download_as_string())
+            """
+        )
+    )
+    make_cmd = "make upload-code"
+    with measure_time(make_cmd):
+        run(make_cmd)
+
+    make_cmd = f'make train TRAIN_CMD="python {script_path}"'
+    with finalize(f"neuro kill {mk_train_job()}"):
+        with measure_time(make_cmd):
+            out = run(make_cmd)
+
+        job_id = parse_job_id(out)
+
+        cmd = f"neuro logs {job_id}"
+        with measure_time(cmd):
+            run(
+                cmd,
+                expect_patterns=["Hello world!"],
+                error_patterns=["Errno", "No such file or directory"],
+            )
 
 
 @pytest.mark.run(order=STEP_KILL)

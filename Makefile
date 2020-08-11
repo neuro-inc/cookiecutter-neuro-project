@@ -16,10 +16,10 @@ version:
 
 .PHONY: lint
 lint:
-#	 isort -c -rc $(LINTER_DIRS)
-#	 black --check $(LINTER_DIRS)
-#	 mypy $(LINTER_DIRS)
-#	 flake8 $(LINTER_DIRS)
+	 isort -c -rc $(LINTER_DIRS)
+	 black --check $(LINTER_DIRS)
+	 mypy $(LINTER_DIRS)
+	 flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
@@ -29,10 +29,10 @@ format:
 
 .PHONY: test_doctest
 test_doctest:
-	# python -m doctest tests/e2e/conftest.py
-	# python -m doctest tests/e2e/helpers/runners.py
-	# python -m doctest tests/e2e/helpers/utils.py
-	# @echo -e "OK\n"
+	python -m doctest tests/e2e/conftest.py
+	python -m doctest tests/e2e/helpers/runners.py
+	python -m doctest tests/e2e/helpers/utils.py
+	@echo -e "OK\n"
 
 .PHONY: test_unit
 test_unit:

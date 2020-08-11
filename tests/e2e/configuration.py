@@ -67,14 +67,12 @@ MK_PROJECT_FILES = [PROJECT_PIP_FILE_NAME, PROJECT_APT_FILE_NAME, "setup.cfg"]
 PACKAGES_APT_CUSTOM = ["figlet"]
 PACKAGES_PIP_CUSTOM = ["pexpect"]
 GCP_KEY_FILE = "gcp-key.json"
-AWS_KEY_FILE = "aws-credentials.txt"
 SECRET_FILE_ENC_PATTERN = "{key}.enc"
 
 PROJECT_CODE_DIR_CONTENT = {"__init__.py", "train.py"}
 PROJECT_CONFIG_DIR_CONTENT = {
     "test-config",
     GCP_KEY_FILE,
-    AWS_KEY_FILE,
 }
 PROJECT_NOTEBOOKS_DIR_CONTENT = {
     "demo.ipynb",
