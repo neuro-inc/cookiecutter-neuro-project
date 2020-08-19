@@ -11,9 +11,6 @@
 # IntelliJ IDEA project
 /.idea/
 
-# Weights & Biases folders
-wandb/
-
 # awk
 awkvars.out*
 
