@@ -11,7 +11,6 @@ import pytest
 from cryptography.fernet import Fernet
 
 from tests.e2e.configuration import (
-    AWS_KEY_FILE,
     EXISTING_PROJECT_SLUG,
     FILE_SIZE_B,
     GCP_KEY_FILE,
@@ -271,7 +270,7 @@ def _decrypt_file(file_enc: Path, output: Path) -> None:
 
 
 @contextmanager
-def _decrypt_key(key_name: str) -> t.Iterator[str]:
+def _decrypt_key(key_name: str) -> t.Iterator[Path]:
     key = Path(MK_CONFIG_DIR) / key_name
     try:
         if not key.exists():
@@ -298,8 +297,3 @@ def gcp_secret_mount() -> t.Iterator[str]:
             f"-v secret:{secret_name}:/var/secrets/gcp.json "
             "-e GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/gcp.json"
         )
-
-
-@pytest.fixture()
-def decrypt_aws_key() -> t.Iterator[None]:
-    yield from _decrypt_key(AWS_KEY_FILE)
