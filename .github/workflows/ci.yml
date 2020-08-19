@@ -73,46 +73,60 @@ jobs:
         run: |
           make test_unit
 
-#  e2e:
-#    name: E2E
-#    needs: unit
-#    strategy:
-#      matrix:
-#        python-version: [3.6, 3.7, 3.8]
-#        os: [ubuntu, macos, windows]
-#        exclude:
-#          - os: macos
-#            python-version: 3.6
-#      fail-fast:
-#        false
-#    runs-on: ${{ matrix.os }}-latest
-#    timeout-minutes: 45
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#      - name: Setup Python ${{ matrix.python-version }}
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#      - name: Get pip cache dir
-#        id: pip-cache
-#        run: |
-#          echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
-#      - name: Cache PyPI
-#        uses: actions/cache@v2
-#        with:
-#          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
-#          path: ${{ steps.pip-cache.outputs.dir }}
-#          restore-keys: |
-#            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
-#      - name: Install dependencies
-#        uses: py-actions/py-dependency-install@v2
-#        with:
-#          path: requirements-dev.txt
-#      - name: Run E2E tests
-#        timeout-minutes: 30
-#        env:
-#          E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
-#          E2E_USER_TOKEN: ${{ secrets.E2E_USER_TOKEN }}
-#        run: |
-#          make .e2e
+  e2e:
+    name: E2E
+    needs: unit
+    strategy:
+      matrix:
+        python-version: [3.7]
+        os: [ubuntu, macos, windows]
+      fail-fast:
+        false
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
+      - name: Cache PyPI
+        uses: actions/cache@v2
+        with:
+          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
+          path: ${{ steps.pip-cache.outputs.dir }}
+          restore-keys: |
+            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
+      - name: Install dependencies
+        run: |
+          make init
+      - name: Run E2E tests
+        timeout-minutes: 30
+        env:
+          CI: true
+          COOKIECUTTER_TEST_E2E_TOKEN: ${{ secrets.COOKIECUTTER_TEST_E2E_TOKEN }}
+          COOKIECUTTER_TEST_E2E_URL: ${{ secrets.COOKIECUTTER_TEST_E2E_URL }}
+          COOKIECUTTER_TEST_E2E_CLUSTER: ${{ secrets.COOKIECUTTER_TEST_E2E_CLUSTER }}
+          COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY: ${{ secrets.COOKIECUTTER_GCP_CONFIG_ENCRYPTION_KEY }}
+          E2E_NEURO_TAG: e2e-neuro-tag
+        run: |
+          export RUN_EXTRA=--tag=${E2E_NEURO_TAG}
+          make test_e2e_dev
+
+      - name: Cleanup after e2e tests
+        run: |
+          # Cleanup jobs:
+          neuro ps
+          export jobs=`neuro -q ps --tag=${E2E_NEURO_TAG}
+          echo "Killing stale jobs:\n$jobs\n"
+          neuro kill $jobs
+          # Cleanup storage:
+          make cleanup_e2e_storage
+
+#      - script: |
+#          make $(e2e.target)
