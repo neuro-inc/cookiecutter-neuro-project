@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, release ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'  # Daily midnight build
+
+
+jobs:
+  lint:
+    name: Linter
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Cache PyPI
+        uses: actions/cache@v2
+        with:
+          key: pip-lint-${{ hashFiles('requirements-*.txt') }}
+          path: ~/.cache/pip
+          restore-keys: |
+            pip-lint-
+      - name: Install dependencies
+        uses: py-actions/py-dependency-install@v2
+        with:
+          path: requirements-dev.txt
+      - name: Run linters
+        run: |
+          make lint
+
+  unit:
+    name: Unit
+    needs: lint
+    strategy:
+      matrix:
+        python-version: [3.7]
+        os: [ubuntu]
+      fail-fast:
+        false
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
+      - name: Cache PyPI
+        uses: actions/cache@v2
+        with:
+          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
+          path: ${{ steps.pip-cache.outputs.dir }}
+          restore-keys: |
+            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
+      - name: Install dependencies
+        uses: py-actions/py-dependency-install@v2
+        with:
+          path: requirements-dev.txt
+      - name: Run unittests
+        run: |
+          make test_unit
+
+#  e2e:
+#    name: E2E
+#    needs: unit
+#    strategy:
+#      matrix:
+#        python-version: [3.6, 3.7, 3.8]
+#        os: [ubuntu, macos, windows]
+#        exclude:
+#          - os: macos
+#            python-version: 3.6
+#      fail-fast:
+#        false
+#    runs-on: ${{ matrix.os }}-latest
+#    timeout-minutes: 45
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#      - name: Setup Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#      - name: Get pip cache dir
+#        id: pip-cache
+#        run: |
+#          echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
+#      - name: Cache PyPI
+#        uses: actions/cache@v2
+#        with:
+#          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
+#          path: ${{ steps.pip-cache.outputs.dir }}
+#          restore-keys: |
+#            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
+#      - name: Install dependencies
+#        uses: py-actions/py-dependency-install@v2
+#        with:
+#          path: requirements-dev.txt
+#      - name: Run E2E tests
+#        timeout-minutes: 30
+#        env:
+#          E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
+#          E2E_USER_TOKEN: ${{ secrets.E2E_USER_TOKEN }}
+#        run: |
+#          make .e2e
