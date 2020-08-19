@@ -5,15 +5,11 @@
 /config/*.json
 /config/*.yml
 /.setup_done
-/.wandb_sweeps
 
 !/**/.gitkeep
 
 # IntelliJ IDEA project
 /.idea/
-
-# Weights & Biases folders
-wandb/
 
 # awk
 awkvars.out*
