@@ -201,28 +201,6 @@ def test_make_train_custom_command(
 
 
 @pytest.mark.run(order=STEP_RUN)
-def test_make_train_tqdm(env_var_preset_cpu_small: str, monkeypatch: Any) -> None:
-    with finalize(f"neuro kill {mk_train_job()}"):
-        cmd = (
-            'python -c "import time, tqdm; '
-            '[time.sleep(0.1) for _ in tqdm.tqdm(range(100))]"'
-        )
-        assert "'" not in cmd, f"cmd contains single quotes: `{cmd}`"
-        log_msg(f"Setting env var: TRAIN_CMD=`{cmd}`")
-        monkeypatch.setenv("TRAIN_CMD", cmd)
-
-        cmd = "make train"
-        with measure_time(cmd):
-            run(
-                cmd,
-                expect_patterns=[_get_pattern_status_running(), r"100/100"],
-                assert_exit_code=False,
-            )
-
-        run("make kill-train")
-
-
-@pytest.mark.run(order=STEP_RUN)
 def test_make_run_jupyter_notebook(env_var_no_http_auth: None) -> None:
     _test_run_something_useful("jupyter", MK_JUPYTER_JOB, "/tree")
 
