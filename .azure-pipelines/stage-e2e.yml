@@ -49,7 +49,7 @@ stages:
     - script: |
         python -m pip install -U pip neuromation
         # pip install git+https://github.com/neuromation/platform-client-python.git@master
-        make init
+        make setup
       displayName: 'Install dependencies'
 
     - script: |
