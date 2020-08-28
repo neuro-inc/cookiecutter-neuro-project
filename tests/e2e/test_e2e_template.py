@@ -12,7 +12,6 @@ from tests.e2e.configuration import (
     JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
     MK_DEVELOP_JOB,
-    MK_FILEBROWSER_JOB,
     MK_JUPYTER_JOB,
     MK_NOTEBOOKS_DIR,
     MK_PROJECT,
@@ -213,13 +212,6 @@ def test_make_jupyter_lab(env_var_no_http_auth: None,) -> None:
 @pytest.mark.run(order=STEP_RUN)
 def test_make_tensorboard(env_var_no_http_auth: None) -> None:
     _test_run_something_useful("tensorboard", MK_TENSORBOARD_JOB, "/")
-
-
-@pytest.mark.run(order=STEP_RUN)
-def test_make_filebrowser(env_var_no_http_auth: None) -> None:
-    _test_run_something_useful(
-        "filebrowser", MK_FILEBROWSER_JOB, "/files/requirements.txt"
-    )
 
 
 def _test_run_something_useful(target: str, job_name: str, path: str) -> None:
