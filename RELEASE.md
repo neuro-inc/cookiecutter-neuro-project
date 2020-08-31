@@ -21,12 +21,11 @@ $ git pull origin
 is the latest available (see [Neuro Platform Base Image](https://github.com/neuromation/neuro-base-environment/releases)).
 Update template [version](./{{cookiecutter.project_slug}}/Makefile#L1), it may reflect the version of used base image.
 
+Hint: base image version could be get with
 ```bash
-$ BASE_VERSION=$(git ls-remote --tags --refs --sort="version:refname" git://github.com/neuromation/neuro-base-environment.git | awk -F/ 'END{print$NF}')
-$ echo $BASE_VERSION
+$ BASE_IMAGE_VERSION=$(git ls-remote --tags --refs --sort="version:refname" git://github.com/neuromation/neuro-base-environment.git | awk -F/ 'END{print$NF}')
+$ echo $BASE_IMAGE_VERSION
 1.7
-$ sed -i "s/BASE_ENV_VERSION=.*/BASE_ENV_VERSION=$BASE_VERSION/" ./{{cookiecutter.project_slug}}/Makefile
-$ sed -i "s/TEMPLATE_VERSION=.*/TEMPLATE_VERSION=$BASE_VERSION/" ./{{cookiecutter.project_slug}}/Makefile
 ```
 
 3. Test `master` manually:
