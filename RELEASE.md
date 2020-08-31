@@ -8,7 +8,7 @@ Preconditions:
 ------------
 1. All necessary PRs are merged into `master` branch and CI tests are green.
 
-Release process:g
+Release process:
 ------------
 
 1. Update your local `master` branch.
