@@ -1,4 +1,4 @@
-VERSION=v1.6.1
+TEMPLATE_VERSION=v1.7.6
 BASE_ENV_VERSION=v1.7.6
 PROJECT_ID=placeholder
 
@@ -25,7 +25,7 @@ _PROJECT_TAGS=--tag "kind:project" \
               --tag "project-id:$(PROJECT_ID)"
 
 BASE_ENV=neuromation/base:$(BASE_ENV_VERSION)
-CUSTOM_ENV?=image:neuromation-$(PROJECT):$(VERSION)
+CUSTOM_ENV?=image:neuromation-$(PROJECT):$(TEMPLATE_VERSION)
 
 ##### VARIABLES #####
 
