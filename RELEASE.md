@@ -12,7 +12,7 @@ Release process:
 ------------
 
 1. Update your local `master` branch.
-```console
+```bash
 $ git checkout master
 $ git pull origin
 ```
@@ -21,7 +21,7 @@ $ git pull origin
 is the latest available (see [Neuro Platform Base Image](https://github.com/neuromation/neuro-base-environment/releases)).
 Update template [version](./{{cookiecutter.project_slug}}/Makefile#L1), it may reflect the version of used base image.
 
-```console
+```bash
 $ BASE_VERSION=$(git ls-remote --tags --refs --sort="version:refname" git://github.com/neuromation/neuro-base-environment.git | awk -F/ 'END{print$NF}')
 $ echo $BASE_VERSION
 1.7
@@ -30,7 +30,7 @@ $ sed -i "s/TEMPLATE_VERSION=.*/TEMPLATE_VERSION=$BASE_VERSION/" ./{{cookiecutte
 ```
 
 3. Test `master` manually:
-```console
+```bash
 $ cookiecutter gh:neuromation/cookiecutter-neuro-project -c master
 project_name [Neuro Project]: 
 project_slug [neuro-project]: 
@@ -42,7 +42,7 @@ $ make setup
 ...
 ```
 4. If `master` is fine, find out what was the previous release (find latest tag like `v1.6` or `v1.6.1`) and save the following information to `CHANGELOG.md`. Suppose we're releasing version `v1.7`:
-```console
+```bash
 $ PREV=$(git tag --list | grep -e "v.*" | tail -1)
 $ echo $PREV
 v1.6.1
@@ -55,7 +55,7 @@ e60fb2b Minor improvements to simplify NNI integration (#389)
 c0558a1 [Makefile] Bump base env version to v1.5
 ```
 5. Put the lines above^ to `CHANGELOG.md` under the heading `### v1.7 (todays-date)` and push these changes to `master`:
-```console
+```bash
 $ git add CHANGELOG.md 
 $ git commit -m "Update changelog" 
 $ git push
@@ -65,7 +65,7 @@ $ git push --tags
 Note, this update to `master` will trigger CI.
 
 6. Now,  hard-reset `release` branch on `master`:
-```console
+```bash
 $ git checkout release
 $ git reset --hard master
 $ git push  # no need to push --force since `release` will move only forward
