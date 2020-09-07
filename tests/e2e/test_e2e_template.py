@@ -9,8 +9,8 @@ from flaky import flaky
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
     JOB_ID_PATTERN,
-    JOB_STATUS_SUCCEEDED,
     JOB_STATUS_CANCELLED,
+    JOB_STATUS_SUCCEEDED,
     MK_CODE_DIR,
     MK_DEVELOP_JOB,
     MK_JUPYTER_JOB,
