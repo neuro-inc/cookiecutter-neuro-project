@@ -95,7 +95,7 @@ jobs:
         cd $[[ volumes.project.mount ]]
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
-  jupyter:
+  jupyter_notebook:
     image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
     http_port: 8888
     http_auth: True
@@ -110,8 +110,29 @@ jobs:
     env:
       PYTHONPATH: $[[ volumes.code.mount ]]
     cmd: >-
-      #todo: pass somehow 'lab', or create separate job?
       jupyter notebook
+        --no-browser
+        --ip=0.0.0.0
+        --allow-root
+        --NotebookApp.token=
+        --notebook-dir=$[[ volumes.notebooks.mount ]]
+
+  jupyter_lab:
+    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+    http_port: 8888
+    http_auth: True
+    browse: True
+    detach: True
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_rw ]]
+      - $[[ volumes.config.ref_ro ]]
+      - $[[ volumes.notebooks.ref_rw ]]
+      - $[[ volumes.results.ref_rw ]]
+    env:
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    cmd: >-
+      jupyter lab
         --no-browser
         --ip=0.0.0.0
         --allow-root
