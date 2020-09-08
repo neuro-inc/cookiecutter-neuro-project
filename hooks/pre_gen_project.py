@@ -1,7 +1,7 @@
 import re
 import sys
 
-PROJECT_REGEX = r'^[-a-zA-Z][-a-zA-Z0-9]+$'
+PROJECT_REGEX = r'^[_a-zA-Z][_a-zA-Z0-9]+$'
 project_slug = '{{ cookiecutter.project_slug }}'
 
 if not re.match(PROJECT_REGEX, project_slug):

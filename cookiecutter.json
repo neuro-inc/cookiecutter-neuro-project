@@ -1,9 +1,5 @@
 {
     "project_name": "Neuro Project",
-    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
-    "code_directory": "modules",
-    "_jinja2_env_vars": {
-        "variable_start_string": "[[",
-        "variable_end_string": "]]"
-    }
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "code_directory": "code"
 }

@@ -1,4 +1,0 @@
-[storage]
-cp-exclude = ["*.pyc", ".mypy_cache", "__pycache__", ".ipynb_checkpoints"]
-cp-exclude = [".git"]
-cp-exclude-from-files=[".neuroignore", ".gitignore"]
