@@ -7,8 +7,8 @@ defaults:
   life_span: 1d
   tags:
     - kind:project
-    - project:{{ flow.project_slug }}
-    - project-id:{{ flow.id }}
+    - project:project-kebab-name-placeholder
+    - project-id:project-uuid-placeholder
 
 volumes:
   data:
