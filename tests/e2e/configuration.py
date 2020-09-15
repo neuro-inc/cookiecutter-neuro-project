@@ -37,15 +37,6 @@ MK_PROJECT_PATH_STORAGE = f"storage:{MK_PROJECT}"
 MK_PROJECT_PATH_ENV = "/project"
 
 
-MK_SETUP_JOB = f"setup-{MK_PROJECT}"
-MK_TRAIN_JOB = f"train-{MK_PROJECT}"
-MK_DEVELOP_JOB = f"develop-{MK_PROJECT}"
-MK_JUPYTER_JOB = f"jupyter-{MK_PROJECT}"
-MK_TENSORBOARD_JOB = f"tensorboard-{MK_PROJECT}"
-MK_FILEBROWSER_JOB = f"filebrowser-{MK_PROJECT}"
-
-MK_RUN_DEFAULT = "base"  # env var 'RUN'
-
 MK_BASE_ENV_NAME = "neuromation/base"
 MK_CUSTOM_ENV_NAME = f"image:cookiecutter-e2e:{_unique_label}"
 
@@ -153,10 +144,6 @@ DEFAULT_NEURO_ERROR_PATTERNS = (
 )
 DEFAULT_MAKE_ERROR_PATTERNS = ("recipe for target .+ failed.+",)
 DEFAULT_ERROR_PATTERNS = DEFAULT_MAKE_ERROR_PATTERNS + DEFAULT_NEURO_ERROR_PATTERNS
-
-
-def mk_train_job(run: str = MK_RUN_DEFAULT) -> str:
-    return f"{MK_TRAIN_JOB}-{run}"
 
 
 def _pattern_copy_file_started(file_name: str) -> str:
