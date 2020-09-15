@@ -8,7 +8,7 @@ defaults:
   tags:
     - kind:project
     - project:PROJECT_SLUG_WITH_DASHES_PLACEHOLDER
-    - flow-id:FLOW_ID_PLACEHOLDER
+    - flow-id:$[[ flow.id ]]
 
 volumes:
   data:
@@ -38,7 +38,7 @@ volumes:
     local: .
 
 images:
-  {{ cookiecutter.project_slug }}:
+  myimage:
     ref: image:$[[ flow.id ]]/develop
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
@@ -46,7 +46,7 @@ images:
 jobs:
 
   develop:
-    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+    image: $[[ images.myimage.ref ]]
     # note, since the base image v1.6 redirects the output via '2>&1 | tee'
     # the image cannot run bash in interactive mode.
     # detach: True
@@ -63,7 +63,7 @@ jobs:
     cmd: bash
 
   train:
-    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+    image: $[[ images.myimage.ref ]]
     detach: True
     life_span: 10d
     volumes:
@@ -79,7 +79,7 @@ jobs:
         python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
 
   multitrain:
-    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+    image: $[[ images.myimage.ref ]]
     detach: True
     life_span: 10d
     volumes:
@@ -95,8 +95,8 @@ jobs:
         cd $[[ volumes.project.mount ]]
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
-  jupyter_notebook:
-    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+  jupyter:
+    image: $[[ images.myimage.ref ]]
     http_port: 8888
     http_auth: True
     browse: True
@@ -118,7 +118,7 @@ jobs:
         --notebook-dir=$[[ volumes.notebooks.mount ]]
 
   jupyter_lab:
-    image: $[[ images.{{ cookiecutter.project_slug }}.ref ]]
+    image: $[[ images.myimage.ref ]]
     http_port: 8888
     http_auth: True
     browse: True
