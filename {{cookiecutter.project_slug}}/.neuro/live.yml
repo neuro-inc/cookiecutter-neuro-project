@@ -7,8 +7,8 @@ defaults:
   life_span: 1d
   tags:
     - kind:project
-    - project:project-slug-name-placeholder
-    - project-id:project-uuid-placeholder
+    - project:PROJECT_SLUG_WITH_DASHES_PLACEHOLDER
+    - flow-id:FLOW_ID_PLACEHOLDER
 
 volumes:
   data:

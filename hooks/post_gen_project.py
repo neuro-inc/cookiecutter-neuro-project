@@ -4,12 +4,12 @@ import re
 from pathlib import Path
 
 project_slug_name = "{{ cookiecutter.project_slug }}".replace("_", "-")
-project_id = f"{project_slug_name}-{uuid.uuid4().hex[:8]}"
+flow_id = f"neuro-flow-{uuid.uuid4().hex[:8]}"
 
 live_file_path = Path(".neuro/live.yml")
 
 text = live_file_path.read_text()
-text = re.sub(r"project:project-slug-name-placeholder", f"project:{project_slug_name}", text)
-text = re.sub(r"project-id:project-uuid-placeholder", f"project-id:{project_id}", text)
+text = re.sub("PROJECT_SLUG_WITH_DASHES_PLACEHOLDER", project_slug_name, text)
+text = re.sub("FLOW_ID_PLACEHOLDER", flow_id, text)
 
 live_file_path.write_text(text)
