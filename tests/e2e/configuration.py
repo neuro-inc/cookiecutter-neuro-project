@@ -25,7 +25,7 @@ DEFAULT_TIMEOUT_LONG = 10 * 60
 _unique_label = unique_label()
 UNIQUE_PROJECT_NAME = f"Test Project {_unique_label}"
 EXISTING_PROJECT_SLUG = os.environ.get("PROJECT")
-MK_PROJECT = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "-")
+MK_PROJECT = EXISTING_PROJECT_SLUG or UNIQUE_PROJECT_NAME.lower().replace(" ", "_")
 
 MK_CODE_DIR = "modules"
 MK_CONFIG_DIR = "config"
