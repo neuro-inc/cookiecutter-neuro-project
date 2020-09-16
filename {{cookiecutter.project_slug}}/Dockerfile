@@ -10,7 +10,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     cat apt.txt | tr -d "\r" | xargs -I % apt-get -qq install --no-install-recommends % && \
     apt-get -qq clean && \
     apt-get autoremove && \
-    rm -rf /var/lib/apt/lists/*'
+    rm -rf /var/lib/apt/lists/*
 
 COPY setup.cfg .
 

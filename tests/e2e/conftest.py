@@ -225,30 +225,6 @@ def neuro_login(
     yield
 
 
-@pytest.fixture(autouse=True)
-def set_custom_env(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("CUSTOM_ENV", MK_CUSTOM_ENV_NAME)
-
-
-@pytest.fixture(autouse=True)
-def set_jupyter_life_span(monkeypatch: t.Any) -> None:
-    monkeypatch.setenv("JUPYTER_LIFE_SPAN", "1h")
-
-
-@pytest.fixture()
-def env_var_preset_cpu_small(monkeypatch: t.Any) -> None:
-    key, val = "PRESET", "cpu-small"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
-@pytest.fixture()
-def env_var_no_http_auth(monkeypatch: t.Any) -> None:
-    key, val = "HTTP_AUTH", "--no-http-auth"
-    log_msg(f"Setting env var: {key}={val}")
-    monkeypatch.setenv(key, val)
-
-
 def _decrypt_file(file_enc: Path, output: Path) -> None:
     log_msg(f"Decrypting `{file_enc}` to `{output}`")
     assert file_enc.exists(), f"encrypted file does not exist: {file_enc}"

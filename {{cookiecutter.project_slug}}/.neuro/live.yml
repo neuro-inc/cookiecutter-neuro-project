@@ -6,9 +6,8 @@ defaults:
   preset: gpu-small
   life_span: 1d
   tags:
-    - kind:project
-    - project:PROJECT_SLUG_WITH_DASHES_PLACEHOLDER
-    - flow-id:$[[ flow.id ]]
+    - kind:flow
+    - flow-id:PROJECT_SLUG_WITH_DASHES_PLACEHOLDER
 
 volumes:
   data:
