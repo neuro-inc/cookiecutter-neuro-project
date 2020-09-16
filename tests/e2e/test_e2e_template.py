@@ -14,6 +14,7 @@ from tests.e2e.conftest import (
     STEP_SETUP,
 )
 from tests.e2e.helpers.new_runners import run
+
 #
 # from tests.e2e.helpers.runners import (
 #     finalize,
@@ -35,11 +36,11 @@ def test_make_setup_full() -> None:
         run("neuro-flow mkvolumes")
         run("neuro-flow upload ALL")
         run("neuro-flow build myimage")
-    except Exception:
-        pytest.exit(f"Test on setup failed, aborting the whole test suite.")
-        raise
+    except Exception as e:
+        pytest.exit(f"Setup test failed, aborting the whole test suite. Error: {e}")
 
-#
+
+
 # @pytest.mark.run(order=STEP_RUN)
 # def test_make_train_defaults(monkeypatch: Any, env_var_preset_cpu_small: None) -> None:
 #     monkeypatch.setenv("RUN_EXTRA", "--detach")

@@ -47,7 +47,7 @@ DEFAULT_TIMEOUT_LONG = 3 * 60
 
 WIN = sys.platform == "win32"
 
-
+TERM_WIDTH = os.get_terminal_size()[0]
 
 if WIN:
     from pexpect.popen_spawn import PopenSpawn  # type: ignore
@@ -57,17 +57,36 @@ else:
     _pexpect_spawn = pexpect.spawn
 
 
+def _get_start_str(cmd: str, until: str) -> str:
+    if until is pexpect.EOF:
+        until = "<EOF>"
+    else:
+        until = f"'{until}'"
+    s = f"$ {cmd}"
+    s += f"  # until: {until} "
+    s += "-" * (TERM_WIDTH - len(s))
+    return s
+
+
+def _get_end_str() -> str:
+    s = "==" * (TERM_WIDTH // 2)
+    return s
+
+
 def run(cmd: str, *, until: str = pexpect.EOF, to_stdout: bool = True) -> str:
-    logfile = sys.stdout.buffer if to_stdout else None
+    if to_stdout:
+        logfile = sys.stdout
+        print(_get_start_str(cmd, until), file=logfile)
+    else:
+        logfile = None
+
     child = _pexpect_spawn(
-        cmd,
-        encoding="utf-8",
-        logfile=logfile,
-        timeout=DEFAULT_TIMEOUT_LONG,
+        cmd, encoding="utf-8", logfile=logfile, timeout=DEFAULT_TIMEOUT_LONG,
     )
     child.expect(until)
     out = child.before
     if isinstance(child.after, child.allowed_string_types):
         out += child.after
+    if to_stdout:
+        print(_get_end_str(), file=logfile)
     return out
-

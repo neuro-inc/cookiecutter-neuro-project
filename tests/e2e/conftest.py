@@ -204,25 +204,26 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def pip_install_neuromation(generate_empty_project: None) -> None:
-    if not EXISTING_PROJECT_SLUG:
-        run("pip install -U neuromation", verbose=True, check_default_errors=False)
-    log_msg(f"Using: {run('neuro --version', verbose=False)}")
-
-
-@pytest.fixture(scope="session", autouse=True)
-def neuro_login(
-    pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]
-) -> t.Iterator[None]:
-    config = client_setup_factory()
-    captured = run(
-        f"neuro config login-with-token {config.token} {config.url}", verbose=False,
-    )
-    assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
-    run(f"neuro config switch-cluster {config.cluster}", verbose=False)
-    log_msg(run("neuro config show", verbose=False))
-    yield
+#
+# @pytest.fixture(scope="session", autouse=True)
+# def pip_install_neuromation(generate_empty_project: None) -> None:
+#     # if not EXISTING_PROJECT_SLUG:
+#     #     run("pip install -U neuromation", verbose=True, check_default_errors=False)
+#     log_msg(f"Using: {run('neuro --version', verbose=False)}")
+#
+#
+# @pytest.fixture(scope="session", autouse=True)
+# def neuro_login(
+#     pip_install_neuromation: None, client_setup_factory: t.Callable[[], ClientConfig]
+# ) -> t.Iterator[None]:
+#     config = client_setup_factory()
+#     captured = run(
+#         f"neuro config login-with-token {config.token} {config.url}", verbose=False,
+#     )
+#     assert f"Logged into {config.url}" in captured, f"stdout: `{captured}`"
+#     run(f"neuro config switch-cluster {config.cluster}", verbose=False)
+#     log_msg(run("neuro config show", verbose=False))
+#     yield
 
 
 def _decrypt_file(file_enc: Path, output: Path) -> None:
