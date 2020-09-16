@@ -47,7 +47,11 @@ DEFAULT_TIMEOUT_LONG = 3 * 60
 
 WIN = sys.platform == "win32"
 
-TERM_WIDTH = os.get_terminal_size()[0]
+try:
+    TERM_WIDTH = os.get_terminal_size()[0]
+except Exception as e:
+    TERM_WIDTH = 100
+    log_msg(f"Could not get terminal width: {e}, using default {TERM_WIDTH}")
 
 if WIN:
     from pexpect.popen_spawn import PopenSpawn  # type: ignore
