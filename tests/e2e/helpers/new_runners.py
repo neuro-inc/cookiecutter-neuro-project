@@ -43,7 +43,7 @@ JOB_ID_DECLARATION_REGEX = re.compile(
 )
 
 
-DEFAULT_TIMEOUT_LONG = 3 * 60
+DEFAULT_TIMEOUT_LONG = 10 * 60
 
 WIN = sys.platform == "win32"
 
