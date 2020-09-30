@@ -32,5 +32,5 @@ test_unit:
 	 pytest -v -s tests/unit
 	 @echo -e "OK\n"
 	 cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
-	 stat $(TMP_DIR)/test-project
+	 ls -d $(TMP_DIR)/test-project/.neuro/
 	 @echo -e "OK\n"
