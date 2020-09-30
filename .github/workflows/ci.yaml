@@ -10,13 +10,13 @@ on:
 
 
 jobs:
-  
+
   test:
     name: Run tests
     strategy:
       matrix:
         python-version: [3.7]
-        os: [ubuntu]
+        os: [windows]
         #python-version: [3.6, 3.7]
         #os: [ubuntu, macos, windows]
       fail-fast: false

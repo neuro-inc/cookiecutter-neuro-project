@@ -29,8 +29,9 @@ format:
 
 .PHONY: test_unit
 test_unit:
-	 pytest -v -s tests/unit
+	 export TMP_DIR=$$(mktemp -d) && \
+	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
+	   ls -d $$TMP_DIR/test-project/.neuro/
 	 @echo -e "OK\n"
-	 cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
-	 ls -d $(TMP_DIR)/test-project/.neuro/
+	 pytest -v -s tests/unit
 	 @echo -e "OK\n"
