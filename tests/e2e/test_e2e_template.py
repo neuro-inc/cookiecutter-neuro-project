@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
 from flaky import flaky
+from neuro_flow.parser import find_live_config
 
 from tests.e2e.configuration import (
     EXISTING_PROJECT_SLUG,
@@ -9,11 +11,9 @@ from tests.e2e.configuration import (
     JOB_STATUS_SUCCEEDED,
     _get_pattern_status_running,
 )
-from tests.e2e.conftest import (
-    STEP_RUN,
-    STEP_SETUP,
-)
+from tests.e2e.conftest import STEP_RUN, STEP_SETUP
 from tests.e2e.helpers.new_runners import run
+
 
 #
 # from tests.e2e.helpers.runners import (
@@ -40,7 +40,6 @@ def test_make_setup_full() -> None:
         pytest.exit(f"Setup test failed, aborting the whole test suite. Error: {e}")
 
 
-
 # @pytest.mark.run(order=STEP_RUN)
 # def test_make_train_defaults(monkeypatch: Any, env_var_preset_cpu_small: None) -> None:
 #     monkeypatch.setenv("RUN_EXTRA", "--detach")
@@ -50,7 +49,7 @@ def test_make_setup_full() -> None:
 #         )
 #         job_id = parse_job_id(out)
 #         wait_job_change_status_to(job_id, JOB_STATUS_SUCCEEDED)
-#
+
 #
 # @pytest.mark.run(order=STEP_RUN)
 # def test_make_run_jupyter_notebook(env_var_no_http_auth: None) -> None:

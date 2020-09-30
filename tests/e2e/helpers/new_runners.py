@@ -2,15 +2,15 @@ import os
 import re
 import sys
 import time
-from typing import Callable, Any, Sequence, Tuple
 from contextlib import contextmanager
 from pathlib import Path
-from more_itertools import unique_everseen
-
+from typing import Any, Callable, Sequence, Tuple
 
 import pexpect
+from more_itertools import unique_everseen
 
-from tests.e2e.helpers.logs import log_msg, LOGGER
+from tests.e2e.helpers.logs import LOGGER, log_msg
+
 
 _pexpect_spawn: Callable[..., Any]
 
@@ -61,7 +61,6 @@ else:
     _pexpect_spawn = pexpect.spawn
 
 
-
 def _pexpect_isalive(proc: Any) -> bool:
     """ This method is a copy-paste of method `isalive()` somehow missing in Windows
     implementation of `pexpect`.
@@ -76,6 +75,7 @@ def _pexpect_isalive(proc: Any) -> bool:
     except:  # noqa
         return False
 
+
 class ExitCodeException(Exception):
     def __init__(self, exit_code: int):
         self._exit_code = exit_code
@@ -87,12 +87,13 @@ class ExitCodeException(Exception):
     def exit_code(self) -> int:
         return self._exit_code
 
+
 def _hide_cmd_secret(cmd: str) -> str:
     args = cmd.split()
     for verb in VERBS_SECRET:
         try:
             idx = args.index(verb)
-            return ' '.join(args[:idx+1] + ['<secret>'])
+            return " ".join(args[: idx + 1] + ["<secret>"])
         except ValueError:
             pass
     return cmd
@@ -114,7 +115,9 @@ def _get_end_str() -> str:
     return s
 
 
-def run(cmd: str, *args, until: str = pexpect.EOF, verbose: bool = True, **kwargs) -> str:
+def run(
+    cmd: str, *args, until: str = pexpect.EOF, verbose: bool = True, **kwargs
+) -> str:
     if verbose:
         logfile = sys.stdout
         print(_get_start_str(cmd, until), file=logfile)
@@ -177,7 +180,8 @@ def repeat_until_success(
             raise RuntimeError(f"Timeout exceeded: {time_current}")
         time.sleep(interval_s)
 
-def get_job_status(job_id: str,verbose: bool = False) -> str:
+
+def get_job_status(job_id: str, verbose: bool = False) -> str:
     out = run(f"neuro status {job_id}", verbose=verbose)
     search = re.search(r"Status.*(" + "|".join(JOB_STATUSES_ALL) + ")", out)
     assert search, f"not found known job status in output: `{out}`"

@@ -204,11 +204,14 @@ def generate_empty_project(cookiecutter_setup: None) -> None:
     LOCAL_CLEANUP_STORAGE_FILE.write_text(MK_PROJECT_PATH_STORAGE)
 
 
-
 @pytest.fixture(scope="session", autouse=True)
 def pip_install_neuromation(generate_empty_project: None) -> None:
     if not EXISTING_PROJECT_SLUG:
-        run("pip install -U neuromation neuro-flow", verbose=True, check_default_errors=False)
+        run(
+            "pip install -U neuromation neuro-flow",
+            verbose=True,
+            check_default_errors=False,
+        )
     log_msg(f"Using: {run('neuro --version', verbose=False)}")
 
 

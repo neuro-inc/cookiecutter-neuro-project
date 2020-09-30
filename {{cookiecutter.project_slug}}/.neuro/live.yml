@@ -3,42 +3,42 @@ title: {{ cookiecutter.project_name }}
 id: PROJECT_SLUG_WITH_UNDERSCORES_PLACEHOLDER
 
 defaults:
-  preset: gpu-small
+  preset: gpu-small-p
   life_span: 1d
   tags:
     - kind:flow
-    - flow-id:$[[ flow.id ]]
+    - flow-id-with-dashes:{{ cookiecutter.project_slug }}
 
 volumes:
   data:
-    remote: storage:$[[ flow.id ]]/data
+    remote: storage:$[[ flow.flow_id ]]/data
     mount: /project/data
     local: data
   code:
-    remote: storage:$[[ flow.id ]]/{{ cookiecutter.code_directory }}
+    remote: storage:$[[ flow.flow_id ]]/{{ cookiecutter.code_directory }}
     mount: /project/{{ cookiecutter.code_directory }}
     local: {{ cookiecutter.code_directory }}
   config:
-    remote: storage:$[[ flow.id ]]/config
+    remote: storage:$[[ flow.flow_id ]]/config
     mount: /project/config
     local: config
     read_only: True
   notebooks:
-    remote: storage:$[[ flow.id ]]/notebooks
+    remote: storage:$[[ flow.flow_id ]]/notebooks
     mount: /project/notebooks
     local: notebooks
   results:
-    remote: storage:$[[ flow.id ]]/results
+    remote: storage:$[[ flow.flow_id ]]/results
     mount: /project/results
     local: results
   project:
-    remote: storage:$[[ flow.id ]]
+    remote: storage:$[[ flow.flow_id ]]
     mount: /project
     local: .
 
 images:
   myimage:
-    ref: image:$[[ flow.id ]]/develop
+    ref: image:$[[ flow.flow_id ]]/develop
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
 
@@ -46,9 +46,6 @@ jobs:
 
   develop:
     image: $[[ images.myimage.ref ]]
-    # note, since the base image v1.6 redirects the output via '2>&1 | tee'
-    # the image cannot run bash in interactive mode.
-    # detach: True
     env:
       EXPOSE_SSH: "yes"
       PYTHONPATH: $[[ volumes.code.mount ]]
