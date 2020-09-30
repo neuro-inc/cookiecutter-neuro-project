@@ -1,13 +1,13 @@
 kind: live
 title: {{ cookiecutter.project_name }}
-id: {{ cookiecutter.project_slug }}
+id: PROJECT_SLUG_WITH_UNDERSCORES_PLACEHOLDER
 
 defaults:
   preset: gpu-small
   life_span: 1d
   tags:
     - kind:flow
-    - flow-id:PROJECT_SLUG_WITH_DASHES_PLACEHOLDER
+    - flow-id:$[[ flow.id ]]
 
 volumes:
   data:
