@@ -1,10 +1,26 @@
+import os
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any, AsyncIterator, Awaitable, Callable, Iterator
 
 import pytest
 from neuro_flow.context import JobCtx
 from neuro_flow.live_runner import LiveRunner
 from neuro_flow.parser import ConfigDir, ConfigPath, find_live_config
+
+
+@contextmanager
+def inside_dir(dirpath: str) -> Iterator[None]:
+    """
+    Execute code from inside the given directory
+    :param dirpath: String, path of the directory the command is being run.
+    """
+    old_path = os.getcwd()
+    try:
+        os.chdir(dirpath)
+        yield
+    finally:
+        os.chdir(old_path)
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ stages:
     pool:
       vmImage: $[ variables['image'] ]
 
-    timeoutInMinutes: 30
+#    timeoutInMinutes: 30
 
     steps:
     - checkout: self
@@ -26,14 +26,9 @@ stages:
 
     - script: |
         python -m pip install -U pip
-      displayName: 'Install pre-requirements'
-    - script: |
         make setup
       displayName: 'Install dependencies'
+
     - script: |
         make test_unit
       displayName: 'Run unittests'
-    - script: |
-        make lint
-      displayName: 'Run linters'
-
