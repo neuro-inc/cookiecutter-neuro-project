@@ -9,6 +9,7 @@ Sign up at [neu.ro](https://neu.ro) and setup your local machine according to [i
 Then run:
 
 ```shell
+pip install -U neuromation
 neuro login
 neuro-flow build {{ cookiecutter.project_slug }}
 neuro-flow run jupyter
