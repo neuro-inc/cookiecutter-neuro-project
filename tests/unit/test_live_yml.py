@@ -80,7 +80,10 @@ async def test_jobs_train(
         http_port=None,
         http_auth=None,
         entrypoint=None,
-        cmd="bash -euo pipefail -c 'cd /project\npython -u /project/modules/train.py --data /project/data\n'",
+        cmd=(
+            "bash -euo pipefail -c 'cd /project\n"
+            "python -u /project/modules/train.py --data /project/data\n'"
+        ),
         workdir=None,
         volumes=[
             "storage:my_project/data:/project/data:ro",

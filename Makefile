@@ -4,7 +4,8 @@ TMP_DIR := $(shell mktemp -d)
 
 .PHONY: setup init
 setup init:
-	pip install -r requirements-dev.txt
+	pip install -r '{{cookiecutter.project_slug}}/requirements.txt'
+	pip install -r requirements.txt
 
 .PHONY: cook
 cook:
@@ -26,14 +27,6 @@ format:
 	isort -rc $(LINTER_DIRS)
 	black $(LINTER_DIRS)
 
-
-.PHONY: test_doctest
-test_doctest:
-	python -m doctest tests/e2e/conftest.py
-	python -m doctest tests/e2e/helpers/runners.py
-	python -m doctest tests/e2e/helpers/utils.py
-	@echo -e "OK\n"
-
 .PHONY: test_unit
 test_unit:
 	 pytest -v -s tests/unit
@@ -41,19 +34,3 @@ test_unit:
 	 cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $(TMP_DIR) .
 	 stat $(TMP_DIR)/test-project
 	 @echo -e "OK\n"
-
-.PHONY: test_e2e_dev
-test_e2e_dev:
-	PRESET=cpu-small NEURO="$(NEURO_COMMAND)"  pytest -s -v --environment=dev --tb=short tests/e2e
-
-.PHONY: test_e2e_staging
-test_e2e_staging:
-	PRESET=gpu-small NEURO="$(NEURO_COMMAND)"  pytest -s -v --environment=staging --tb=short tests/e2e
-
-.PHONY: get_e2e_failures
-get_e2e_failures:
-	@[ -f tests/e2e/output/failures.txt ] && cat tests/e2e/output/failures.txt || echo "(no data)"
-
-.PHONY: cleanup_e2e_storage
-cleanup_e2e_storage:
-	bash -c tests/e2e/cleanup.sh

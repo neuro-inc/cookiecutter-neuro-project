@@ -41,5 +41,5 @@ async def get_live_job(live_runner: LiveRunner) -> Callable[[str], Awaitable[Job
 
 
 @pytest.fixture
-def get_live_multi_job():
+def get_live_multi_job() -> None:
     raise NotImplementedError
