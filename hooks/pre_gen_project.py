@@ -1,10 +1,10 @@
 import re
 import sys
 
-SLUG_REGEX = r'^[a-zA-Z][-a-zA-Z0-9]+$'
+PROJECT_REGEX = r'^[-a-zA-Z][-a-zA-Z0-9]+$'
 project_slug = '{{ cookiecutter.project_slug }}'
 
-if not re.match(SLUG_REGEX, project_slug):
+if not re.match(PROJECT_REGEX, project_slug):
     print('ERROR: %s is not a valid project slug. Slug can only contain letters, digits, '
           'and dashes.' % project_slug)
     sys.exit(1)
@@ -14,7 +14,7 @@ if len(project_slug) > 28:
           '(e.g., "%s").' % (project_slug, project_slug[:28]))
     sys.exit(1)
 
-MODULE_REGEX = r'^[a-zA-Z][_a-zA-Z0-9]+$'
+MODULE_REGEX = r'^[_a-zA-Z][_a-zA-Z0-9]+$'
 module_name = '{{ cookiecutter.code_directory }}'
 
 if not re.match(MODULE_REGEX, module_name):
