@@ -2,8 +2,6 @@ import re
 import sys
 
 SLUG_REGEX = r'^[a-zA-Z][-a-zA-Z0-9]+$'
-MODULE_REGEX = r'^[a-zA-Z][_a-zA-Z0-9]+$'
-
 project_slug = '{{ cookiecutter.project_slug }}'
 
 if not re.match(SLUG_REGEX, project_slug):
@@ -16,6 +14,7 @@ if len(project_slug) > 28:
           '(e.g., "%s").' % (project_slug, project_slug[:28]))
     sys.exit(1)
 
+MODULE_REGEX = r'^[a-zA-Z][_a-zA-Z0-9]+$'
 module_name = '{{ cookiecutter.code_directory }}'
 
 if not re.match(MODULE_REGEX, module_name):
