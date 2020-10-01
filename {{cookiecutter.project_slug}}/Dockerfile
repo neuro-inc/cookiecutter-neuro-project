@@ -1,6 +1,5 @@
 FROM neuromation/base:v1.7.6
 
-ENV DEBIAN_FRONTEND noninteractive
 RUN mkdir /project
 WORKDIR /project
 

@@ -38,7 +38,7 @@ volumes:
 
 images:
   myimage:
-    ref: image:$[[ flow.flow_id ]]/develop
+    ref: image:$[[ flow.flow_id ]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
 
@@ -71,7 +71,7 @@ jobs:
       EXPOSE_SSH: "yes"
       PYTHONPATH: $[[ volumes.code.mount ]]
     bash: |
-        cd $[[ volumes.project.mount ]]
+        cd $[[ flow.workspace ]]
         python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
 
   multitrain:
@@ -88,7 +88,7 @@ jobs:
       PYTHONPATH: $[[ volumes.code.mount ]]
     multi: true
     bash: |
-        cd $[[ volumes.project.mount ]]
+        cd $[[ flow.workspace ]]
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
