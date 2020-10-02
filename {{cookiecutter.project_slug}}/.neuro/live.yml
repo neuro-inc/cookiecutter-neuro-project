@@ -7,7 +7,6 @@ defaults:
   life_span: 1d
   tags:
     - kind:flow
-    - flow-id-with-dashes:{{ cookiecutter.project_slug }}
 
 volumes:
   data:
