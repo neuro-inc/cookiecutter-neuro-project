@@ -27,11 +27,11 @@ format:
 	isort -rc $(LINTER_DIRS)
 	black $(LINTER_DIRS)
 
-.PHONY: test_unit
-test_unit:
+.PHONY: test
+test:
 	 export TMP_DIR=$$(mktemp -d) && \
 	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
 	   ls -d $$TMP_DIR/test-project/.neuro/
-	 @echo -e "OK\n"
 	 pytest -v -s tests/unit
+	 pytest -v -s tests/e2e
 	 @echo -e "OK\n"
