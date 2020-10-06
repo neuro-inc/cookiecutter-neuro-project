@@ -1,10 +1,9 @@
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable, Iterator
+from typing import Any, AsyncIterator, Iterator
 
 import pytest
-from neuro_flow.context import JobCtx
 from neuro_flow.live_runner import LiveRunner
 from neuro_flow.parser import ConfigDir, ConfigPath, find_live_config
 
@@ -42,20 +41,3 @@ async def live_runner(live_config_path: ConfigPath) -> AsyncIterator[LiveRunner]
     config = live_config_path
     async with LiveRunner(config.workspace, config.config_file) as runner:
         yield runner
-
-
-@pytest.fixture
-async def get_live_job(live_runner: LiveRunner) -> Callable[[str], Awaitable[JobCtx]]:
-    async def _f(name: str) -> JobCtx:
-        is_multi = await live_runner.ctx.is_multi(name)
-        assert not is_multi
-        meta_ctx = await live_runner._ensure_meta(name, suffix=None)
-        job_ctx = await meta_ctx.with_job(name)
-        return job_ctx.job
-
-    return _f
-
-
-@pytest.fixture
-def get_live_multi_job() -> None:
-    raise NotImplementedError
