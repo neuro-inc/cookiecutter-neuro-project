@@ -27,7 +27,7 @@ def change_directory_to_temp() -> Iterator[str]:
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> Iterator[None]:
-    run_cmd(f"cookiecutter --no-input {PATH_ROOT} project_name='{PROJECT_NAME}'")
+    exec(f"cookiecutter --no-input {PATH_ROOT} project_name='{PROJECT_NAME}'")
     with inside_dir(MK_PROJECT):
         logging.info(f"Working inside test project: {Path().absolute()}")
         yield
@@ -38,15 +38,13 @@ def neuro_login() -> None:
     token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
     url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
     cluster = os.environ["COOKIECUTTER_TEST_E2E_CLUSTER"]
-    proc = run_cmd(f"neuro config login-with-token {token} {url}")
+    proc = exec(f"neuro config login-with-token {token} {url}")
     assert f"Logged into {url}" in proc.stdout, proc
-    run_cmd(f"neuro config switch-cluster {cluster}")
-    run_cmd("neuro config show")
+    exec(f"neuro config switch-cluster {cluster}")
+    exec("neuro config show")
 
 
-def run_cmd(
-    cmd: str, assert_exit_code: bool = True
-) -> "subprocess.CompletedProcess[str]":
+def exec(cmd: str, assert_exit_code: bool = True) -> "subprocess.CompletedProcess[str]":
     proc = subprocess.run(shlex.split(cmd), capture_output=True, encoding="utf-8")
     if assert_exit_code and proc.returncode != 0:
         raise RuntimeError(f"Non-zero exit code {proc.returncode} for `{cmd}`: {proc}")
