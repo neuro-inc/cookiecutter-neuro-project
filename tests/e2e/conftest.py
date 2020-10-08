@@ -20,7 +20,11 @@ PATH_ROOT = Path(__file__).resolve().parent.parent.parent
 def change_directory_to_temp() -> Iterator[None]:
     tmp = Path(tempfile.mkdtemp(prefix="test-cookiecutter-"))
     for path in PATH_ROOT.iterdir():
-        shutil.copytree(path, tmp / path.name)
+        if path.is_file():
+            shutil.copy(path, tmp / path.name)
+        else:
+            shutil.copytree(path, tmp / path.name)
+
     with inside_dir(tmp):
         yield
 
