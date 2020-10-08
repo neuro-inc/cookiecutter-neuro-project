@@ -15,7 +15,8 @@ jobs:
     name: Run tests
     strategy:
       matrix:
-        python-version: [3.6, 3.7]
+        #python-version: [3.6, 3.7]  # Python 3.6 temp muted, see https://github.com/neuro-inc/neuro-flow/issues/116
+        python-version: [3.7]
         os: [ubuntu, macos, windows]
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
