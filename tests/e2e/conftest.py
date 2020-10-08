@@ -12,8 +12,8 @@ from tests.utils import inside_dir
 
 PROJECT_NAME = "My e2e project"
 MK_PROJECT = PROJECT_NAME.lower().replace(" ", "-")
-PATH_ROOT = Path(__file__).resolve().parent.parent.parent
-COOKIECUTTER_CONFIG_PATH = PATH_ROOT / "cookiecutter.yaml"
+# PATH_ROOT = Path(__file__).resolve().parent.parent.parent
+# COOKIECUTTER_CONFIG_PATH = PATH_ROOT / "cookiecutter.yaml"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -25,7 +25,7 @@ def change_directory_to_temp() -> Iterator[str]:
 
 @pytest.fixture(scope="session", autouse=True)
 def cookiecutter_setup(change_directory_to_temp: None) -> Iterator[None]:
-    exec(f"cookiecutter --no-input {PATH_ROOT} project_name='{PROJECT_NAME}'")
+    exec(f"cookiecutter --no-input . project_name='{PROJECT_NAME}'")
     with inside_dir(MK_PROJECT):
         logging.info(f"Working inside test project: {Path().absolute()}")
         yield
