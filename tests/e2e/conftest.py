@@ -1,5 +1,4 @@
 import logging
-import os
 import shlex
 import subprocess
 import tempfile
@@ -20,7 +19,6 @@ COOKIECUTTER_CONFIG_PATH = PATH_ROOT / "cookiecutter.yaml"
 @pytest.fixture(scope="session", autouse=True)
 def change_directory_to_temp() -> Iterator[str]:
     tmp = tempfile.mkdtemp(prefix="test-cookiecutter-")
-    # Path(tmp).mkdir(exist_ok=True, parents=True)
     with inside_dir(tmp):
         yield tmp
 
@@ -33,26 +31,13 @@ def cookiecutter_setup(change_directory_to_temp: None) -> Iterator[None]:
         yield
 
 
-@pytest.fixture(scope="session", autouse=True)
-def neuro_login() -> None:
-    token = os.environ["COOKIECUTTER_TEST_E2E_TOKEN"]
-    url = os.environ["COOKIECUTTER_TEST_E2E_URL"]
-    cluster = os.environ["COOKIECUTTER_TEST_E2E_CLUSTER"]
-    proc = exec(f"neuro config login-with-token {token} {url}")
-    assert f"Logged into {url}" in proc.stdout, proc
-    exec(f"neuro config switch-cluster {cluster}")
-    exec("neuro config show")
-
-
 def exec(cmd: str, assert_exit_code: bool = True) -> "subprocess.CompletedProcess[str]":
-    # mypy: begin ignore
     proc = subprocess.run(
         shlex.split(cmd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
     )
-    # mypy: end ignore
     if assert_exit_code and proc.returncode != 0:
         raise RuntimeError(f"Non-zero exit code {proc.returncode} for `{cmd}`: {proc}")
     return proc
