@@ -51,4 +51,4 @@ jobs:
           make lint
       - name: Run unit tests
         run: |
-          make test_unit
+          make test
