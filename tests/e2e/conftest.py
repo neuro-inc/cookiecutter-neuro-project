@@ -1,5 +1,6 @@
 import logging
 import shlex
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -12,13 +13,16 @@ from tests.utils import inside_dir
 
 PROJECT_NAME = "My e2e project"
 MK_PROJECT = PROJECT_NAME.lower().replace(" ", "-")
+PATH_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture(scope="session", autouse=True)
-def change_directory_to_temp() -> Iterator[str]:
-    tmp = tempfile.mkdtemp(prefix="test-cookiecutter-")
+def change_directory_to_temp() -> Iterator[None]:
+    tmp = Path(tempfile.mkdtemp(prefix="test-cookiecutter-"))
+    for path in PATH_ROOT.iterdir():
+        shutil.copytree(path, tmp / path.name)
     with inside_dir(tmp):
-        yield tmp
+        yield
 
 
 @pytest.fixture(scope="session", autouse=True)
