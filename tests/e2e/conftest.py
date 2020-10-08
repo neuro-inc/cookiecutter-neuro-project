@@ -12,8 +12,6 @@ from tests.utils import inside_dir
 
 PROJECT_NAME = "My e2e project"
 MK_PROJECT = PROJECT_NAME.lower().replace(" ", "-")
-# PATH_ROOT = Path(__file__).resolve().parent.parent.parent
-# COOKIECUTTER_CONFIG_PATH = PATH_ROOT / "cookiecutter.yaml"
 
 
 @pytest.fixture(scope="session", autouse=True)
