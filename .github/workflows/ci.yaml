@@ -47,7 +47,7 @@ jobs:
           neuro config show
       - name: Lint
         run: |
-          rm -rf .mypy_cache/
+          python -c "import shutil; shutil.rmtree('.mypy_cache', ignore_errors=True)"
           make lint
       - name: Run tests
         run: |
