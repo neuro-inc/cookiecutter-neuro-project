@@ -3,7 +3,7 @@ import typing as t
 
 from cookiecutter.exceptions import FailedHookException
 
-from .conftest import inside_dir
+from tests.utils import inside_dir
 
 
 def test_project_tree(cookies: t.Any) -> None:

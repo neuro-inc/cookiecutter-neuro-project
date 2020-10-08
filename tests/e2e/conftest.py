@@ -8,7 +8,7 @@ from typing import Iterator
 
 import pytest
 
-from tests.unit.conftest import inside_dir
+from tests.utils import inside_dir
 
 
 PROJECT_NAME = "My e2e project"
@@ -45,7 +45,7 @@ def neuro_login() -> None:
 
 
 def exec(cmd: str, assert_exit_code: bool = True) -> "subprocess.CompletedProcess[str]":
-    proc = subprocess.run(shlex.split(cmd), capture_output=True, encoding="utf-8")  # type: ignore[call-overload]  # noqa
+    proc = subprocess.run(shlex.split(cmd), capture_output=True, encoding="utf-8")
     if assert_exit_code and proc.returncode != 0:
         raise RuntimeError(f"Non-zero exit code {proc.returncode} for `{cmd}`: {proc}")
     return proc
