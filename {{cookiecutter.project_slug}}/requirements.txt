@@ -1,4 +1,5 @@
-neuromation>=20.4.6
+neuro-flow
+
 flake8
 mypy
 isort

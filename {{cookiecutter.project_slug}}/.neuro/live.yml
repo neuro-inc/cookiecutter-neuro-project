@@ -1,0 +1,133 @@
+kind: live
+title: {{ cookiecutter.project_name }}
+
+defaults:
+  preset: gpu-small-p
+  life_span: 1d
+
+volumes:
+  data:
+    remote: storage:$[[ flow.project_id ]]/data
+    mount: /project/data
+    local: data
+  code:
+    remote: storage:$[[ flow.project_id ]]/{{ cookiecutter.code_directory }}
+    mount: /project/{{ cookiecutter.code_directory }}
+    local: {{ cookiecutter.code_directory }}
+  config:
+    remote: storage:$[[ flow.project_id ]]/config
+    mount: /project/config
+    local: config
+    read_only: True
+  notebooks:
+    remote: storage:$[[ flow.project_id ]]/notebooks
+    mount: /project/notebooks
+    local: notebooks
+  results:
+    remote: storage:$[[ flow.project_id ]]/results
+    mount: /project/results
+    local: results
+  project:
+    remote: storage:$[[ flow.project_id ]]
+    mount: /project
+    local: .
+
+images:
+  myimage:
+    ref: image:$[[ flow.project_id ]]
+    dockerfile: $[[ flow.workspace ]]/Dockerfile
+    context: $[[ flow.workspace ]]/
+
+jobs:
+
+  develop:
+    image: $[[ images.myimage.ref ]]
+    env:
+      EXPOSE_SSH: "yes"
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    port_forward:
+      - "2211:22"
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_rw ]]
+      - $[[ volumes.config.ref_rw ]]
+      - $[[ volumes.results.ref_rw ]]
+    cmd: bash
+
+  train:
+    image: $[[ images.myimage.ref ]]
+    detach: True
+    life_span: 10d
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_ro ]]
+      - $[[ volumes.config.ref_ro ]]
+      - $[[ volumes.results.ref_rw ]]
+    env:
+      EXPOSE_SSH: "yes"
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    bash: |
+        cd $[[ flow.workspace ]]
+        python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
+
+  multitrain:
+    image: $[[ images.myimage.ref ]]
+    detach: True
+    life_span: 10d
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_ro ]]
+      - $[[ volumes.config.ref_ro ]]
+      - $[[ volumes.results.ref_rw ]]
+    env:
+      EXPOSE_SSH: "yes"
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    multi: true
+    bash: |
+        cd $[[ flow.workspace ]]
+        python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
+
+  jupyter:
+    multi: True
+    image: $[[ images.myimage.ref ]]
+    http_port: 8888
+    http_auth: True
+    browse: True
+    detach: True
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_rw ]]
+      - $[[ volumes.config.ref_ro ]]
+      - $[[ volumes.notebooks.ref_rw ]]
+      - $[[ volumes.results.ref_rw ]]
+    env:
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    cmd: >-
+      jupyter $[[ multi.args ]]
+        --no-browser
+        --ip=0.0.0.0
+        --allow-root
+        --NotebookApp.token=
+        --notebook-dir=$[[ volumes.notebooks.mount ]]
+
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    preset: cpu-small
+    http_port: 6006
+    http_auth: True
+    browse: True
+    detach: True
+    volumes:
+      - $[[ volumes.results.ref_ro ]]
+    cmd: tensorboard --host=0.0.0.0 --logdir=$[[ volumes.results.mount ]]
+
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    preset: cpu-small
+    http_port: 80
+    http_auth: True
+    browse: True
+    detach: True
+    volumes:
+      - $[[ volumes.project.remote ]]:/srv:rw
+    cmd: --noauth
