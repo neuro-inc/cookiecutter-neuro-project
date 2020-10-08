@@ -1,4 +1,3 @@
-neuromation
 neuro-flow
 
 flake8

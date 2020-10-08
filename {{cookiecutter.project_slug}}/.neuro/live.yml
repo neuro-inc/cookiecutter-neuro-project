@@ -1,43 +1,40 @@
 kind: live
 title: {{ cookiecutter.project_name }}
-id: PROJECT_SLUG_WITH_UNDERSCORES_PLACEHOLDER
 
 defaults:
   preset: gpu-small-p
   life_span: 1d
-  tags:
-    - kind:flow
 
 volumes:
   data:
-    remote: storage:$[[ flow.flow_id ]]/data
+    remote: storage:$[[ flow.project_id ]]/data
     mount: /project/data
     local: data
   code:
-    remote: storage:$[[ flow.flow_id ]]/{{ cookiecutter.code_directory }}
+    remote: storage:$[[ flow.project_id ]]/{{ cookiecutter.code_directory }}
     mount: /project/{{ cookiecutter.code_directory }}
     local: {{ cookiecutter.code_directory }}
   config:
-    remote: storage:$[[ flow.flow_id ]]/config
+    remote: storage:$[[ flow.project_id ]]/config
     mount: /project/config
     local: config
     read_only: True
   notebooks:
-    remote: storage:$[[ flow.flow_id ]]/notebooks
+    remote: storage:$[[ flow.project_id ]]/notebooks
     mount: /project/notebooks
     local: notebooks
   results:
-    remote: storage:$[[ flow.flow_id ]]/results
+    remote: storage:$[[ flow.project_id ]]/results
     mount: /project/results
     local: results
   project:
-    remote: storage:$[[ flow.flow_id ]]
+    remote: storage:$[[ flow.project_id ]]
     mount: /project
     local: .
 
 images:
   myimage:
-    ref: image:$[[ flow.flow_id ]]
+    ref: image:$[[ flow.project_id ]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
 
@@ -91,6 +88,7 @@ jobs:
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
+    multi: True
     image: $[[ images.myimage.ref ]]
     http_port: 8888
     http_auth: True
@@ -105,29 +103,7 @@ jobs:
     env:
       PYTHONPATH: $[[ volumes.code.mount ]]
     cmd: >-
-      jupyter notebook
-        --no-browser
-        --ip=0.0.0.0
-        --allow-root
-        --NotebookApp.token=
-        --notebook-dir=$[[ volumes.notebooks.mount ]]
-
-  jupyter_lab:
-    image: $[[ images.myimage.ref ]]
-    http_port: 8888
-    http_auth: True
-    browse: True
-    detach: True
-    volumes:
-      - $[[ volumes.data.ref_ro ]]
-      - $[[ volumes.code.ref_rw ]]
-      - $[[ volumes.config.ref_ro ]]
-      - $[[ volumes.notebooks.ref_rw ]]
-      - $[[ volumes.results.ref_rw ]]
-    env:
-      PYTHONPATH: $[[ volumes.code.mount ]]
-    cmd: >-
-      jupyter lab
+      jupyter $[[ multi.args ]]
         --no-browser
         --ip=0.0.0.0
         --allow-root
