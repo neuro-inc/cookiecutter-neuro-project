@@ -45,12 +45,14 @@ def neuro_login() -> None:
 
 
 def exec(cmd: str, assert_exit_code: bool = True) -> "subprocess.CompletedProcess[str]":
+    # mypy: begin ignore
     proc = subprocess.run(
         shlex.split(cmd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
     )
+    # mypy: end ignore
     if assert_exit_code and proc.returncode != 0:
         raise RuntimeError(f"Non-zero exit code {proc.returncode} for `{cmd}`: {proc}")
     return proc
