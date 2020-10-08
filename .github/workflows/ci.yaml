@@ -47,6 +47,7 @@ jobs:
           neuro config show
       - name: Lint
         run: |
+          rm -rf .mypy_cache/
           make lint
       - name: Run unit tests
         run: |
