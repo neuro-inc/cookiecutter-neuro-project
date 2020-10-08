@@ -4,7 +4,7 @@ import shlex
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Sequence
 
 import pytest
 
@@ -45,8 +45,8 @@ def neuro_login() -> None:
 
 
 def exec(cmd: str, assert_exit_code: bool = True) -> "subprocess.CompletedProcess[str]":
-    args = shlex.split(cmd)
-    proc = subprocess.run(args, capture_output=True, encoding="utf-8")  # noqa
+    args: Sequence[str] = shlex.split(cmd)
+    proc = subprocess.run(args, capture_output=True, encoding="utf-8")
     if assert_exit_code and proc.returncode != 0:
         raise RuntimeError(f"Non-zero exit code {proc.returncode} for `{cmd}`: {proc}")
     return proc
