@@ -20,6 +20,8 @@ jobs:
         os: [ubuntu, macos, windows]
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
+    env:
+      PYTHONIOENCODING: utf-8
     steps:
       - name: Checkout commit
         uses: actions/checkout@v2
@@ -45,7 +47,7 @@ jobs:
       - name: Configure environment
         run: |
           neuro config login-with-token ${{ secrets.NEURO_TOKEN }} ${{ secrets.NEURO_STAGING_URL }}
-          neuro config show
+          neuro --color=no config show
       - name: Lint
         run: |
           python -c "import shutil; shutil.rmtree('.mypy_cache', ignore_errors=True)"
