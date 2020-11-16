@@ -27,7 +27,7 @@ Follow the instructions below to set up the environment on Neuro and start a Jup
 ### Setup development environment 
 
 ```shell
-make setup
+neuro-flow build myimage
 ```
 
 * Several files from the local project are uploaded to the platform storage (namely, `requirements.txt`,  `apt.txt`, `setup.cfg`).
@@ -50,4 +50,71 @@ neuro-flow run jupyter
 neuro-flow kill jupyter
 ```
 
-* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage. You may run `make download-notebooks` to download them to the local `notebooks/` directory.
+* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage.
+
+### Help
+
+```shell 
+neuro-flow ps
+```
+
+* The list of all available template jobs is printed along with their statuses.
+
+
+## Data
+
+### Uploading to the Storage via Web UI
+
+On local machine, run `neuro-flow run filebrowser` and open the job's URL on your mobile device or desktop.
+Through a simple file explorer interface, you can upload test images and perform file operations.
+
+### Run development job
+
+# TODO!
+
+If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug`, then connect to its bash over SSH
+via `make connect-develop` (type `exit` or `^D` to close SSH connection), see its logs via `make logs-develop`, or 
+forward port 22 from the job to localhost via `make port-forward-develop` to use it for remote debugging.
+Please find instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm). 
+
+Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
+
+
+### Training machine type
+
+```yaml
+defaults:
+  preset: gpu-small-p
+```
+
+There are several machine types supported on the platform. Run `neuro config show` to see the list.
+
+### Training command
+
+To tweak the training command, change the last line in this section of `live.yaml`:
+ 
+```yaml
+  train:
+    image: $[[ images.myimage.ref ]]
+    detach: True
+    life_span: 10d
+    volumes:
+      - $[[ volumes.data.ref_ro ]]
+      - $[[ volumes.code.ref_ro ]]
+      - $[[ volumes.config.ref_ro ]]
+      - $[[ volumes.results.ref_rw ]]
+    env:
+      EXPOSE_SSH: "yes"
+      PYTHONPATH: $[[ volumes.code.mount ]]
+    bash: |
+        cd $[[ flow.workspace ]]
+        python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
+```
+
+And then, just run `neuro-flow run train`.
+
+Please, don't forget to kill the jobs you started:
+- `neuro-flow kill train` to kill the training job started via `neuro-flow run train`,
+- `neuro-flow kill jupyter` to kill the job started via `neuro-flow run jupyter`,
+- ...
+- `neuro-flow kill ALL` to kill all jobs started in the current project.
