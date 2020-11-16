@@ -40,7 +40,7 @@ images:
 
 jobs:
 
-  remote-debug:
+  remote_debug:
     action: gh:neuro-actions/remote_debug@master
     args:
       image: $[[ images.myimage.ref ]]
