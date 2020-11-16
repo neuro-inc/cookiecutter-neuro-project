@@ -40,8 +40,8 @@ images:
 
 jobs:
 
-  develop:
-    action: gh:neuro-actions/develop@master
+  remote-debug:
+    action: gh:neuro-actions/remote_debug@master
     args:
       image: $[[ images.myimage.ref ]]
       volumes_data_ref: $[[ volumes.data.remote ]]
@@ -95,7 +95,6 @@ jobs:
 
   tensorboard:
     action: gh:neuro-actions/tensorboard@master
-    image: tensorflow/tensorflow:latest
     args:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
