@@ -68,16 +68,40 @@ neuro-flow ps
 On local machine, run `neuro-flow run filebrowser` and open the job's URL on your mobile device or desktop.
 Through a simple file explorer interface, you can upload test images and perform file operations.
 
+### Uploading to the Storage via CLI
+
+On local machine run `neuro-flow mkvolumes`. This commands creates storage folders for all defined volumes. You only need to run this once.
+
+After storage folders have been created run `neuro-flow upload data` from local machine as well. This command pushes local files stored in ./data into storage:{{ cookiecutter.project_slug }}/data mounted to your development environment's /project/data.
+
+### Uploading data to the Job from Google Cloud Storage
+
+Google Cloud SDK is pre-installed on all jobs produced from the Base Image.
+
+Please refer to the [documentation](https://docs.neu.ro/toolbox/accessing-object-storage-in-gcp) explaining how to start using GCP with the template.
+
+### Uploading data to the Job from AWS S3
+
+AWS CLI is pre-installed on all jobs produced from the Base Image.
+
+Please refer to the [documentation](https://docs.neu.ro/toolbox/accessing-object-storage-in-aws) explaining how to start using AWS with the template.
+
 ### Run development job
 
-# TODO!
-
-If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug`, then connect to its bash over SSH
-via `make connect-develop` (type `exit` or `^D` to close SSH connection), see its logs via `make logs-develop`, or 
-forward port 22 from the job to localhost via `make port-forward-develop` to use it for remote debugging.
+If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug`, which will also open a shell to the job. You can also see job logs via `neuro-flow logs remote_debug`. The job forwards your local port 2211 to its port 22for remote debugging.
 Please find instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm). 
 
-Please don't forget to kill your job via `make kill-develop` not to waste your quota!   
+Please don't forget to kill your job via `make kill remote_debug` not to waste your quota!   
+
+### Weights & Biases integration
+
+Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb.com), an experiment tracking tool for deep learning.
+
+Here you can find [documentation](https://docs.neu.ro/toolbox/experiment-tracking-with-weights-and-biases) for using W&B for experiment tracking with the template.
+ 
+Please find instructions on using Weights & Biases in your code in [W&B documentation](https://docs.wandb.com/library/api/examples).
+You can also find [W&B example projects](https://github.com/wandb/examples) or an example of Neuro Project Template-based 
+[ML Recipe that uses W&B as a part of the workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention). 
 
 
 ### Training machine type
@@ -87,7 +111,28 @@ defaults:
   preset: gpu-small-p
 ```
 
-There are several machine types supported on the platform. Run `neuro config show` to see the list.
+There are several machine types supported on the platform. Run `neuro config show` to see the list. You can also override default preset per job:
+
+```yaml
+jobs:
+ train:
+    image: $[[ images.myimage.ref ]]
+    preset: gpu-large
+    ...
+```
+
+### HTTP authentication
+
+```yaml
+args:
+    http_auth: "False"
+```
+
+When jobs with HTTP interface are executed (for example, with Jupyter Notebooks or TensorBoard), this interface requires a user to be authenticated on the platform. However, if you want to share the link with someone who is not registered on the platform, you may disable the authentication adding this arg to your job configuration `http_auth: "False"`.
+
+### Storage uploads
+
+Running `neuro-flow upload ALL` from local machine uploads all of your code, config and notebooks to storage so that these folders can be used by your jobs.
 
 ### Training command
 
@@ -113,8 +158,25 @@ To tweak the training command, change the last line in this section of `live.yam
 
 And then, just run `neuro-flow run train`.
 
+### Multiple training jobs
+
+You can run multiple training experiments simultaneously.
+
+```shell
+neuro-flow run multitrain -s myidea-1
+```
+
+Note, this label becomes a suffix of the job name, which may contain only alphanumeric characters and hyphen `-`, and cannot end with hyphen or be longer than 40 characters. You can use suffixed job name to access the job: `neuro-flow status multitrain myidea-1`, `neuro-flow logs multitrain myidea-1` and so on.
+
 Please, don't forget to kill the jobs you started:
 - `neuro-flow kill train` to kill the training job started via `neuro-flow run train`,
+- `neuro-flow kill multistrain` to kill the training job started via `neuro-flow run multitrain`,
 - `neuro-flow kill jupyter` to kill the job started via `neuro-flow run jupyter`,
 - ...
 - `neuro-flow kill ALL` to kill all jobs started in the current project.
+
+### Multi-threaded hyperparameter tuning
+
+Neuro Platform supports hyperparameter tuning via [Weights & Biases](https://www.wandb.com/articles/running-hyperparameter-sweeps-to-pick-the-best-model-using-w-b).
+
+Please refer to the corresponding [documentation](https://docs.neu.ro/toolbox/hyperparameter-tuning-with-weights-and-biases).

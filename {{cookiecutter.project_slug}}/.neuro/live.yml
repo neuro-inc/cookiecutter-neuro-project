@@ -44,10 +44,10 @@ jobs:
     action: gh:neuro-actions/remote_debug@master
     args:
       image: $[[ images.myimage.ref ]]
-      volumes_data_ref: $[[ volumes.data.remote ]]
-      volumes_code_ref: $[[ volumes.code.remote ]]
-      volumes_config_ref: $[[ volumes.config.remote ]]
-      volumes_results_ref: $[[ volumes.results.remote ]]h
+      volumes_data_remote: $[[ volumes.data.remote ]]
+      volumes_code_remote: $[[ volumes.code.remote ]]
+      volumes_config_remote: $[[ volumes.config.remote ]]
+      volumes_results_remote: $[[ volumes.results.remote ]]h
 
   train:
     image: $[[ images.myimage.ref ]]
