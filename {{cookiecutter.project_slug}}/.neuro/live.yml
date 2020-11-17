@@ -40,19 +40,14 @@ images:
 
 jobs:
 
-  develop:
-    image: $[[ images.myimage.ref ]]
-    env:
-      EXPOSE_SSH: "yes"
-      PYTHONPATH: $[[ volumes.code.mount ]]
-    port_forward:
-      - "2211:22"
-    volumes:
-      - $[[ volumes.data.ref_ro ]]
-      - $[[ volumes.code.ref_rw ]]
-      - $[[ volumes.config.ref_rw ]]
-      - $[[ volumes.results.ref_rw ]]
-    cmd: bash
+  remote_debug:
+    action: gh:neuro-actions/remote_debug@master
+    args:
+      image: $[[ images.myimage.ref ]]
+      volumes_data_ref: $[[ volumes.data.remote ]]
+      volumes_code_ref: $[[ volumes.code.remote ]]
+      volumes_config_ref: $[[ volumes.config.remote ]]
+      volumes_results_ref: $[[ volumes.results.remote ]]h
 
   train:
     image: $[[ images.myimage.ref ]]
@@ -88,46 +83,22 @@ jobs:
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
-    multi: True
-    image: $[[ images.myimage.ref ]]
-    http_port: 8888
-    http_auth: True
-    browse: True
-    detach: True
-    volumes:
-      - $[[ volumes.data.ref_ro ]]
-      - $[[ volumes.code.ref_rw ]]
-      - $[[ volumes.config.ref_ro ]]
-      - $[[ volumes.notebooks.ref_rw ]]
-      - $[[ volumes.results.ref_rw ]]
-    env:
-      PYTHONPATH: $[[ volumes.code.mount ]]
-    cmd: >-
-      jupyter $[[ multi.args ]]
-        --no-browser
-        --ip=0.0.0.0
-        --allow-root
-        --NotebookApp.token=
-        --notebook-dir=$[[ volumes.notebooks.mount ]]
+    action: gh:neuro-actions/jupyter@master
+    args:
+      image: $[[ images.myimage.ref ]]
+      multi_args: $[[ multi.args ]]
+      volumes_data_remote: $[[ volumes.data.remote ]]
+      volumes_code_remote: $[[ volumes.code.remote ]]
+      volumes_config_remote: $[[ volumes.config.remote ]]
+      volumes_notebooks_remote: $[[ volumes.notebooks.remote ]]
+      volumes_results_remote: $[[ volumes.results.remote ]]
 
   tensorboard:
-    image: tensorflow/tensorflow:latest
-    preset: cpu-small
-    http_port: 6006
-    http_auth: True
-    browse: True
-    detach: True
-    volumes:
-      - $[[ volumes.results.ref_ro ]]
-    cmd: tensorboard --host=0.0.0.0 --logdir=$[[ volumes.results.mount ]]
+    action: gh:neuro-actions/tensorboard@master
+    args:
+      volumes_results_remote: $[[ volumes.results.remote ]]
 
   filebrowser:
-    image: filebrowser/filebrowser:latest
-    preset: cpu-small
-    http_port: 80
-    http_auth: True
-    browse: True
-    detach: True
-    volumes:
-      - $[[ volumes.project.remote ]]:/srv:rw
-    cmd: --noauth
+    action: gh:neuro-actions/filebrowser@master
+    args:
+      volumes_project_remote: $[[ volumes.project.remote ]]
