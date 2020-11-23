@@ -44,14 +44,14 @@ jobs:
     action: gh:neuro-actions/remote_debug@master
     args:
       image: $[[ images.myimage.ref ]]
-      volumes_data_ref: $[[ volumes.data.remote ]]
-      volumes_code_ref: $[[ volumes.code.remote ]]
-      volumes_config_ref: $[[ volumes.config.remote ]]
-      volumes_results_ref: $[[ volumes.results.remote ]]h
+      volumes_data_remote: $[[ volumes.data.remote ]]
+      volumes_code_remote: $[[ volumes.code.remote ]]
+      volumes_config_remote: $[[ volumes.config.remote ]]
+      volumes_results_remote: $[[ volumes.results.remote ]]h
 
   train:
     image: $[[ images.myimage.ref ]]
-    detach: True
+    detach: False
     life_span: 10d
     volumes:
       - $[[ volumes.data.ref_ro ]]
@@ -62,12 +62,12 @@ jobs:
       EXPOSE_SSH: "yes"
       PYTHONPATH: $[[ volumes.code.mount ]]
     bash: |
-        cd $[[ flow.workspace ]]
+        cd $[[ flow.project.mount ]]
         python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
 
   multitrain:
     image: $[[ images.myimage.ref ]]
-    detach: True
+    detach: False
     life_span: 10d
     volumes:
       - $[[ volumes.data.ref_ro ]]
@@ -79,7 +79,7 @@ jobs:
       PYTHONPATH: $[[ volumes.code.mount ]]
     multi: true
     bash: |
-        cd $[[ flow.workspace ]]
+        cd $[[ flow.project.mount ]]
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
