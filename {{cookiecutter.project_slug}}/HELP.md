@@ -72,7 +72,9 @@ Through a simple file explorer interface, you can upload test images and perform
 
 On local machine run `neuro-flow mkvolumes`. This commands creates storage folders for all defined volumes. You only need to run this once.
 
-After storage folders have been created run `neuro-flow upload data` from local machine as well. This command pushes local files stored in ./data into storage:{{ cookiecutter.project_slug }}/data mounted to your development environment's /project/data.
+After storage folders have been created run `neuro-flow upload data` from the local machine as well. This command pushes local files stored in ./data into storage:{{ cookiecutter.project_slug }}/data mounted to your development environment's /project/data.
+
+You can upload (or download) every folder for which the `local` parameter is specified in [live.yml file](./.neuro/live.yml).
 
 ### Uploading data to the Job from Google Cloud Storage
 
