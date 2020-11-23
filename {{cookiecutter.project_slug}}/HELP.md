@@ -50,7 +50,7 @@ neuro-flow run jupyter
 neuro-flow kill jupyter
 ```
 
-* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage.
+* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage. You may run `neuro-flow download notebooks` to download them to the local `notebooks/` directory.
 
 ### Help
 
