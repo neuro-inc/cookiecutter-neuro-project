@@ -93,7 +93,7 @@ Please refer to the [documentation](https://docs.neu.ro/toolbox/accessing-object
 If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug`, which will also open a shell to the job. You can also see job logs via `neuro-flow logs remote_debug`. The job forwards your local port 2211 to its port 22for remote debugging.
 Please find instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm). 
 
-Please don't forget to kill your job via `make kill remote_debug` not to waste your quota!   
+Please don't forget to kill your job via `neuro-flow kill remote_debug` not to waste your quota!   
 
 ### Weights & Biases integration
 
