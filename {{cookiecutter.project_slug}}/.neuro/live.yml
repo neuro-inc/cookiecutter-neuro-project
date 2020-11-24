@@ -47,7 +47,7 @@ jobs:
       volumes_data_remote: $[[ volumes.data.remote ]]
       volumes_code_remote: $[[ volumes.code.remote ]]
       volumes_config_remote: $[[ volumes.config.remote ]]
-      volumes_results_remote: $[[ volumes.results.remote ]]h
+      volumes_results_remote: $[[ volumes.results.remote ]]
 
   train:
     image: $[[ images.myimage.ref ]]
