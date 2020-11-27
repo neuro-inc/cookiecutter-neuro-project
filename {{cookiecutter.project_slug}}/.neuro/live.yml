@@ -86,6 +86,7 @@ jobs:
     action: gh:neuro-actions/jupyter@master
     args:
       image: $[[ images.myimage.ref ]]
+      preset: gpu-small-p
       multi_args: $[[ multi.args ]]
       volumes_data_remote: $[[ volumes.data.remote ]]
       volumes_code_remote: $[[ volumes.code.remote ]]
