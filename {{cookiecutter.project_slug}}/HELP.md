@@ -30,7 +30,7 @@ Follow the instructions below to set up the environment on Neuro and start a Jup
 neuro-flow build myimage
 ```
 
-* Several files from the local project are uploaded to the platform storage (namely, `requirements.txt`,  `apt.txt`, `setup.cfg`).
+* The entire context folder is uploaded to platform storage.
 * A new job is started in our [base environment](https://hub.docker.com/r/neuromation/base). 
 * Pip requirements from `requirements.txt` and apt applications from `apt.txt` are installed in this environment.
 * The updated environment is saved under a new project-dependent name and is used further on.
@@ -48,7 +48,7 @@ neuro-flow run jupyter
 
 ```shell 
 neuro-flow kill jupyter
-```
+neuro-flow build myimage```
 
 * The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage.
 
