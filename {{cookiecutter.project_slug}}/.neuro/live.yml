@@ -2,7 +2,7 @@ kind: live
 title: {{ cookiecutter.project_name }}
 
 defaults:
-  preset: gpu-small-p
+  preset: gpu-k80-small-p
   life_span: 1d
 
 volumes:
