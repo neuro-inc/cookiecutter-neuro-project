@@ -5,6 +5,22 @@ Command to bulid changelog from git:
 $ git log --oneline v1.5..HEAD  # if current version is v1.6
 -->
 
+### v1.8 (15-12-2020)
+c160e5a Restore preset for jupyter
+6366007 Remove invalid preset from jupyter action
+d1f90d9 Update default preset
+e7db9c5 Update default preset
+e92f922 [docs] Update RELEASE.md
+995f776 Update neuro-cli pypi package name (#429)
+4bb156c Add the preset into args. (#428)
+73ce733 Fix typo in live.yaml
+65e21ba [docs] Update internal docs (#427)
+866b8aa Migrate to external neuro-flow actions (#425)
+6dd7045 Bump cryptography from 2.8 to 3.2 (#424)
+448c2e7 [Template] Migrate template from makefile to neuro-flow (#419)
+94e218b [Tests] Support new job status in tests (#418)
+
+
 ### v1.7.6 (28-08-2020)
 618ea84 [Makefile] bump base_image to v1.7.6
 f8cc2f6 [tests] Drop filebrowser test (#416)
