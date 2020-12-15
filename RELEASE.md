@@ -20,8 +20,9 @@ project_slug [neuro-project]:
 code_directory [modules]: 
 $ cd neuro-project
 $ ls
-apt.txt  config  data  HELP.md  Makefile  modules  notebooks  README.md  requirements.txt  results  setup.cfg
-$ make setup
+apt.txt  config  data  Dockerfile  HELP.md  modules  notebooks  README.md  requirements.txt  results  setup.cfg
+$ neuro-flow build myimage
+$ neuro-flow run jupyter
 ...
 ```
 3. If `master` is fine, find out what was the previous release (find latest tag like `v1.6` or `v1.6.1`) and save the following information to `CHANGELOG.md`. Suppose we're releasing version `v1.7`:
@@ -60,7 +61,6 @@ Notes:
 ------
 
 - In order to ease the process of constructing the changelog, each PR should be prefixed with `[keywords]` reflecting the changes:
-    - `[Makefile]` if the makefile itself was modified,
     - `[Template]` if template structure was modified,
     - `[tests]`, `[docs]` if only tests or docs were modified.
 - When CI is triggered:
