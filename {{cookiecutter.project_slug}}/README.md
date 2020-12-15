@@ -9,7 +9,7 @@ Sign up at [neu.ro](https://neu.ro) and setup your local machine according to [i
 Then run:
 
 ```shell
-pip install -U neuromation neuro-flow
+pip install -U neuro-cli neuro-flow
 neuro login
 neuro-flow build myimage
 neuro-flow run jupyter
