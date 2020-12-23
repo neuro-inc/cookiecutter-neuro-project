@@ -62,7 +62,7 @@ jobs:
       EXPOSE_SSH: "yes"
       PYTHONPATH: $[[ volumes.code.mount ]]
     bash: |
-        cd $[[ flow.project.mount ]]
+        cd $[[ volumes.project.mount ]]
         python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
 
   multitrain:
@@ -79,7 +79,7 @@ jobs:
       PYTHONPATH: $[[ volumes.code.mount ]]
     multi: true
     bash: |
-        cd $[[ flow.project.mount ]]
+        cd $[[ volumes.project.mount ]]
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
