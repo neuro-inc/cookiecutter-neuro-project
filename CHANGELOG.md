@@ -1,11 +1,5 @@
-# Change Log
-
-<!--
-Command to bulid changelog from git:
-$ git log --oneline v1.5..HEAD  # if current version is v1.6
--->
-
 ### v1.8 (15-12-2020)
+```
 c160e5a Restore preset for jupyter
 6366007 Remove invalid preset from jupyter action
 d1f90d9 Update default preset
@@ -19,9 +13,10 @@ e92f922 [docs] Update RELEASE.md
 6dd7045 Bump cryptography from 2.8 to 3.2 (#424)
 448c2e7 [Template] Migrate template from makefile to neuro-flow (#419)
 94e218b [Tests] Support new job status in tests (#418)
-
+```
 
 ### v1.7.6 (28-08-2020)
+```
 618ea84 [Makefile] bump base_image to v1.7.6
 f8cc2f6 [tests] Drop filebrowser test (#416)
 61847d1 [tests] Rename the Makefile target "init" to "setup" (#409)
@@ -29,8 +24,10 @@ f8cc2f6 [tests] Drop filebrowser test (#416)
 400757f [tests] Drop W&B completely (#411)
 79b4ff1 [tests] Fix tests (#410)
 3b4814f [tests] Update tests
+```
 
 ### v1.7 (30-07-2020)
+```
 890d690 [docs] Update docs (#408)
 537f20e [Makefile] Remove hypertrain (#407)
 644151d [Makefile] Secrets support (#400)
@@ -39,11 +36,13 @@ f8cc2f6 [tests] Drop filebrowser test (#416)
 8650a7a [tests] Drop flaky tests on W&B and hypertrain (#406)
 84b3a06 [doc] Add release instructions (#404)
 2b8a681 [Makefile, tests] Adapt Makefile to neuro>=20.6.23, Simplify tests (#398)
+```
 
 ### v1.6.1 (17-06-2020)
+```
 e3d910b [Makefile] No upload-notebooks before each command (#396)
 70ba4a3 Disable life-span for Jupyter job (#397)
-
+```
 
 ### v1.6 (18-05-2020)
 ```
