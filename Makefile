@@ -1,6 +1,7 @@
 LINTER_DIRS := tests
 NEURO_COMMAND=neuro --verbose --show-traceback --color=no
 TMP_DIR := $(shell mktemp -d)
+VERSION_FILE := version.txt
 
 .PHONY: setup init
 setup init:
@@ -11,9 +12,13 @@ setup init:
 cook:
 	cookiecutter gh:neuromation/cookiecutter-neuro-project
 
-.PHONY: version
-version:
-	@grep -Po "^VERSION=(\K.+)" \{\{cookiecutter.project_slug\}\}/Makefile || echo "v?.?"
+.PHONY: get-version
+get-version: $(VERSION_FILE)
+	cat $(VERSION_FILE)
+
+.PHONY: update-version
+update-version:
+	echo "v`date +"%y.%m.%d"`" > $(VERSION_FILE)
 
 .PHONY: lint
 lint:
@@ -37,9 +42,9 @@ test:
 	 @echo -e "OK\n"
 
 .PHONY: changelog-draft
-changelog-draft:
-	towncrier --draft --name "Neuro Platform Project Template" --version v$(date +"%y.%m.%d")
+changelog-draft: update-version $(VERSION_FILE)
+	towncrier --draft --name "Neuro Platform Project Template" --version `cat version.txt`
 
 .PHONY: changelog
-changelog:
-	towncrier --name "Neuro Platform Project Template" --version v$(date +"%y.%m.%d")
+changelog: update-version $(VERSION_FILE)
+	towncrier --name "Neuro Platform Project Template" --version `cat version.txt` --yes
