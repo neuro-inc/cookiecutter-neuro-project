@@ -7,62 +7,44 @@ Neuro CLI [uses `release` branch](https://github.com/neuromation/platform-client
 Instructions:
 ------------
 
-1. Merge all necessary PRs and ensure that `master` is green, update your master:
-```
-$ git checkout master
-$ git pull origin
-```
+1. Merge all necessary PRs and ensure that `master` is green, update your local master branch:
+    ```
+    $ git checkout master
+    $ git pull origin
+    ```
 2. Test `master` manually:
-```
-$ cookiecutter gh:neuromation/cookiecutter-neuro-project -c master
-project_name [Neuro Project]: 
-project_slug [neuro-project]: 
-code_directory [modules]: 
-$ cd neuro-project
-$ ls
-apt.txt  config  data  Dockerfile  HELP.md  modules  notebooks  README.md  requirements.txt  results  setup.cfg
-$ neuro-flow build myimage
-$ neuro-flow run jupyter
-...
-```
-3. If `master` is fine, find out what was the previous release (find latest tag like `v1.6` or `v1.6.1`) and save the following information to `CHANGELOG.md`. Suppose we're releasing version `v1.7`:
-```
-$ PREV=$(git tag --list | grep -e "v.*" | tail -1)
-$ echo $PREV
-v1.6.1
-$ git log --oneline $PREV..HEAD   # See the changes
-4b0b20b [Makefile] Stabilize W&B Hypertrain + Set up CI for MacOS (#390)
-bd988f3 [Makefile] Sync directories optionally (#386)
-099d601 [tests] Use tags instead of image names (#391)
-31969f7 [tests] Switch tests on AWS (#392)
-e60fb2b Minor improvements to simplify NNI integration (#389)
-c0558a1 [Makefile] Bump base env version to v1.5
-```
-4. Put the lines above^ to `CHANGELOG.md` under the heading `### v1.7 (todays-date)` and push these changes to `master`:
-```
-$ git add CHANGELOG.md 
-$ git commit -m "Update changelog" 
-$ git push
-$ git tag v1.7
-$ git push --tags
-```
-Note, this update to `master` will trigger CI.
+    ```
+    $ cookiecutter gh:neuromation/cookiecutter-neuro-project -c master
+    project_name [Neuro Project]: 
+    project_slug [neuro-project]: 
+    code_directory [modules]: 
+    $ cd neuro-project
+    $ ls
+    apt.txt  config  data  Dockerfile  HELP.md  modules  notebooks  README.md  requirements.txt  results  setup.cfg
+    $ neuro-flow build myimage
+    $ neuro-flow run jupyter
+    ...
+    ```
+3. Generate changelog:
+    - `make changelog-draft` - verify changelog looks valid
+    - `make changelog` - delete changelog items from `CHANGELOG.d` and really modify [CHANGELOG.md](./CHANGELOG.md)
+    - `git add CHANGELOG* && git commit -m "Update changelog"` - commit changelog changes in **local** repository
+    - `git tag v$(date +"%y.%m.%d")` - mark latest changes as a release tag
+    - `git push && git push --tags` - push the updated changelog and assigned tag to the remote repository 
+    - Note, this `master` branch update will trigger CI
 
-5. Now,  hard-reset `release` branch on `master`:
-```
-$ git checkout release
-$ git reset --hard master
-$ git push  # no need to push --force since `release` will move only forward
-```
-6. Once `release` is green, test it via `neuro project init`, and if everything's fine, publish new release to slack: `#platform-development`, `#platform-feedback`, `#template-nightly-testing`.
-
+4. Now, hard-reset `release` branch on `master` (actual release):
+    ```
+    $ git checkout release
+    $ git reset --hard master
+    $ git push  # no need to push --force since `release` will move only forward
+    ```
+5. Once `release` is green, test it via `neuro project init`, and if everything's fine,
+    publish new release to Slack: `#platform-development`, `#platform-feedback`, `#template-nightly-testing`.
 
 Notes:
 ------
 
-- In order to ease the process of constructing the changelog, each PR should be prefixed with `[keywords]` reflecting the changes:
-    - `[Template]` if template structure was modified,
-    - `[tests]`, `[docs]` if only tests or docs were modified.
 - When CI is triggered:
     - Each open PR (even draft PR) agains `master`.
     - Each new commit to `master` and `release`.

@@ -35,3 +35,11 @@ test:
 	 pytest -v -s tests/unit
 	 pytest -v -s tests/e2e
 	 @echo -e "OK\n"
+
+.PHONY: changelog-draft
+changelog-draft:
+	towncrier --draft --name "Neuro Platform Project Template" --version v$(date +"%y.%m.%d")
+
+.PHONY: changelog
+changelog:
+	towncrier --name "Neuro Platform Project Template" --version v$(date +"%y.%m.%d")
