@@ -1,3 +1,20 @@
+Neuro Platform Project Template v20.12.30 (2020-12-30)
+======================================================
+
+Bugfixes
+--------
+
+
+- Fix volumes mounting point references for train and multi-train jobs. ([#430](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/430))
+
+
+Improved Documentation
+----------------------
+
+
+- Added towncrier for changelogs generation, changed versioning style to date-based. ([#431](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/431))
+
+
 ### v1.8 (15-12-2020)
 ```
 c160e5a Restore preset for jupyter
