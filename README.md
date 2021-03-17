@@ -1,7 +1,7 @@
-Neuro Platform Project Template
+Neu.ro Platform Project Template
 ===============================
 
-Base template for [Neuro Platform](https://neu.ro) projects
+Base template for the [Neu.ro](https://neu.ro) platform projects
 
 Requirements
 ------------
@@ -17,4 +17,4 @@ see [Release instructions](/RELEASE.md)
 
 License
 -------
-This project is licensed under the terms of the [MIT License](/LICENSE)
+This project is licensed under the terms of the [Apache 2.0 License](/LICENSE)
