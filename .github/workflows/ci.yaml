@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "::set-output name=dir::$(pip cache dir)"    # - name: dir
       - name: Cache PyPI
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('setup.py', 'requirements/*.txt') }}
           path: ${{ steps.pip-cache.outputs.dir }}
