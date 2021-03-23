@@ -12,6 +12,7 @@ updates:
     interval: daily
     time: "03:00"
   open-pull-requests-limit: 10
+  insecure-external-code-execution: allow
   assignees:
   - anayden
   - artemlops
