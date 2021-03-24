@@ -1,6 +1,5 @@
 import subprocess
 import typing as t
-
 from cookiecutter.exceptions import FailedHookException
 
 from tests.utils import inside_dir
