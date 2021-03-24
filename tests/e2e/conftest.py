@@ -1,12 +1,11 @@
 import logging
+import pytest
 import shlex
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Iterator
-
-import pytest
 
 from tests.utils import inside_dir
 
