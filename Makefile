@@ -22,14 +22,14 @@ update-version:
 
 .PHONY: lint
 lint:
-	 isort -c -rc $(LINTER_DIRS)
+	 isort -c $(LINTER_DIRS)
 	 black --check $(LINTER_DIRS)
 	 mypy $(LINTER_DIRS)
 	 flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
-	isort -rc $(LINTER_DIRS)
+	isort -c $(LINTER_DIRS)
 	black $(LINTER_DIRS)
 
 .PHONY: test
