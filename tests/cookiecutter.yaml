@@ -1,5 +1,5 @@
 default_context:
-    full_name: "Neuromation Test"
-    email: "test@neuromation.io"
-    github_username: "neuromation"
+    full_name: "Neu.ro Test"
+    email: "test@neu.ro"
+    github_username: "neuro-inc"
     project_name: Test Project

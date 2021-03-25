@@ -16,4 +16,4 @@ COPY setup.cfg .
 COPY requirements.txt .
 RUN pip install --progress-bar=off -U --no-cache-dir -r requirements.txt
 
-RUN ssh-keygen -f /id_rsa -t rsa -N neuromation -q
+RUN ssh-keygen -f /id_rsa -t rsa -N neuro -q

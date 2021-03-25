@@ -1,10 +1,5 @@
 # Neuro Template:
 /data/**/*
-/config/*.txt
-/config/*.conf
-/config/*.json
-/config/*.yml
-/.setup_done
 
 !/**/.gitkeep
 
