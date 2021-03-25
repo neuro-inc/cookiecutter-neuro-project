@@ -10,7 +10,7 @@ setup init:
 
 .PHONY: cook
 cook:
-	cookiecutter gh:neuromation/cookiecutter-neuro-project
+	cookiecutter gh:neuro-inc/cookiecutter-neuro-project
 
 .PHONY: get-version
 get-version: $(VERSION_FILE)

@@ -9,7 +9,7 @@ Install `cookiecutter` command line: `pip install cookiecutter` (or `make setup`
 
 Usage
 -----
-Generate a new Cookiecutter template layout: `cookiecutter gh:neuromation/cookiecutter-neuro-project` (or `make cook`)    
+Generate a new Cookiecutter template layout: `cookiecutter gh:neuro-inc/cookiecutter-neuro-project` (or `make cook`)    
 
 Release
 -------

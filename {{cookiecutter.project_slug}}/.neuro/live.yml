@@ -18,7 +18,6 @@ volumes:
     remote: storage:$[[ flow.project_id ]]/config
     mount: /project/config
     local: config
-    read_only: True
   notebooks:
     remote: storage:$[[ flow.project_id ]]/notebooks
     mount: /project/notebooks
@@ -34,7 +33,7 @@ volumes:
 
 images:
   myimage:
-    ref: image:$[[ flow.project_id ]]
+    ref: image:$[[ flow.project_id ]]:v1
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     context: $[[ flow.workspace ]]/
     build_preset: cpu-small

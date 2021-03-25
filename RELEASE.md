@@ -1,7 +1,7 @@
 Release instructions
 ====================
 
-Neuro CLI [uses `release` branch](https://github.com/neuromation/platform-client-python/blob/d00a75504d665acdbcdda24f3999ee4b2223054d/neuromation/cli/project.py#L43-L48) to scaffold projects, so to do a release we need to update `release` branch.
+Neuro CLI [uses `release` branch](https://github.com/neuro-inc/platform-client-python/blob/d00a75504d665acdbcdda24f3999ee4b2223054d/neuromation/cli/project.py#L43-L48) to scaffold projects, so to do a release we need to update `release` branch.
 
 
 Instructions:
@@ -14,7 +14,7 @@ Instructions:
     ```
 2. Test `master` manually:
     ```
-    $ cookiecutter gh:neuromation/cookiecutter-neuro-project -c master
+    $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
     project_name [Neuro Project]: 
     project_slug [neuro-project]: 
     code_directory [modules]: 
