@@ -1,4 +1,4 @@
-FROM neuromation/base:v1.7.7
+FROM neuromation/base:v1.7.8
 
 RUN mkdir /project
 WORKDIR /project
