@@ -6,6 +6,6 @@ cookiecutter==1.7.2
 cryptography==3.4.7
 towncrier==19.2.0
 
-pytest==5.4.3
+pytest==6.2.3
 pytest-asyncio==0.14.0
 pytest-cookies==0.5.1
