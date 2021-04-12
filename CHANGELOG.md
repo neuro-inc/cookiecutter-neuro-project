@@ -1,3 +1,19 @@
+[comment]: # (Please do not modify this file)
+[comment]: # (Put your comments to changelog.d and it will be moved to changelog in next release)
+[comment]: # (Clear the text on make release for canceling the release)
+
+[comment]: # (towncrier release notes start)
+
+Neuro Platform Project Template v21.04.12 (2021-04-12)
+======================================================
+
+Features
+--------
+
+
+- Pin neuro-actions' versions used in the template ([#458](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/458))
+
+
 Neuro Platform Project Template v20.12.30 (2020-12-30)
 ======================================================
 
