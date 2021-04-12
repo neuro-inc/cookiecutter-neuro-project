@@ -41,7 +41,7 @@ images:
 jobs:
 
   remote_debug:
-    action: gh:neuro-actions/remote_debug@master
+    action: gh:neuro-actions/remote_debug@v1.0.0
     args:
       image: $[[ images.myimage.ref ]]
       volumes_data_remote: $[[ volumes.data.remote ]]
@@ -83,7 +83,7 @@ jobs:
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
-    action: gh:neuro-actions/jupyter@master
+    action: gh:neuro-actions/jupyter@v1.0.0
     args:
       image: $[[ images.myimage.ref ]]
       preset: gpu-k80-small-p
@@ -95,11 +95,11 @@ jobs:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
   tensorboard:
-    action: gh:neuro-actions/tensorboard@master
+    action: gh:neuro-actions/tensorboard@v1.0.0
     args:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
   filebrowser:
-    action: gh:neuro-actions/filebrowser@master
+    action: gh:neuro-actions/filebrowser@v1.0.0
     args:
       volumes_project_remote: $[[ volumes.project.remote ]]

@@ -1,0 +1,1 @@
+Pin neuro-actions' versions used in the template
