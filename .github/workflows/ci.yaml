@@ -24,7 +24,7 @@ jobs:
       PYTHONIOENCODING: utf-8
     steps:
       - name: Checkout commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
       - name: Install python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
