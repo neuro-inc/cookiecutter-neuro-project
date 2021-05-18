@@ -7,5 +7,5 @@ cryptography==3.4.7
 towncrier==21.3.0
 neuro-flow==21.5.17
 pytest==5.4.3
-pytest-asyncio==0.15.0
+pytest-asyncio==0.15.1
 pytest-cookies==0.5.1
