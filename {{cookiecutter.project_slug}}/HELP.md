@@ -52,6 +52,38 @@ neuro-flow kill jupyter
 
 * The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage. You may run `neuro-flow download notebooks` to download them to the local `notebooks/` directory.
 
+### Memory management
+
+If you use `neuromation/base` as your base image (which is done by default), otherwise you may want to protect main processes in your jobs from killing when there's not enough memory for them. 
+
+This can be done in two steps:
+
+1. Create an executable file `oom_guard.sh` with the following contents
+
+```shell 
+#!/bin/sh
+
+for pid in $(ps x | awk 'NR>1 {print $1}' | xargs)
+ do
+   if [ "$pid" != "1" ]
+   then
+     echo 1000 > /proc/"$pid"/oom_score_adj
+   fi
+ done
+```
+
+The script above tells `oom_killer` to avoid killing the process with pid = 1 for as long as possible.
+
+2. Add the following lines to your `Dockerfile`:
+
+```dockerfile
+COPY oom_guard.sh /root/oom_guard.sh
+RUN chmod +x /root/oom_guard.sh
+RUN crontab -l 2>/dev/null | { cat; echo '* * * * * /root/oom_guard.sh'; } | crontab
+```
+
+This will ensure the script is executed every minute.
+
 ### Help
 
 ```shell 
