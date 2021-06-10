@@ -4,6 +4,11 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v21.06.10 (2021-06-10)
+======================================================
+
+No significant changes.
+
 
 No significant changes.
 
