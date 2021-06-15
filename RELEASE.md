@@ -28,7 +28,7 @@ Instructions:
 3. Generate changelog:
     - `make changelog-draft` - verify changelog looks valid
     - `make changelog` - delete changelog items from `CHANGELOG.d` and really modify [CHANGELOG.md](./CHANGELOG.md)
-    - `git add CHANGELOG* && git commit -m "Update changelog"` - commit changelog changes in **local** repository
+    - `git add CHANGELOG* version.txt && git commit -m "Update changelog"` - commit changelog changes in **local** repository
     - `git tag $(cat version.txt)` - mark latest changes as a release tag
     - `git push && git push --tags` - push the updated changelog and assigned tag to the remote repository 
     - Note, this `master` branch update will trigger CI
