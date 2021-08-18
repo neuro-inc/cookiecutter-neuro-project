@@ -1,10 +1,9 @@
 kind: live
 ## Required. Type of workflow, might be one of the following:
 ## - 'live' -- full reference doc at https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax
-
 # id: <id>
-## Optional. Identifier of the workflow. By default, the id is live. It's available as a $[[ flow.flow_id ]] in experssions.
-
+## Optional. Identifier of the workflow. By default, the id is 'live'. It's available as a $[[ flow.flow_id ]] in experssions.
+## Note: don't mess it up with the $[[ flow.project_id ]] which is defined in project.yml file!
 title: {{ cookiecutter.project_name }}
 ## Optional. Workflow title, any valid tring basically, accessible $[[ flow.title ]]
 
@@ -27,14 +26,13 @@ defaults:
   ## Set of volumes which will be mounted to all jobs within this project.
   # schedule_timeout: 20m
   ## The attribute accepts the following values:
-  ##  - A float number representing the amount of seconds (3600 represents an hour), 
+  ##  - A float number representing the amount of seconds (3600 represents an hour),
   ##  - A string of the following format: 1d6h15m45s (1 day, 6 hours, 15 minutes, 45 seconds)
   ## The cluster-wide timeout is used if both default.schedule_timeout and jobs.<job-id>.schedule_timeout are omitted.
   # tags: [tag-a, tag-b]
   ## A list of tags that are added to every job created by the workflow.
   # workdir: /users/my_user
   ## The default working directory for jobs created by this workflow if jobs.<job-id>.workdir is not set
-
 
 images:
   ## Optional section.
@@ -69,7 +67,6 @@ images:
     #   - storage:folder2:/mnt/folder2
     #   - volumes.volume_id.ref
     ## A list of volume references mounted to the image building process.
-
 
 volumes:
 ## TODO: add this to main docs
@@ -143,7 +140,7 @@ jobs:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
   train:
-  ## Unlike 'remote_debug' action call, the 'train' job description is stored directly in this file.    
+  ## Unlike 'remote_debug' action call, the 'train' job description is stored directly in this file.
     image: $[[ images.myimage.ref ]]
     ## Required for localy defined jobs. This field defines the docker image used to run the job.
     ## The image can be hosted:
@@ -202,7 +199,7 @@ jobs:
     ## If the job is not started when the schedule timeout elapses, it will be failed.
     ## The default cluster-wide schedule timeout is controlled by the admin and is usually about 5-10 minutes.
     ## The value can be:
-    ## - A float number representing an amount of seconds 
+    ## - A float number representing an amount of seconds
     ## - A string in the following format: 1d6h15m45s (1 day, 6 hours, 15 minutes, 45 seconds)
     # tags:
     # - tag-a
@@ -247,7 +244,6 @@ jobs:
     ## This attribute contains a python script to run.
     ## python3 should be pre-installed on the image to make this attribute work.
     ## The 'cmd', 'bash', and 'python' sections are mutually exclusive: only one could be used.
-
 
   multitrain:
     image: $[[ images.myimage.ref ]]

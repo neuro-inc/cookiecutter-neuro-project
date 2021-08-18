@@ -7,10 +7,7 @@ VERSION_FILE := version.txt
 setup init:
 	pip install -r '{{cookiecutter.project_slug}}/requirements.txt'
 	pip install -r requirements.txt
-
-.PHONY: cook
-cook:
-	cookiecutter gh:neuro-inc/cookiecutter-neuro-project
+	pre-commit install
 
 .PHONY: get-version
 get-version: $(VERSION_FILE)
@@ -22,15 +19,11 @@ update-version:
 
 .PHONY: lint
 lint:
-	 isort -c $(LINTER_DIRS)
-	 black --check $(LINTER_DIRS)
 	 mypy $(LINTER_DIRS)
-	 flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
-	isort -c $(LINTER_DIRS)
-	black $(LINTER_DIRS)
+	pre-commit run --all-files --show-diff-on-failure
 
 .PHONY: test
 test:
