@@ -1,15 +1,12 @@
-FROM neuromation/base:v1.7.12
-
-RUN mkdir /project
-WORKDIR /project
+FROM neuromation/base:v1.8.1-runtime
 
 COPY apt.txt .
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -qq update && \
-    cat apt.txt | tr -d "\r" | xargs -I % apt-get -qq install --no-install-recommends % && \
+    xargs apt-get -qq install --no-install-recommends < apt.txt && \
     apt-get -qq clean && \
-    apt-get autoremove && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get autoremove -y --purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/*
 
 COPY setup.cfg .
 

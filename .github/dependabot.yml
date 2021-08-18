@@ -1,33 +1,22 @@
 version: 2
-registries:
-  python-index-devpi-dev-neu-ro-testuser-dev:
-    type: python-index
-    url: https://devpi-dev.neu.ro/testuser/dev
-    username: "${{secrets.PYTHON_INDEX_DEVPI_DEV_NEU_RO_TESTUSER_DEV_USERNAME}}"
-    password: "${{secrets.PYTHON_INDEX_DEVPI_DEV_NEU_RO_TESTUSER_DEV_PASSWORD}}"
 updates:
 - package-ecosystem: pip
   directory: "/"
   schedule:
     interval: daily
-    time: "03:00"
-  open-pull-requests-limit: 10
-  insecure-external-code-execution: allow
-  assignees:
-  - anayden
-  - artemlops
-  - YevheniiSemendiak
-  registries:
-  - python-index-devpi-dev-neu-ro-testuser-dev
+  allow:
+    - dependency-type: "all"
+  reviewers:
+    - neuro-inc/mlops
 - package-ecosystem: docker
   directory: "/{{cookiecutter.project_slug}}"
   schedule:
     interval: daily
-    time: "03:00"
-  open-pull-requests-limit: 10
+  reviewers:
+    - neuro-inc/mlops
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: daily
-    time: "03:00"
-  open-pull-requests-limit: 10
+  reviewers:
+    - neuro-inc/mlops
