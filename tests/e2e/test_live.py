@@ -17,22 +17,20 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
     )
     print(result.project_path)
     with inside_dir(str(result.project_path)):
-        proc = exec("neuro-flow -v --show-traceback ps")
+        proc = exec("neuro-flow --show-traceback ps")
         assert not proc.stderr, proc
         assert "JOB" in proc.stdout, proc
 
-        proc = exec(
-            "neuro-flow -v --show-traceback status train", assert_exit_code=False
-        )
+        proc = exec("neuro-flow --show-traceback status train", assert_exit_code=False)
         assert not proc.stderr, proc
         assert "is not running" in proc.stdout, proc
 
-        proc = exec("neuro-flow -v --show-traceback run --dry-run train")
+        proc = exec("neuro-flow --show-traceback run --dry-run train")
         assert not proc.stderr, proc
         assert "neuro run" in proc.stdout, proc
         assert "--tag=project:awesome-project" in proc.stdout, proc
 
-        proc = exec("neuro-flow -v --show-traceback run --dry-run remote_debug")
+        proc = exec("neuro-flow --show-traceback run --dry-run remote_debug")
         assert not proc.stderr, proc
         assert "neuro run" in proc.stdout, proc
         assert "--tag=project:awesome-project" in proc.stdout, proc
