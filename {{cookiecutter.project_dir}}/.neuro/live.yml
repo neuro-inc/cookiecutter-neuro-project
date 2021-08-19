@@ -1,6 +1,7 @@
 kind: live
 ## Required. Type of workflow, might be one of the following:
 ## - 'live' -- full reference doc at https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax
+## - 'batch' -- full reference doc at https://neu-ro.gitbook.io/neuro-flow/reference/batch-workflow-syntax
 # id: <id>
 ## Optional. Identifier of the workflow. By default, the id is 'live'. It's available as a $[[ flow.flow_id ]] in experssions.
 ## Note: don't mess it up with the $[[ flow.project_id ]] which is defined in project.yml file!

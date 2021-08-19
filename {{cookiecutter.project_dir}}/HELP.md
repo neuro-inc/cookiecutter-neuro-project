@@ -2,7 +2,7 @@
 
 ## Development environment
 
-This template runs on the [Neuro Platform](https://neu.ro). 
+This template runs on the [Neuro Platform](https://neu.ro).
 
 To dive into problem solving, you need to sign up at the [Neuro Platform](https://neu.ro) website, set up your local machine according to the [instructions](https://neu.ro/docs), and login to Neuro CLI:
 
@@ -13,18 +13,18 @@ neuro login
 ## Directory structure
 
 | Local directory | Description | Storage URI | Environment mounting point |
-|:--------------- |:----------- |:----------- |:-------------------------- | 
-| `data/` | Data | `storage:{{ cookiecutter.project_slug }}/data/` | `/{{ cookiecutter.project_slug }}/data/` | 
-| `{{ cookiecutter.code_directory }}/` | Python modules | `storage:{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.project_slug }}/{{ cookiecutter.code_directory }}/` |
-| `config/` | Configuration files | `storage:{{ cookiecutter.project_slug }}/config/` | `/{{ cookiecutter.project_slug }}/config/` |
-| `notebooks/` | Jupyter notebooks | `storage:{{ cookiecutter.project_slug }}/notebooks/` | `/{{ cookiecutter.project_slug }}/notebooks/` |
-| `results/` | Logs and results | `storage:{{ cookiecutter.project_slug }}/results/` | `/{{ cookiecutter.project_slug }}/results/` |
+|:--------------- |:----------- |:----------- |:-------------------------- |
+| `data/` | Data | `storage:{{ cookiecutter.project_id }}/data/` | `/{{ cookiecutter.project_id }}/data/` |
+| `{{ cookiecutter.code_directory }}/` | Python modules | `storage:{{ cookiecutter.project_id }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.project_id }}/{{ cookiecutter.code_directory }}/` |
+| `config/` | Configuration files | `storage:{{ cookiecutter.project_id }}/config/` | `/{{ cookiecutter.project_id }}/config/` |
+| `notebooks/` | Jupyter notebooks | `storage:{{ cookiecutter.project_id }}/notebooks/` | `/{{ cookiecutter.project_id }}/notebooks/` |
+| `results/` | Logs and results | `storage:{{ cookiecutter.project_id }}/results/` | `/{{ cookiecutter.project_id }}/results/` |
 
 ## Development
 
 Follow the instructions below to set up the environment on Neuro and start a Jupyter development session.
 
-### Setting up the development environment 
+### Setting up the development environment
 
 ```shell
 neuro-flow build myimage
@@ -32,11 +32,11 @@ neuro-flow build myimage
 Command results:
 
 * The `requirements.txt`, `apt.txt`, and `setup.cfg` files from the local project are uploaded to the platform storage.
-* A new job is started in our [base environment](https://hub.docker.com/r/neuromation/base). 
+* A new job is started in our [base environment](https://hub.docker.com/r/neuromation/base).
 * Pip requirements from `requirements.txt` and `apt` applications from `apt.txt` are installed in the same environment.
 * The updated environment is saved under a new project-dependent name to be used further on.
 
-### Running Jupyter with GPU 
+### Running Jupyter with GPU
 
 ```shell
 neuro-flow run jupyter
@@ -49,7 +49,7 @@ Command results:
 
 ### Killing Jupyter
 
-```shell 
+```shell
 neuro-flow kill jupyter
 ```
 
@@ -65,7 +65,7 @@ You can do this in two steps:
 
 1. Create an `oom_guard.sh` executable file with the following contents:
 
-```shell 
+```shell
 #!/bin/sh
 
 for pid in $(ps x | awk 'NR>1 {print $1}' | xargs)
@@ -91,7 +91,7 @@ This will ensure the script from step 1 is executed every minute.
 
 ### Help
 
-```shell 
+```shell
 neuro-flow ps
 ```
 
@@ -111,7 +111,7 @@ Through a simple file explorer interface, you can upload test images and perform
 
 On a local machine, run `neuro-flow mkvolumes`. This command creates storage folders for all defined volumes. You only need to run this once.
 
-After the storage folders have been created, run `neuro-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.project_slug }}/data` volume mounted to your development environment's `/project/data`.
+After the storage folders have been created, run `neuro-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.project_id }}/data` volume mounted to your development environment's `/project/data`.
 
 You can upload (or download) every folder for which the `local` parameter is specified in the [live.yml file](./.neuro/live.yml).
 
@@ -130,19 +130,19 @@ Feel free to refer to the [documentation](https://docs.neu.ro/toolbox/accessing-
 ### Running a development job
 
 If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug` which will also open a shell to the job. You can also see job logs via `neuro-flow logs remote_debug`. The job forwards your local port 2211 to its port 22 for remote debugging.
-You can find the instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm). 
+You can find the instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm).
 
-Please don't forget to kill your job via `neuro-flow kill remote_debug` to not waste your quota!   
+Please don't forget to kill your job via `neuro-flow kill remote_debug` to not waste your quota!
 
 ### Weights & Biases integration
 
 The Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb.com), an experiment tracking tool for deep learning.
 
 Here you can find [documentation](https://docs.neu.ro/toolbox/experiment-tracking-with-weights-and-biases) for using W&B for experiment tracking with the template.
- 
+
 You can also refer to instructions on using Weights & Biases in your code in the [W&B documentation](https://docs.wandb.com/library/api/examples).
-There are also [W&B example projects](https://github.com/wandb/examples) or an example of a Neuro Project Template-based 
-[ML Recipe that uses W&B as a part of the workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention). 
+There are also [W&B example projects](https://github.com/wandb/examples) or an example of a Neuro Project Template-based
+[ML Recipe that uses W&B as a part of the workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention).
 
 
 ### Training machine types
@@ -178,7 +178,7 @@ Running `neuro-flow upload ALL` from a local machine will upload all of your cod
 ### The training command
 
 To tweak the training command, change the last line in this section of `live.yaml`:
- 
+
 ```yaml
   train:
     image: $[[ images.myimage.ref ]]

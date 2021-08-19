@@ -1,5 +1,5 @@
-## Checkout our full reference doc at https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax
-id: {{ cookiecutter.project_slug }}
+## Checkout our full reference doc at https://neu-ro.gitbook.io/neuro-flow/reference/project-configuration-syntax
+id: {{ cookiecutter.project_id }}
 ## Could be referenced as $[[ project.id ]] or $[[ flow.project_id ]] contexts.
 ## Default value - folder name, where .neuro folder is located
 # owner: {ownername}

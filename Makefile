@@ -5,7 +5,7 @@ VERSION_FILE := version.txt
 
 .PHONY: setup init
 setup init:
-	pip install -r '{{cookiecutter.project_slug}}/requirements.txt'
+	pip install -r '{{cookiecutter.project_dir}}/requirements.txt'
 	pip install -r requirements.txt
 	pre-commit install
 
@@ -29,9 +29,9 @@ format:
 test:
 	 export TMP_DIR=$$(mktemp -d) && \
 	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
-	   ls -d $$TMP_DIR/test-project/.neuro/
-	 pytest -v -s tests/unit
-	 pytest -v -s tests/e2e
+	   ls -d "$$TMP_DIR/test project/.neuro/"
+	 pytest -v tests/unit
+	 pytest -v tests/e2e
 	 @echo -e "OK\n"
 
 .PHONY: changelog-draft
