@@ -1,5 +1,6 @@
 import pytest
 import subprocess
+import sys
 from cookiecutter.exceptions import FailedHookException
 from pathlib import Path
 from pytest_cookies.plugin import Cookies  # type: ignore
@@ -27,7 +28,14 @@ def test_project_dir_hook(cookies: Cookies) -> None:
     assert result.exit_code == 0
     result = cookies.bake(extra_context={"project_dir": "my?project"})
     assert result.exit_code != 0
-    assert isinstance(result.exception, FailedHookException)
+    if sys.platform == "win32":
+        # Unfortunately, pre_gen hook is called before cookiecutter copies the template
+        #  into the TMP dir for rendering.
+        # This will not hurt the user,
+        #  but the error message will also include a traceback
+        assert isinstance(result.exception, OSError)
+    else:
+        assert isinstance(result.exception, FailedHookException)
     result = cookies.bake(extra_context={"project_dir": "t" * 256})
     assert result.exit_code != 0
 
