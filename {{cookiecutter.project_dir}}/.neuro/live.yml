@@ -6,10 +6,12 @@ kind: live
 ## Optional. Identifier of the workflow. By default, the id is 'live'. It's available as a $[[ flow.flow_id ]] in experssions.
 ## Note: don't mess it up with the $[[ flow.project_id ]] which is defined in project.yml file!
 title: {{ cookiecutter.project_name }}
-## Optional. Workflow title, any valid tring basically, accessible $[[ flow.title ]]
+## Optional. Workflow title, any valid string basically, accessible $[[ flow.title ]]
 
 defaults:
 ## Optional section.
+## A map of default settings that will apply to all jobs in the workflow.
+## You can override these global default settings for specific jobs.
   life_span: 1d
   ## The default lifespan for jobs ran by the workflow if not overridden by jobs.<job-id>.life_span.
   ## The lifespan value can be one of the following:
@@ -20,32 +22,41 @@ defaults:
   # env:
   #   key1: value1
   #   key2: value2
-  ## A mapping of environment variables that are available to all jobs in the workflow.
+  ## A mapping of environment variables that will be set in all jobs of the workflow.
+  ## When two or more environment variables are defined with the same name,
+  ##  `neuro-flow` uses the most specific environment variable.
+  ## For example, an environment variable defined in a job will override the workflow's default.
   # volumes:
   #   - storage:some/path:/path/in/job
   #   - storage://absolute/path:/different/path/in/job
   ## Set of volumes which will be mounted to all jobs within this project.
+  ## Default volumes are not passed to actions.
   # schedule_timeout: 20m
   ## The attribute accepts the following values:
   ##  - A float number representing the amount of seconds (3600 represents an hour),
   ##  - A string of the following format: 1d6h15m45s (1 day, 6 hours, 15 minutes, 45 seconds)
   ## The cluster-wide timeout is used if both default.schedule_timeout and jobs.<job-id>.schedule_timeout are omitted.
+  ## See the job description below for more information.
   # tags: [tag-a, tag-b]
   ## A list of tags that are added to every job created by the workflow.
   # workdir: /users/my_user
-  ## The default working directory for jobs created by this workflow if jobs.<job-id>.workdir is not set
+  ## The default working directory for jobs created by this workflow if jobs.<job-id>.workdir is not set.
 
 images:
-  ## Optional section.
+  ## Optional section, a mapping of image definitions used by the workflow.
   myimage:
   ## `neuro-flow build myimage` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
   ## The $[[ images.img_id.ref ]] expression can be used for pointing the image from a jobs.<job-id>.image.
     ref: image:$[[ flow.project_id ]]:v1
     ## Required. Image reference, can be of two types:
-    ##  - Platform-hosted image - its ref should start with the 'image:' prefix. In this case `neuro-flow build <img_id>` does work.
-    ##  - Image, hosted on the DockerHub - without the 'image:' prefix. In this case `neuro-flow build <img_id>` does not work.
+    ##  - Platform-hosted image - its ref should start with the 'image:' prefix. In this case `neuro-flow build <img_id>` will work.
+    ##  - Image, hosted on the DockerHub - without the 'image:' prefix. In this case `neuro-flow build <img_id>` will not work.
     ## Checkout ./neuro/project.yaml to configure $[[ flow.project_id ]] part.
     ## During the job execution, '$[[ flow.project_id ]]' part will be replaced to its string value by Neuro-Flow engine.
+    ## Hint: You could use the embedded `hash_files()` function to generate the built image's tag based on its content.
+    ## Example:
+    ##  myimage:
+    ##    ref: image:$[[ flow.project_id ]]:$[[ hash_files('Dockerfile', 'requirements.txt', '{{cookiecutter.project_dir}}/**/*.py')]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     ## An optional Docker file path used for building images, Dockerfile by default. The path should be relative to the context root.
     context: $[[ flow.workspace ]]/
@@ -63,14 +74,23 @@ images:
     #  ENV1: val1
     #  ENV2: val2
     ## A mapping of environment variables passed to the image builder.
+    ## Hint: You could also map platform secrets as the values of env variable and later utilize them during the image build.
+    ## For instance, you have `secret:github_password` which gives you an access to needed private repository.
+    ## In this case, map it as env `GH_PASS: secret:github_password` into the builder job,
+    ##   and pass it further as a `--build-arg GH_PASS=$GH_PASS` while building the container.
     # volumes:
     #   - storage:folder1:/mnt/folder1:ro
     #   - storage:folder2:/mnt/folder2
     #   - volumes.volume_id.ref
     ## A list of volume references mounted to the image building process.
+    ## Hint: You could also map platform secrets as files and later utilize them during the image build.
+    ## For instance, you have `secret:aws_account_credentials` file, which gives you an access to needed during the build S3 bucket.
+    ## In this case, attach it as volume into the builder job:
+    ##  `- secret:aws_account_credentials:/kaniko_context/aws_account_credentials`
+    ## And the file with credentials will appear in a root of the build context,
+    ##  since the build context is mounted in `/kaniko_context` folder within the builder job.
 
 volumes:
-## TODO: add this to main docs
 ## Optional section.
 ## A volume defines a link between the Neu.ro storage folder or disk, and a local folder within the job.
 ## Volume can be mounted to a job by using the `jobs.<job-id>.volumes` attribute.
@@ -80,12 +100,14 @@ volumes:
   ## The 'volume-id' must start with a letter and contain only alphanumeric characters or underscore symbols.
     remote: storage:$[[ flow.project_id ]]/data
     ## Required. The volume URI on the Neu.ro Storage ('storage:path/on/storage') or disk id ('disk:disk-id-or-name').
+    ## Checkout what is  Neu.ro Storage and  Neu.ro Disk at
+    ##  https://docs.neu.ro/core/platform-storage/storage and https://docs.neu.ro/core/platform-storage/disks respectively
     mount: /project/data
     ## Required. The mount path inside a job.
     local: data
     ## Optional. Volumes could also be assotiated with folder on a local machine.
     ## A local path should be relative to the project's root.
-    ## In this case the volume content can be synchronized between the local machine and a storage folder (not a disk!)
+    ## In this case the volume content can be synchronized between the local machine and a storage folder (but not a disk!)
     ##  with the `neuro-flow upload` and `neuro-flow download` commands.
     # read-only: true
     ## The volume is mounted as read-only by default if this attribute is set, read-write mode is used otherwise.
@@ -122,6 +144,8 @@ jobs:
   remote_debug:
   ## Each job must have an associated Job-ID (a.k.a. job name) within the project.
   ## The key 'job-id' is a string and its value is a map of the job's configuration data or action call.
+  ## The 'job-id' must start with a letter and contain only alphanumeric characters or underscore symbols `_`.
+  ## Dash `-` is not allowed.
     action: gh:neuro-actions/remote_debug@v1.0.0
     ## The type of this particular job is an 'action'.
     ## 'action' is a URL that specifies the job description location.
@@ -131,7 +155,7 @@ jobs:
     ## In this particular case it is the GitHub repo https://github.com/neuro-actions/remote_debug under @1.0.0 tag.
     ## For running this job, Neuro-Flow will fetch 'action.yaml' file from the repository and execute job defined in it.
     args:
-    ## Mapping of values that will be passed to the actions as arguments.
+    ## Optional mapping of values that will be passed to the actions as arguments.
     ## They should correspond to inputs defined in the action file.
     ## Each value should be a string.
       image: $[[ images.myimage.ref ]]
@@ -148,6 +172,26 @@ jobs:
     ##  - on DockerHub ('python:3.9' or 'ubuntu:20.04')
     ##  - on the platform registry, in this case image name should be prefixed with 'image:', e.g. 'image:my_image:v2.3'
     ## $[[ images.myimage.ref ]] is a reference of the image 'myimage', defined within this file in 'images' section.
+    # params:
+    #   name1: default1
+    #   name2: ~        # None by default
+    #   name3: ""       # Empty string by default
+    ## Optional. Params is a mapping of key-value pairs that have default value and could be overridden
+    ##   from a command line by using `neuro-flow run <job-id> --param name1 val1 --param name2 val2`.
+    ## Parameters can be specified in 'short' and 'long' forms, the example above is a short form.
+    ## The short form is compact, but only allows to specify the parameter's name and default value:
+    ## The long form allows to also specify parameter descriptions.
+    ## This can be useful for `neuro-flow run` command introspection, shell autocompletion,
+    ##  and generation of more detailed error messages. Example:
+    # params:
+    #   name1:
+    #     default: default1
+    #     descr: The name1 description
+    #   name2:
+    #     default: ~
+    #     descr: The name2 description
+    ## The parameters can be used in expressions for calculating other job attributes.
+    ## Note: 'params' could be also used in 'action' description.
     # browse: true
     ## Whether to open the job HTTP URI in a browser after the job startup. False by default.
     # detach: true
@@ -164,6 +208,7 @@ jobs:
     ## The job's HTTP port number that will be exposed via platform.
     ## By default, the Neu.ro Platform exposes the job's internal 80 port as an HTTPS-protected resource.
     ## Use 0 to disable the feature entirely.
+    ## Note: only HTTP trafic is allowed. Platform encapsulates it into TLS (to provide HTTPS) automaticaly.
     life_span: 10d
     ## The time period after which a job will be automatically killed. 1 day by default.
     ## The value could be:
@@ -183,8 +228,8 @@ jobs:
     # pass_config: true
     ## Attach your Neuro auth data and config into the job.
     ## Can be usefull if you want to use Neuro CLI inside the running job.
-    ## Note: passed credentials lifetime are bounded to the job's lifetime.
-    ## It might be tricky to pass them further into other jobs.
+    ## Note: the lifetime of passed credentials is bounded to the job's lifetime.
+    ## It will be impossible to use them when the job is terminated.
     # port_forward:
     # - 6379:6379  # Default Redis port
     # - 9200:9200  # Default Zipkin port
