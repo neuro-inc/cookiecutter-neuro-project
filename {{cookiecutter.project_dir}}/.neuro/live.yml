@@ -198,7 +198,7 @@ jobs:
     ## By default, 'neuro-flow run <job-id>' keeps the terminal attached to the spawned job.
     ## This can help with viewing the job's logs and running commands in its embedded bash session.
     ## Enable the detach attribute to disable this behavior.
-    # entrypoint: sh -c "Echo $HOME"
+    # entrypoint: sh -c "echo $HOME"
     ## Optional. You can override a Docker image ENTRYPOINT if needed.
     # http_auth: false
     ## Control whether the HTTP port exposed by the job requires the Neu.ro Platform authentication for access.

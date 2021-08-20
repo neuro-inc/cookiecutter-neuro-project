@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-# >>> Optionally clearing comments comments
+# >>> Optionally clearing comments
 COMMENTS_STRUCTURE = {
     "./.neuro/live.yml": r"(\s*#.*)",
     "./.neuro/project.yml": r"(\s*#.*)",
@@ -30,7 +30,7 @@ else:
         for f_name in COMMENTS_STRUCTURE:
             f_path = Path(f_name)
             if not f_path.exists():
-                print(f"WARNING: {f_name} does not exist, skipping.")
+                print(f"WARNING: skipping comments removal from file {f_name}")
             else:
                 content = f_path.read_text().splitlines(keepends=True)
                 result = []
@@ -38,4 +38,4 @@ else:
                     if not re.match(COMMENTS_STRUCTURE[f_name], line):
                         result.append(line)
                 f_path.write_text("".join(result))
-# <<< Optionally clearing comments comments
+# <<< Optionally clearing comments

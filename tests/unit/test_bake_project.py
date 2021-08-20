@@ -83,15 +83,12 @@ def test_project_descr_with_comments(cookies: Cookies, preserve_comments: str) -
         }
     )
     assert result.exit_code == 0
-    l_com = "https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax"
-    p_com = (
-        "https://neu-ro.gitbook.io/neuro-flow/reference/project-configuration-syntax"
-    )
+    comment_sign = "#"
     with inside_dir(str(result.project_path)):
         live_file_content = Path(".neuro/live.yml").read_text()
         project_file_content = Path(".neuro/project.yml").read_text()
-        l_com_exists = l_com in live_file_content
-        p_com_exists = p_com in project_file_content
+        l_com_exists = comment_sign in live_file_content
+        p_com_exists = comment_sign in project_file_content
         if preserve_comments == "yes":
             assert l_com_exists, ".neuro/live.yml file does not contain comments"
             assert p_com_exists, ".neuro/project.yml file does not contain comments"
@@ -99,4 +96,7 @@ def test_project_descr_with_comments(cookies: Cookies, preserve_comments: str) -
             assert not l_com_exists, ".neuro/live.yml file contains comments"
             assert not p_com_exists, ".neuro/project.yml file contains comments"
         else:
-            raise RuntimeError("This should not happen.")
+            raise RuntimeError(
+                f"invalid value '{preserve_comments}' for 'preserve_comments' arg. "
+                " Only 'yes' and 'no' are allowed."
+            )

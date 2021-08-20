@@ -8,7 +8,7 @@ PROJECT_DIR = "{{ cookiecutter.project_dir }}"
 FULL_PROJECT_DIR = (Path(".") / PROJECT_DIR).resolve()
 FORBIDDEN_CHARS = r'<>:"\/|?*'
 
-forbidden_chars_in_dir_name = any(ch in PROJECT_DIR for ch in FORBIDDEN_CHARS)
+forbidden_chars_in_dir_name = set(PROJECT_DIR) & set(FORBIDDEN_CHARS)
 
 if forbidden_chars_in_dir_name:
     print(f"ERROR: '{PROJECT_DIR}' contains forbidden chars ({FORBIDDEN_CHARS})")
@@ -22,8 +22,6 @@ elif not FULL_PROJECT_DIR.exists():
             "since OS cannot create it."
         )
         sys.exit(1)
-    else:
-        FULL_PROJECT_DIR.rmdir()
 
 project_id = "{{ cookiecutter.project_id }}"
 if not project_id.isidentifier():

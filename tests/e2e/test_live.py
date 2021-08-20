@@ -15,7 +15,6 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
             "preserve Neuro Flow template hints": preserve_comments,
         }
     )
-    print(result.project_path)
     with inside_dir(str(result.project_path)):
         proc = exec("neuro-flow --show-traceback ps")
         assert not proc.stderr, proc
