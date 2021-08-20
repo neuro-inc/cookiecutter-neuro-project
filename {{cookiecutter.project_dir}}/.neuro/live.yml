@@ -263,7 +263,10 @@ jobs:
     ## A list of job volumes.
     ## You can specify a plain string for the volume reference and use the $[[ volumes.<volume-id>.ref ]] expressions.
       - $[[ volumes.data.ref_ro ]]
-      - $[[ volumes.code.ref_ro ]]
+      - $[[ upload(volumes.code).ref_ro ]]
+      ## upload() - is an expression function which performs `neuro-flow upload code` before each run of this job
+      ## Checkout list of magic functions and their use-cases under
+      ##  https://neu-ro.gitbook.io/neuro-flow/reference/expression-functions
       - $[[ volumes.config.ref_ro ]]
       - $[[ volumes.results.ref_rw ]]
     # workdir: /users/my_user
