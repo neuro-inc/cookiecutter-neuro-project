@@ -17,8 +17,9 @@ defaults:
   ## The lifespan value can be one of the following:
   ##  - A float number representing the amount of seconds (3600 represents an hour)
   ##  - A string of the following format: 1d6h15m (1 day, 6 hours, 15 minutes)
-  preset: gpu-small-p
+  # preset: gpu-small
   ## The default preset name used to run all jobs in this project if not overridden by jobs.<job-id>.preset.
+  ## Consider selecting the resource preset according to your needs for each job spearately.
   # env:
   #   key1: value1
   #   key2: value2
@@ -155,7 +156,7 @@ jobs:
     ## In this particular case it is the GitHub repo https://github.com/neuro-actions/remote_debug under @1.0.0 tag.
     ## For running this job, Neuro-Flow will fetch 'action.yaml' file from the repository and execute job defined in it.
     args:
-    ## Optional mapping of values that will be passed to the actions as arguments.
+    ## Optional action-specific mapping of values that will be passed to the actions as arguments.
     ## They should correspond to inputs defined in the action file.
     ## Each value should be a string.
       image: $[[ images.myimage.ref ]]
@@ -239,6 +240,7 @@ jobs:
     # preset: cpu-small
     ## A resource preset used to run the job.
     ## This overwrites system-default (first in 'neuro config show' list) and workflow-default configurations.
+    ## Consider selecting the resource preset according to your needs for each job spearately.
     # schedule_timeout: 1d
     ## Optionally set the schedule timeout to specified value.
     ## If the platform cluster has no resources to launch the job immediately, it will be kept in the waiting queue.
@@ -261,7 +263,10 @@ jobs:
     ## A list of job volumes.
     ## You can specify a plain string for the volume reference and use the $[[ volumes.<volume-id>.ref ]] expressions.
       - $[[ volumes.data.ref_ro ]]
-      - $[[ volumes.code.ref_ro ]]
+      - $[[ upload(volumes.code).ref_ro ]]
+      ## upload() - is an expression function which performs `neuro-flow upload code` before each run of this job
+      ## Checkout list of magic functions and their use-cases under
+      ##  https://neu-ro.gitbook.io/neuro-flow/reference/expression-functions
       - $[[ volumes.config.ref_ro ]]
       - $[[ volumes.results.ref_rw ]]
     # workdir: /users/my_user
@@ -312,7 +317,6 @@ jobs:
     action: gh:neuro-actions/jupyter@v1.0.0
     args:
       image: $[[ images.myimage.ref ]]
-      preset: gpu-k80-small-p
       multi_args: $[[ multi.args ]]
       volumes_data_remote: $[[ volumes.data.remote ]]
       volumes_code_remote: $[[ volumes.code.remote ]]
