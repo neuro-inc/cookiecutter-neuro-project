@@ -15,9 +15,10 @@ Instructions:
 2. Test `master` manually:
     ```
     $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
-    project_name [Neuro Project]: 
-    project_slug [neuro-project]: 
-    code_directory [modules]: 
+    project_name [Neuro Project]:
+    project_dir [neuro-project]:
+    project_id [neuro_project]:
+    code_directory [modules]:
     $ cd neuro-project
     $ ls
     apt.txt  config  data  Dockerfile  HELP.md  modules  notebooks  README.md  requirements.txt  results  setup.cfg
@@ -30,7 +31,7 @@ Instructions:
     - `make changelog` - delete changelog items from `CHANGELOG.d` and really modify [CHANGELOG.md](./CHANGELOG.md)
     - `git add CHANGELOG* version.txt && git commit -m "Update changelog"` - commit changelog changes in **local** repository
     - `git tag $(cat version.txt)` - mark latest changes as a release tag
-    - `git push && git push --tags` - push the updated changelog and assigned tag to the remote repository 
+    - `git push && git push --tags` - push the updated changelog and assigned tag to the remote repository
     - Note, this `master` branch update will trigger CI
 
 4. Now, hard-reset `release` branch on `master` (actual release):

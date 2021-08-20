@@ -1,5 +1,7 @@
 {
     "project_name": "Neuro Project",
-    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
-    "code_directory": "modules"
+    "project_dir": "{{ cookiecutter.project_name.lower() }}",
+    "project_id": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "code_directory": "modules",
+    "preserve Neuro Flow template hints": "yes"
 }

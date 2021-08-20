@@ -1,15 +1,12 @@
 Neu.ro Platform Project Template
 ===============================
 
-Base template for the [Neu.ro](https://neu.ro) platform projects
-
-Requirements
-------------
-Install `cookiecutter` command line: `pip install cookiecutter` (or `make setup`)
+Base template for the [Neu.ro](https://neu.ro) platform projects based on [cookiecutter project](https://github.com/cookiecutter/cookiecutter).
 
 Usage
 -----
-Generate a new Cookiecutter template layout: `cookiecutter gh:neuro-inc/cookiecutter-neuro-project` (or `make cook`)    
+Consider using this template from within the Neuro CLI via `neuro project init` command.
+Nevertheless, one also could generate it directly via cookiecutter via `cookiecutter gh:neuro-inc/cookiecutter-neuro-project`.
 
 Release
 -------

@@ -5,12 +5,9 @@ VERSION_FILE := version.txt
 
 .PHONY: setup init
 setup init:
-	pip install -r '{{cookiecutter.project_slug}}/requirements.txt'
+	pip install -r '{{cookiecutter.project_dir}}/requirements.txt'
 	pip install -r requirements.txt
-
-.PHONY: cook
-cook:
-	cookiecutter gh:neuro-inc/cookiecutter-neuro-project
+	pre-commit install
 
 .PHONY: get-version
 get-version: $(VERSION_FILE)
@@ -22,23 +19,19 @@ update-version:
 
 .PHONY: lint
 lint:
-	 isort -c $(LINTER_DIRS)
-	 black --check $(LINTER_DIRS)
 	 mypy $(LINTER_DIRS)
-	 flake8 $(LINTER_DIRS)
 
 .PHONY: format
 format:
-	isort -c $(LINTER_DIRS)
-	black $(LINTER_DIRS)
+	pre-commit run --all-files --show-diff-on-failure
 
 .PHONY: test
 test:
 	 export TMP_DIR=$$(mktemp -d) && \
 	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
-	   ls -d $$TMP_DIR/test-project/.neuro/
-	 pytest -v -s tests/unit
-	 pytest -v -s tests/e2e
+	   ls -d "$$TMP_DIR/test project/.neuro/"
+	 pytest -v tests/unit
+	 pytest -v tests/e2e
 	 @echo -e "OK\n"
 
 .PHONY: changelog-draft

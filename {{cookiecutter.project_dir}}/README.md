@@ -5,7 +5,7 @@ The project description is here.
 ## Quick Start
 
 Sign up at [neu.ro](https://neu.ro) and setup your local machine according to [instructions](https://docs.neu.ro/).
- 
+
 Then run:
 
 ```shell
