@@ -16,10 +16,11 @@ Instructions:
     ```
     $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
     project_name [Neuro Project]:
-    project_dir [neuro-project]:
+    project_dir [neuro project]:
     project_id [neuro_project]:
     code_directory [modules]:
-    $ cd neuro-project
+    preserve Neuro Flow template hints [yes]:
+    $ cd neuro project
     $ ls
     apt.txt  config  data  Dockerfile  HELP.md  modules  notebooks  README.md  requirements.txt  results  setup.cfg
     $ neuro-flow build myimage

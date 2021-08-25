@@ -4,17 +4,28 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v21.08.25 (2021-08-25)
+======================================================
+
+
+Features
+--------
+
+
+- Added syntax hints for Neuro Flow configuration files. ([#497](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/497))
+
+
+Bugfixes
+--------
+
+
+- Removed hard-coded preset names from the project template. ([#498](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/498))
+
+
 Neuro Platform Project Template v21.06.10 (2021-06-10)
 ======================================================
 
 No significant changes.
-
-
-No significant changes.
-
-
-No significant changes.
-
 
 Neuro Platform Project Template v21.04.12 (2021-04-12)
 ======================================================
