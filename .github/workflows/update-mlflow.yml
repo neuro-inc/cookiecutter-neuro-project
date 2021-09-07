@@ -1,4 +1,4 @@
-name: Update mlflow tags
+name: Update action versions
 on:
   schedule:
   - cron: 0 0 * * *
