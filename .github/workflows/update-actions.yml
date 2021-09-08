@@ -1,10 +1,7 @@
-name: Update action versions
+name: Update mlflow tags
 on:
   schedule:
   - cron: 0 0 * * *
-env:
-  PIP_EXTRA_INDEX_URL: ${{ format('https://{0}:{1}@{2}/{0}/{3}', secrets.DEVPI_USER,
-    secrets.DEVPI_PASS, secrets.DEVPI_HOST, secrets.DEVPI_INDEX) }}
 jobs:
   auto-update:
     runs-on: ubuntu-latest
@@ -15,9 +12,9 @@ jobs:
       with:
         python-version: 3.8
     - name: Install dependencies
-      run: make setup
-    - name: Run update mlflow script
-      run: python update_action.py --input “.neuro/*.y*ml" --name mlflow
+      run: pip install pygithub
+    - name: Run update actions script
+      run: python update_actions.py --input “.neuro/*.y*ml"
     - id: generate_token
       uses: tibdex/github-app-token@v1
       with:
