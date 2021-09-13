@@ -1,42 +1,59 @@
 """
   Scans directories for files that satisfy a specific mask and updates
   the actions' tags.
-  python3 update_actions.py --input “one/*.y*ml two/*.y*ml three/*.y*ml”
+  python3 update_actions.py --source “one/*.y*ml two/*.y*ml three/*.y*ml”
 """
 
-import argparse
 import glob
+import argparse
 import re
-from github import Github
 from pathlib import Path
-
+from github import Github
 
 parser = argparse.ArgumentParser()
+cache = {}
 
-parser.add_argument("-i", "--inputs", type=str, help="Input directories to scan")
+parser.add_argument(
+    '-s', '--sources',
+    type=str, help='Source directories to scan'
+)
 
 args = parser.parse_args()
-inputs = args.inputs.split(" ")
+sources = args.sources.split(' ')
 g = Github()
-pattern = r"(?:gh|github):neuro-actions/\w+@[a-zA-Z]{1}\d{1,2}\.\d{1,2}\.\d{1,3}"
+pattern = r"\s+action:.*"
 
-for input in inputs:
-    path = Path(input)
-    for file_path in glob.iglob(input):
+for source in sources:
+    path = Path(source)
+    for file_path in glob.iglob(source):
+        n_actions = 0
+        n_changed = 0
         with open(file_path) as file:
             s = file.read()
-        matches = re.findall(pattern, s)
-        for match in matches:
-            nb, nt = match.find("/"), match.find("@")
-            name = match[nb + 1 : nt]
-            tag = match[nt + 1 :]
-            p = re.compile(match)
+        lines = re.findall(pattern, s)
+        for line in lines:
+            slug = line.split('action:')[1].strip()
+            svc_bgn, svc_end = 0, slug.find(':')
+            rep_bgn, rep_end = slug.find(':') + 1, slug.find('/')
+            acn_bgn, acn_end = slug.find('/') + 1, slug.find('@')
+            tag_bgn, tag_end = slug.find('@') + 1, len(slug)
+            svc = slug[svc_bgn:svc_end]
+            rep = slug[rep_bgn:rep_end]
+            acn = slug[acn_bgn:acn_end]
+            tag = slug[tag_bgn:tag_end]
+            p = re.compile(slug)
             try:
-                repo = g.get_repo(f"neuro-actions/{name}")
-                new_tag = list(repo.get_releases())[-1].title
-                if tag != new_tag:
-                    ss = re.sub(p, f"gh:neuro-actions/{name}@{new_tag}", s)
+                rep_path = f"{rep}/{acn}"
+                rep_obj = g.get_repo(rep_path)
+                if tag not in cache:
+                    cache[tag] = list(rep_obj.get_releases())[-1].title
+                tag_ = cache[tag]
+                if tag != tag_:
+                    n_changed += 1
+                    ss = re.sub(p, f'{svc}:{rep}/{acn}@{tag_}', s)
                     with open(file_path, "w") as file:
                         file.write(ss)
             except:
                 continue
+            n_actions += 1
+        print(f'::set-output {n_changed}/{n_actions} in {file_path} actions were updated')
