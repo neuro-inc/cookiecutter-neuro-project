@@ -1,7 +1,8 @@
-"""
-  Scans directories for files that satisfy a specific mask and updates
-  the actions' tags.
-  python3 update_actions.py --source “one/*.y*ml two/*.y*ml three/*.y*ml”
+"""Scans directories for files that satisfy a specific mask and updates
+version tags of all actions.
+
+Example:
+    python3 update_actions.py --source “one/*.y*ml two/*.y*ml tre/*.y*ml”
 """
 
 import glob
@@ -9,9 +10,11 @@ import argparse
 import re
 from pathlib import Path
 from github import Github
+from typing import Dict
+from github.GithubException import UnknownObjectException
 
 parser = argparse.ArgumentParser()
-cache = {}
+cache: Dict[str, str] = {}
 
 parser.add_argument(
     '-s', '--sources',
@@ -20,40 +23,42 @@ parser.add_argument(
 
 args = parser.parse_args()
 sources = args.sources.split(' ')
-g = Github()
-pattern = r"\s+action:.*"
+g = Github('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')
+p = r"\s+action:\s*(?P<svc>[\w-]+):(?P<org>[\w-]+)/(?P<rep>[\w-]+)@(?P<ver>v[\d.]+)"
+r = re.compile(p)
 
 for source in sources:
     path = Path(source)
     for file_path in glob.iglob(source):
-        n_actions = 0
-        n_changed = 0
+        n_found = 0
+        n_updated = 0
         with open(file_path) as file:
-            s = file.read()
-        lines = re.findall(pattern, s)
+            lines = file.readlines()
+        lines_new = []
         for line in lines:
-            slug = line.split('action:')[1].strip()
-            svc_bgn, svc_end = 0, slug.find(':')
-            rep_bgn, rep_end = slug.find(':') + 1, slug.find('/')
-            acn_bgn, acn_end = slug.find('/') + 1, slug.find('@')
-            tag_bgn, tag_end = slug.find('@') + 1, len(slug)
-            svc = slug[svc_bgn:svc_end]
-            rep = slug[rep_bgn:rep_end]
-            acn = slug[acn_bgn:acn_end]
-            tag = slug[tag_bgn:tag_end]
-            p = re.compile(slug)
-            try:
-                rep_path = f"{rep}/{acn}"
-                rep_obj = g.get_repo(rep_path)
-                if tag not in cache:
-                    cache[tag] = list(rep_obj.get_releases())[-1].title
-                tag_ = cache[tag]
-                if tag != tag_:
-                    n_changed += 1
-                    ss = re.sub(p, f'{svc}:{rep}/{acn}@{tag_}', s)
-                    with open(file_path, "w") as file:
-                        file.write(ss)
-            except:
-                continue
-            n_actions += 1
-        print(f'::set-output {n_changed}/{n_actions} in {file_path} actions were updated')
+            match = r.match(line)
+            if match:
+                n_found += 1
+                slug = line.split('action:')[1].strip()
+                svc, org, rep, ver = match['svc'], match['org'], match['rep'], match['ver']
+                rep_path = f"{match['org']}/{match['rep']}"
+                if rep in cache:
+                    ver_new= cache[rep]
+                else:
+                    try:
+                        ver_new= list(g.get_repo(rep_path).get_releases())[-1].title
+                        if ver != ver_new:
+                            cache[rep] = ver_new
+                    except UnknownObjectException as e:
+                        print(f'::set-output [warning] the repo {rep_path} in file {file_path} was not found')
+                        ver_new= ver
+                if ver != ver_new:
+                    n_updated += 1
+                slug_new= f'{svc}:{org}/{rep}@{ver_new}'
+                line_new= re.sub(re.compile(slug), slug_new, line)
+            else:
+                line_new= line
+            lines_new+= [line_new]
+        with open(file_path, "w") as file:
+            file.write(''.join(lines_new))
+        print(f'::set-output [success] {n_updated} from {n_found} actions in file {file_path} were updated')
