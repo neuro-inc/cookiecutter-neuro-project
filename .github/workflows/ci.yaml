@@ -40,7 +40,7 @@ jobs:
       - name: Cache Python and its deps
         uses: actions/cache@v2.1.6
         with:
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
           path: ${{ env.pythonLocation }}
 
       - name: Install python dependencies

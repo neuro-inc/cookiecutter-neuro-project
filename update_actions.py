@@ -2,63 +2,94 @@
 version tags of all actions.
 
 Example:
-    python3 update_actions.py --source “one/*.y*ml two/*.y*ml tre/*.y*ml”
+    python3 update_actions.py live.yml action.y*ml folder/*.y*ml
 """
 
-import glob
 import argparse
 import re
-from pathlib import Path
 from github import Github
-from typing import Dict
-from github.GithubException import UnknownObjectException
+from pathlib import Path
+from typing import Dict, List, Optional
 
-parser = argparse.ArgumentParser()
-cache: Dict[str, str] = {}
 
-parser.add_argument(
-    '-s', '--sources',
-    type=str, help='Source directories to scan'
-)
+ACTION_PATTERN = r"\s+action:\s*(?P<svc>gh|github):(?P<org>[\w-]+)/(?P<repo>[\w-]+)@(?P<cur_tag>[\w.]+)"  # noqa: E501
 
-args = parser.parse_args()
-sources = args.sources.split(' ')
-g = Github('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')
-p = r"\s+action:\s*(?P<svc>[\w-]+):(?P<org>[\w-]+)/(?P<rep>[\w-]+)@(?P<ver>v[\d.]+)"
-r = re.compile(p)
 
-for source in sources:
-    path = Path(source)
-    for file_path in glob.iglob(source):
-        n_found = 0
-        n_updated = 0
-        with open(file_path) as file:
-            lines = file.readlines()
-        lines_new = []
-        for line in lines:
-            match = r.match(line)
-            if match:
-                n_found += 1
-                slug = line.split('action:')[1].strip()
-                svc, org, rep, ver = match['svc'], match['org'], match['rep'], match['ver']
-                rep_path = f"{match['org']}/{match['rep']}"
-                if rep in cache:
-                    ver_new= cache[rep]
-                else:
-                    try:
-                        ver_new= list(g.get_repo(rep_path).get_releases())[-1].title
-                        if ver != ver_new:
-                            cache[rep] = ver_new
-                    except UnknownObjectException as e:
-                        print(f'::set-output [warning] the repo {rep_path} in file {file_path} was not found')
-                        ver_new= ver
-                if ver != ver_new:
-                    n_updated += 1
-                slug_new= f'{svc}:{org}/{rep}@{ver_new}'
-                line_new= re.sub(re.compile(slug), slug_new, line)
-            else:
-                line_new= line
-            lines_new+= [line_new]
-        with open(file_path, "w") as file:
-            file.write(''.join(lines_new))
-        print(f'::set-output [success] {n_updated} from {n_found} actions in file {file_path} were updated')
+def main():
+    args = parse_args()
+    patterns: List[str] = args.patterns
+    token: Optional[str] = args.token
+    if args.root:
+        root = Path(args.root).resolve()
+    else:
+        root = Path(__file__).parent.resolve()
+    update_actions(patterns, root, token)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "patterns",
+        metavar="PATTERN",
+        nargs="+",
+        help="Neuro-flow workflow file, which should be scanned for action updates.",
+    )
+    parser.add_argument("--token", nargs="?", help="GitHub token to use.")
+    parser.add_argument(
+        "--root",
+        nargs="?",
+        help="Directory, where to start searching for workflow files",
+    )
+    return parser.parse_args()
+
+
+def update_actions(patterns: List[str], root_dir: Path, gh_token: Optional[str]):
+    github_client = Github(gh_token)
+    action_string_pattern = re.compile(ACTION_PATTERN)
+
+    # action_file_rel_path: [found_actions, updated_actions]
+    update_stats: Dict[str, List[int, int]] = {}
+
+    for pattern in patterns:
+        for file_path in root_dir.rglob(pattern):
+            found_actions = 0
+            updated_actions = 0
+            new_file_content = []
+            rel_path = str(file_path.relative_to(root_dir))
+            for line in file_path.read_text().splitlines(keepends=True):
+                match = action_string_pattern.match(line)
+                if match:
+                    found_actions += 1
+                    gh_repo = github_client.get_repo(f"{match['org']}/{match['repo']}")
+                    current_tag = match["cur_tag"]
+                    release_tags = [rel.tag_name for rel in gh_repo.get_releases()]
+                    if not release_tags:
+                        print(f"No releases found for '{gh_repo.full_name}' action")
+                    elif current_tag not in release_tags:
+                        print(
+                            f"Ignoring '{gh_repo.full_name}' action in '{rel_path}',"
+                            " since it is not refferenced by the release tag,"
+                            f" but by '{current_tag}'."
+                        )
+                    else:
+                        latest_tag = release_tags[0]
+                        if latest_tag != current_tag:
+                            updated_actions += 1
+                            line = line.replace(current_tag, latest_tag)
+                new_file_content.append(line)
+            file_path.write_text("".join(new_file_content))
+            update_stats[rel_path] = [found_actions, updated_actions]
+    pr_body_lines = [
+        "::set-output name=updated_files::",
+    ]
+    for filename in update_stats:
+        pr_body_lines.append(
+            f"{filename}: found {update_stats[filename][0]} "
+            f"updated {update_stats[filename][1]} actions; "
+        )
+    # The output afterwards will be used by GH CI to submit a PR.
+    print("".join(pr_body_lines))
+
+
+if __name__ == "__main__":
+    main()
