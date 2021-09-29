@@ -1,1 +1,2 @@
+pre-commit==2.15.0
 PyGithub==1.55
