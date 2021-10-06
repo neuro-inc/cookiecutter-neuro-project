@@ -7,9 +7,10 @@ Example:
 
 import argparse
 import re
-from github import Github
 from pathlib import Path
 from typing import Dict, List, Optional
+
+from github import Github
 
 
 ACTION_PATTERN = r"\s+action:\s*(?P<svc>gh|github):(?P<org>[\w-]+)/(?P<repo>[\w-]+)@(?P<cur_tag>[\w.]+)"  # noqa: E501
