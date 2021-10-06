@@ -1,8 +1,9 @@
-import pytest
 import subprocess
 import sys
-from cookiecutter.exceptions import FailedHookException
 from pathlib import Path
+
+import pytest
+from cookiecutter.exceptions import FailedHookException
 from pytest_cookies.plugin import Cookies  # type: ignore
 
 from tests.utils import inside_dir

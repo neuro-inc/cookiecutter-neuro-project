@@ -3,5 +3,8 @@
     "project_dir": "{{ cookiecutter.project_name.lower() }}",
     "project_id": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
     "code_directory": "modules",
-    "preserve Neuro Flow template hints": "yes"
+    "preserve Neuro Flow template hints": "yes",
+    "_copy_without_render": [
+        ".github/*"
+    ]
 }

@@ -5,8 +5,7 @@ VERSION_FILE := version.txt
 
 .PHONY: setup init
 setup init:
-	pip install -r '{{cookiecutter.project_dir}}/requirements.txt'
-	pip install -r requirements.txt
+	pip install -r requirements/dev.txt
 	pre-commit install
 
 .PHONY: get-version
@@ -18,7 +17,7 @@ update-version:
 	echo "v`date +"%y.%m.%d"`" > $(VERSION_FILE)
 
 .PHONY: lint
-lint:
+lint: format
 	 mypy $(LINTER_DIRS)
 
 .PHONY: format
