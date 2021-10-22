@@ -4,6 +4,24 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v21.10.22 (2021-10-22)
+======================================================
+
+
+Features
+--------
+
+
+- Added GitHub workflow, which will automatically bump Neuro-Flow action tags if they are hosted in the GitHub, referenced by the release tag, and a newer tag is available. ([#505](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/505))
+
+
+Bugfixes
+--------
+
+
+- Do not duplicate folders in the created project directory. ([#517](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/517))
+
+
 Neuro Platform Project Template v21.08.25 (2021-08-25)
 ======================================================
 
