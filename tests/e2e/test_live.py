@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from pytest_cookies.plugin import Cookies  # type: ignore
 
@@ -21,7 +23,8 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
         assert "JOB" in proc.stdout, proc
 
         proc = exec("neuro-flow --show-traceback status train", assert_exit_code=False)
-        assert not proc.stderr, proc
+        # https://github.com/neuro-inc/neuro-flow/issues/331
+        assert not proc.stderr or sys.platform == "win32", proc
         assert "is not running" in proc.stdout, proc
 
         proc = exec("neuro-flow --show-traceback run --dry-run train")
