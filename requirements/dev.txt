@@ -3,7 +3,7 @@ black==21.9b0
 flake8==4.0.1
 isort==5.9.3
 mypy==0.910
-neuro-flow==21.9
+neuro-flow==21.10.0
 pre-commit==2.15.0
 PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
 pytest==5.4.3
