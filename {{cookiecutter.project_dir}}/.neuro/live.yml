@@ -45,8 +45,8 @@ defaults:
 
 images:
   ## Optional section, a mapping of image definitions used by the workflow.
-  myimage:
-  ## `neuro-flow build myimage` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
+  train:
+  ## `neuro-flow build train` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
   ## The $[[ images.img_id.ref ]] expression can be used for pointing to an image from jobs.<job-id>.image.
     ref: image:$[[ flow.project_id ]]:v1
     ## Required. Image reference, can be of two types:
@@ -56,7 +56,7 @@ images:
     ## During job execution, the '$[[ flow.project_id ]]' part will be replaced with its string value by the Neuro-Flow engine.
     ## Hint: You can use the embedded `hash_files()` function to generate a built image's tag based on its content.
     ## Example:
-    ##  myimage:
+    ##  train:
     ##    ref: image:$[[ flow.project_id ]]:$[[ hash_files('Dockerfile', 'requirements.txt', '{{cookiecutter.project_dir}}/**/*.py')]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     ## An optional Docker file path used for building images, `Dockerfile` by default. The path should be relative to the context's root.
@@ -159,7 +159,7 @@ jobs:
     ## Optional action-specific mapping of values that will be passed to the actions as arguments.
     ## They should correspond to inputs defined in the action file.
     ## Each value should be a string.
-      image: $[[ images.myimage.ref ]]
+      image: $[[ images.train.ref ]]
       volumes_data_remote: $[[ volumes.data.remote ]]
       volumes_code_remote: $[[ volumes.code.remote ]]
       volumes_config_remote: $[[ volumes.config.remote ]]
@@ -167,12 +167,12 @@ jobs:
 
   train:
   ## Unlike the 'remote_debug' action call, the 'train' job description is stored directly in this file.
-    image: $[[ images.myimage.ref ]]
+    image: $[[ images.train.ref ]]
     ## Required for locally defined jobs. This field defines the Docker image used to run the job.
     ## The image can be hosted:
     ##  - on DockerHub ('python:3.9' or 'ubuntu:20.04')
     ##  - on the platform registry. In this case, the image's name should be prefixed with 'image:', e.g. 'image:my_image:v2.3'
-    ## $[[ images.myimage.ref ]] is a reference to the 'myimage' image defined in the 'images' section of this file.
+    ## $[[ images.train.ref ]] is a reference to the 'train' image defined in the 'images' section of this file.
     # params:
     #   name1: default1
     #   name2: ~        # None by default
@@ -297,7 +297,7 @@ jobs:
     ## The 'cmd', 'bash', and 'python' sections are mutually exclusive: only one could be used.
 
   multitrain:
-    image: $[[ images.myimage.ref ]]
+    image: $[[ images.train.ref ]]
     detach: False
     life_span: 10d
     volumes:
@@ -316,7 +316,7 @@ jobs:
   jupyter:
     action: gh:neuro-actions/jupyter@v1.0.0
     args:
-      image: $[[ images.myimage.ref ]]
+      image: $[[ images.train.ref ]]
       multi_args: $[[ multi.args ]]
       volumes_data_remote: $[[ volumes.data.remote ]]
       volumes_code_remote: $[[ volumes.code.remote ]]
