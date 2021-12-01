@@ -43,6 +43,12 @@ jobs:
           key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
           path: ${{ env.pythonLocation }}
 
+      - name: Install GNU libraries for MacOS
+        if: matrix.os == 'macos'
+        shell: bash
+        run: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install findutils
+
       - name: Install python dependencies
         run: |
           make setup
