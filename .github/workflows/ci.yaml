@@ -48,6 +48,7 @@ jobs:
         shell: bash
         run: |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install findutils
+          echo PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH" >> $GITHUB_ENV
 
       - name: Install python dependencies
         run: |
