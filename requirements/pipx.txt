@@ -1,1 +1,2 @@
+neuro-cli==21.9.3
 neuro-flow==21.11.2
