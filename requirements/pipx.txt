@@ -1,2 +1,1 @@
-neuro-cli==21.11.4
-neuro-flow==21.11.2
+neuro-all==21.11.3
