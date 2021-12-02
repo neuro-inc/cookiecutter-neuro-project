@@ -25,6 +25,7 @@ repos:
     args: ['--unsafe']
   - id: check-added-large-files
   - id: end-of-file-fixer
+    exclude: "json$"
   - id: requirements-txt-fixer
   - id: trailing-whitespace
   - id: check-symlinks

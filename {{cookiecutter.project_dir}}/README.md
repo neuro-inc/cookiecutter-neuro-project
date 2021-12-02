@@ -1,6 +1,7 @@
 # {{ cookiecutter.project_name }}
 
-The project description is here.
+{% if cookiecutter.project_description %}## Project description{%- endif %}
+{{ cookiecutter.project_description }}
 
 ## Quick Start
 

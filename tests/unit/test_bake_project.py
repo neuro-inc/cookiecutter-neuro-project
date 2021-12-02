@@ -76,7 +76,7 @@ def test_project_id_hook(cookies: Cookies) -> None:
 
 
 @pytest.mark.parametrize("preserve_comments", ["yes", "no"])
-def test_project_descr_with_comments(cookies: Cookies, preserve_comments: str) -> None:
+def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) -> None:
     result = cookies.bake(
         extra_context={
             "project_dir": "project-with-comments",
@@ -101,3 +101,20 @@ def test_project_descr_with_comments(cookies: Cookies, preserve_comments: str) -
                 f"invalid value '{preserve_comments}' for 'preserve_comments' arg. "
                 " Only 'yes' and 'no' are allowed."
             )
+
+
+def test_project_description(cookies: Cookies) -> None:
+    descriptions = [
+        # " ",
+        "Descrition!",
+        "123",
+        "https://github.com/neuro-inc/cookiecutter-neuro-project/",
+    ]
+    for descr in descriptions:
+        result = cookies.bake(extra_context={"project_description": descr})
+        assert result.exit_code == 0, descr
+        with inside_dir(str(result.project_path)):
+            readme_content = Path("README.md").read_text()
+            if descr:
+                assert "## Project description" in readme_content
+                assert descr in readme_content
