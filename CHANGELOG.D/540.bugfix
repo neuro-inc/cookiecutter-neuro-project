@@ -1,0 +1,1 @@
+Fix apt dependencies installation if the project template is used on Windows (CRLF instead of LF file endings).
