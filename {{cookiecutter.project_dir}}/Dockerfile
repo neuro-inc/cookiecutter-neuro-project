@@ -3,10 +3,10 @@ FROM neuromation/base:v1.8.1-runtime
 COPY apt.txt .
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -qq update && \
-    xargs apt-get -qq install --no-install-recommends < apt.txt && \
+    cat apt.txt | tr -d "\r" | xargs -I % apt-get -qq install --no-install-recommends % && \
     apt-get -qq clean && \
     apt-get autoremove -y --purge && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/*
+    rm -rf apt.txt /var/lib/apt/lists/* /tmp/* ~/*
 
 COPY setup.cfg .
 
