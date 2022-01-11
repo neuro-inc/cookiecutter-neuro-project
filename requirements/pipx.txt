@@ -1,1 +1,1 @@
-neuro-all==21.12.0
+neuro-all==22.1.0
