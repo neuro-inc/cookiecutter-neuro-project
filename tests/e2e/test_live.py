@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 from pytest_cookies.plugin import Cookies  # type: ignore
 
