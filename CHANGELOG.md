@@ -4,6 +4,33 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v22.02.01 (2022-02-01)
+======================================================
+
+
+Features
+--------
+
+
+- Added data folder to .neuroignore. Having this, you will not upload data files during the image build. However, `neuro-flow upload data` will work. ([#524](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/524))
+
+- Added Python `3.10` support, renamed image `myimage` to `train` for its verbosity, added optional project description. ([#537](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/537))
+
+
+Bugfixes
+--------
+
+
+- Fix apt dependencies installation if the project template is used on Windows (CRLF instead of LF file endings). ([#540](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/540))
+
+
+Deprecations and Removals
+-------------------------
+
+
+- Drop Python `3.6` support. ([#537](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/537))
+
+
 Neuro Platform Project Template v21.10.22 (2021-10-22)
 ======================================================
 
