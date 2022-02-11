@@ -9,4 +9,4 @@ PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/updat
 pytest==6.2.5
 pytest-asyncio==0.17.2
 pytest-cookies==0.6.1
-towncrier==21.3.0
+towncrier==21.9.0
