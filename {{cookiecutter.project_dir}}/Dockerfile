@@ -1,4 +1,4 @@
-FROM neuromation/base:v1.8.1-runtime
+FROM ghcr.io/neuro-inc/base:v22.2.1-runtime
 
 COPY apt.txt .
 RUN export DEBIAN_FRONTEND=noninteractive && \
