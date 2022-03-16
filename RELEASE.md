@@ -43,8 +43,8 @@ Instructions:
     $ git reset --hard master
     $ git push  # no need to push --force since `release` will move only forward
     ```
-5. Once `release` is green, test it via `neuro project init`, and if everything's fine,
-    publish new release to Slack: `#platform-development`, `#platform-feedback`, `#template-nightly-testing`.
+5. Once `release` is green, test it via `cookiecutter gh:neuro-inc/cookiecutter-neuro-project --checkout release`, and if everything's fine,
+    publish new release to Slack: `#platform-feedback`.
 
 Notes:
 ------
@@ -52,6 +52,3 @@ Notes:
 - When CI is triggered:
     - Each open PR (even draft PR) agains `master`.
     - Each new commit to `master` and `release`.
-    - Nightly builds: `master` at 00:00 and `release` at 01:00 UTC.
-- Branches `master` and `release` are tested against `staging` (`neuro-public` cluster), whereas all other branches are tested against `dev`.
-- See [here](https://dev.azure.com/neuromation/cookiecutter-neuro-project/_build?definitionId=4) to access builds on Azure Pipelines.
