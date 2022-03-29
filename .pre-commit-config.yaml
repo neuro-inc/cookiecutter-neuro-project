@@ -12,10 +12,12 @@ repos:
   hooks:
   - id: isort
 - repo: https://github.com/psf/black
-  rev: '22.1.0'
+  rev: '22.3.0'
   hooks:
     - id: black
       language_version: python3 # Should be a command that runs python3.6+
+      # Click deps are frozed due to https://github.com/psf/black/issues/2964
+      # Undo with the next release of Black.
       additional_dependencies: ['click==8.0.4']
       args: ['--line-length', '88']
 - repo: https://github.com/pre-commit/pre-commit-hooks
