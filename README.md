@@ -5,8 +5,9 @@ Base template for the [Neu.ro](https://neu.ro) platform projects based on [cooki
 
 Usage
 -----
-Consider using this template from within the Neuro CLI via `neuro project init` command.
-Nevertheless, one also could generate it directly via cookiecutter via `cookiecutter gh:neuro-inc/cookiecutter-neuro-project`.
+- `cookiecutter gh:neuro-inc/cookiecutter-neuro-project --checkout release` and follow interactive instractions in CLI.
+
+- `cookiecutter gh:neuro-inc/cookiecutter-neuro-project` to initialize project using master branch with the latest updates (might be unstable).
 
 Release
 -------

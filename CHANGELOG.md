@@ -4,6 +4,19 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v22.04.19 (2022-04-19)
+======================================================
+
+
+Features
+--------
+
+
+- Replace base image reference `neuromation/base:v1.8.1-runtime` -> `ghcr.io/neuro-inc/base:v22.2.1-runtime`. ([#566](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/566))
+
+- Use full storage and volume URIs in the template ([#590](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/590))
+
+
 Neuro Platform Project Template v22.02.01 (2022-02-01)
 ======================================================
 
