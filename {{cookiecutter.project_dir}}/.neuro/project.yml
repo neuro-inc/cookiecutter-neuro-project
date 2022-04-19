@@ -6,4 +6,4 @@ id: {{ cookiecutter.project_id }}
 ## Optional platform user that owns the project, referenced via $[[ project.owner ]]
 # role: {rolename}
 ## Optional platform role which can be used to share the project
-##   with other platform users via `neuro acl grant <role> <user>`
+##   with other platform users via `neuro acl grant <role> <user> {read|write|manage}`
