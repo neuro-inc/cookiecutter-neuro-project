@@ -314,7 +314,7 @@ jobs:
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
-    action: gh:neuro-actions/jupyter@v1.1.0
+    action: gh:neuro-actions/jupyter@v1.1.2
     args:
       image: $[[ images.train.ref ]]
       multi_args: $[[ multi.args ]]
