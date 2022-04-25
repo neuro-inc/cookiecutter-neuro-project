@@ -1,10 +1,15 @@
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import py
 import pytest
+import yaml
 from cookiecutter.exceptions import FailedHookException
+from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
+from pytest_virtualenv import VirtualEnv
 
 from tests.utils import inside_dir
 
@@ -118,3 +123,38 @@ def test_project_description(cookies: Cookies) -> None:
             if descr:
                 assert "## Project description" in readme_content
                 assert descr in readme_content
+
+
+@pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
+def test_user_role_added(
+    tmpdir: py.path.local, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cwd = Path(os.getcwd())
+
+    # This 'hides' neuro-cli installed via pipx
+    cur_path = os.environ["PATH"].split(os.pathsep)
+    avoid_paths = (
+        str(LOCAL_BIN_DIR),
+        str(DEFAULT_PIPX_BIN_DIR),
+    )
+    filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
+    monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
+
+    with VirtualEnv() as venv:
+        if venv_install_packages:
+            venv.install_package(venv_install_packages, installer="pip")
+
+        venv.run(
+            ("cookiecutter", cwd, "-o", tmpdir, "--no-input", "--default-config"),
+            capture=True,
+        )
+        proj_yml = yaml.safe_load(
+            Path(tmpdir / "neuro project" / ".neuro" / "project.yml").read_text()
+        )
+
+        if venv_install_packages:
+            assert "owner" in proj_yml
+            assert "role" in proj_yml
+        else:
+            assert "owner" not in proj_yml
+            assert "role" not in proj_yml
