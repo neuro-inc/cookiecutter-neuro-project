@@ -4,7 +4,7 @@
 
 [comment]: # (towncrier release notes start)
 
-Neuro Platform Project Template v22.04.19 (2022-04-19)
+Neuro Platform Project Template v22.04.26 (2022-04-26)
 ======================================================
 
 
@@ -12,9 +12,11 @@ Features
 --------
 
 
+- Added project owner and role generation in post-generate hooks. ([#596](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/596))
+
 - Replace base image reference `neuromation/base:v1.8.1-runtime` -> `ghcr.io/neuro-inc/base:v22.2.1-runtime`. ([#566](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/566))
 
-- Use full storage and volume URIs in the template ([#590](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/590))
+- Use full storage and image URIs in the template ([#590](https://github.com/neuro-inc/cookiecutter-neuro-project/issues/590))
 
 
 Neuro Platform Project Template v22.02.01 (2022-02-01)
