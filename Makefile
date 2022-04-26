@@ -33,8 +33,8 @@ test:
 	 export TMP_DIR=$$(mktemp -d) && \
 	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
 	   ls -d "$$TMP_DIR/test project/.neuro/"
-	 pytest -v tests/unit
-	 pytest -v tests/e2e
+	 pytest -v -n auto tests/unit
+	 pytest -v -n auto tests/e2e
 	 @echo -e "OK\n"
 
 .PHONY: changelog-draft
