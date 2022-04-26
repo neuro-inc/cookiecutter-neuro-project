@@ -27,7 +27,7 @@ except Exception:
         if result.returncode == 0:
             cli_output = result.stdout.decode().splitlines()
             for line in cli_output:
-                if "User Name" in line:
+                if "user name" in line.lower():
                     USERNAME = line.split()[2]
 if USERNAME:
     proj_file = Path("./.neuro/project.yml")
