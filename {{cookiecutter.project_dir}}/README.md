@@ -12,7 +12,7 @@ Then run:
 ```shell
 pip install -U neuro-cli neuro-flow
 neuro login
-neuro-flow build myimage
+neuro-flow build train
 neuro-flow run jupyter
 ```
 
