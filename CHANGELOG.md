@@ -4,6 +4,13 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Project Template v22.05.04 (2022-05-04)
+======================================================
+
+
+No significant changes.
+
+
 Neuro Platform Project Template v22.04.26 (2022-04-26)
 ======================================================
 
