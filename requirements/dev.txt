@@ -13,4 +13,4 @@ git+https://github.com/man-group/pytest-plugins@c2bc068#egg=pytest-virtualenv&su
 pytest-xdist==2.5.0
 PyYAML==6.0
 towncrier==21.9.0
-types-PyYAML==6.0.7
+types-PyYAML==6.0.8
