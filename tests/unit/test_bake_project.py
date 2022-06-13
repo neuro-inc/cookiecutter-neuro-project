@@ -21,7 +21,7 @@ def patch_yaml_safe_load() -> None:
     """Make yaml safe load print the file contents before parsing"""
     old_impl = yaml.safe_load
 
-    def safe_load(file):
+    def safe_load(file):  # type: ignore
         if isinstance(file, str):
             data = file
         else:
