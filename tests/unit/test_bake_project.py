@@ -17,6 +17,24 @@ from tests.utils import inside_dir
 logger = logging.getLogger(__name__)
 
 
+def patch_yaml_safe_load() -> None:
+    """Make yaml safe load print the file contents before parsing"""
+    old_impl = yaml.safe_load
+
+    def safe_load(file):
+        if isinstance(file, str):
+            data = file
+        else:
+            data = f"#{file.name}\n{Path(file.name).read_text()}"
+        print(f"yaml.safe_load: got input: {data}")
+        return old_impl(file)
+
+    yaml.safe_load = safe_load
+
+
+patch_yaml_safe_load()
+
+
 def test_project_tree(cookies: Cookies) -> None:
     result = cookies.bake(extra_context={"project_dir": "test-project"})
     assert result.exception is None
