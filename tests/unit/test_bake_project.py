@@ -1,9 +1,9 @@
+import logging
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-import py
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
@@ -14,15 +14,19 @@ from pytest_virtualenv import VirtualEnv
 from tests.utils import inside_dir
 
 
+logger = logging.getLogger(__name__)
+
+
 def test_project_tree(cookies: Cookies) -> None:
     result = cookies.bake(extra_context={"project_dir": "test-project"})
-    assert result.exit_code == 0
     assert result.exception is None
+    assert result.exit_code == 0
     assert result.project_path.name == "test-project"
 
 
 def test_run_flake8(cookies: Cookies) -> None:
     result = cookies.bake(extra_context={"project_dir": "flake8-compat"})
+    assert result.exception is None
     with inside_dir(str(result.project_path)):
         subprocess.check_call(["flake8"])
 
@@ -127,7 +131,7 @@ def test_project_description(cookies: Cookies) -> None:
 
 @pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
 def test_user_role_added(
-    tmpdir: py.path.local, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     cwd = Path(os.getcwd())
 
@@ -145,11 +149,18 @@ def test_user_role_added(
             venv.install_package(venv_install_packages, installer="pip")
 
         venv.run(
-            ("cookiecutter", cwd, "-o", tmpdir, "--no-input", "--default-config"),
+            (
+                "cookiecutter",
+                cwd,
+                "-o",
+                str(tmp_path),
+                "--no-input",
+                "--default-config",
+            ),
             capture=True,
         )
         proj_yml = yaml.safe_load(
-            Path(tmpdir / "neuro project" / ".neuro" / "project.yml").read_text()
+            Path(tmp_path / "neuro project" / ".neuro" / "project.yml").read_text()
         )
 
         if venv_install_packages:
