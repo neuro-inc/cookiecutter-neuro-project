@@ -10,6 +10,7 @@ from cookiecutter.exceptions import FailedHookException
 from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
+from yaml import YAMLError
 
 from tests.utils import inside_dir
 
@@ -27,7 +28,10 @@ def patch_yaml_safe_load() -> None:
         else:
             data = f"#{file.name}\n{Path(file.name).read_text()}"
         print(f"yaml.safe_load: got input: {data}")
-        print(old_impl(data))
+        try:
+            print(old_impl(data))
+        except YAMLError as e:
+            logger.error(e)
         return old_impl(file)
 
     yaml.safe_load = safe_load
