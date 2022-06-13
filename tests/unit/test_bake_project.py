@@ -27,6 +27,7 @@ def patch_yaml_safe_load() -> None:
         else:
             data = f"#{file.name}\n{Path(file.name).read_text()}"
         print(f"yaml.safe_load: got input: {data}")
+        print(old_impl(data))
         return old_impl(file)
 
     yaml.safe_load = safe_load
