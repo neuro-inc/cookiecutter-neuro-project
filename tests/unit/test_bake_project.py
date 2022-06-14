@@ -8,36 +8,21 @@ import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
 from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
+from pytest_cookies import plugin as cookies_plugin
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
-from yaml import YAMLError
 
 from tests.utils import inside_dir
 
 
 logger = logging.getLogger(__name__)
 
-
-def patch_yaml_safe_load() -> None:
-    """Make yaml safe load print the file contents before parsing"""
-    old_impl = yaml.safe_load
-
-    def safe_load(file):  # type: ignore
-        if isinstance(file, str):
-            data = file
-        else:
-            data = f"#{file.name}\n{Path(file.name).read_text()}"
-        print(f"yaml.safe_load: got input: {data}")
-        try:
-            print(old_impl(data))
-        except YAMLError as e:
-            logger.error(e)
-        return old_impl(file)
-
-    yaml.safe_load = safe_load
-
-
-patch_yaml_safe_load()
+# patch config to be pyyaml-friendly
+# TODO: remove after https://github.com/hackebrot/pytest-cookies/pull/61 is merged
+cookies_plugin.USER_CONFIG = """
+cookiecutters_dir: '{cookiecutters_dir}'
+replay_dir: '{replay_dir}'
+"""
 
 
 def test_project_tree(cookies: Cookies) -> None:
