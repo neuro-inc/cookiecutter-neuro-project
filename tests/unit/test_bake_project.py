@@ -17,15 +17,18 @@ from tests.utils import inside_dir
 
 logger = logging.getLogger(__name__)
 
-# patch config to be pyyaml-friendly
-# TODO: remove after https://github.com/hackebrot/pytest-cookies/pull/61 is merged
-cookies_plugin.USER_CONFIG = """
-cookiecutters_dir: '{cookiecutters_dir}'
-replay_dir: '{replay_dir}'
-"""
+
+def patch_config_template() -> None:
+    # patch config to be pyyaml-friendly
+    # TODO: remove after https://github.com/hackebrot/pytest-cookies/pull/61 is merged
+    cookies_plugin.USER_CONFIG = """
+    cookiecutters_dir: '{cookiecutters_dir}'
+    replay_dir: '{replay_dir}'
+    """
 
 
 def test_project_tree(cookies: Cookies) -> None:
+    patch_config_template()
     result = cookies.bake(extra_context={"project_dir": "test-project"})
     assert result.exception is None
     assert result.exit_code == 0
@@ -33,6 +36,7 @@ def test_project_tree(cookies: Cookies) -> None:
 
 
 def test_run_flake8(cookies: Cookies) -> None:
+    patch_config_template()
     result = cookies.bake(extra_context={"project_dir": "flake8-compat"})
     assert result.exception is None
     with inside_dir(str(result.project_path)):
@@ -40,6 +44,7 @@ def test_run_flake8(cookies: Cookies) -> None:
 
 
 def test_project_dir_hook(cookies: Cookies) -> None:
+    patch_config_template()
     result = cookies.bake(extra_context={"project_dir": "myproject"})
     assert result.exit_code == 0
     result = cookies.bake(extra_context={"project_dir": "my-project"})
@@ -59,6 +64,7 @@ def test_project_dir_hook(cookies: Cookies) -> None:
 
 
 def test_project_id_hook(cookies: Cookies) -> None:
+    patch_config_template()
     wrong_ids = [
         "qwe/qwe",
         "qwe?qwe",
@@ -94,6 +100,7 @@ def test_project_id_hook(cookies: Cookies) -> None:
 
 @pytest.mark.parametrize("preserve_comments", ["yes", "no"])
 def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) -> None:
+    patch_config_template()
     result = cookies.bake(
         extra_context={
             "project_dir": "project-with-comments",
@@ -121,6 +128,7 @@ def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) 
 
 
 def test_project_description(cookies: Cookies) -> None:
+    patch_config_template()
     descriptions = [
         # " ",
         "Descrition!",
@@ -141,6 +149,7 @@ def test_project_description(cookies: Cookies) -> None:
 def test_user_role_added(
     tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    patch_config_template()
     cwd = Path(os.getcwd())
 
     # This 'hides' neuro-cli installed via pipx
