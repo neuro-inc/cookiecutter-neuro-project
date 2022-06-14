@@ -11,11 +11,34 @@ from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies import plugin as cookies_plugin  # type: ignore
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
+from yaml import YAMLError
 
 from tests.utils import inside_dir
 
 
 logger = logging.getLogger(__name__)
+
+
+def patch_yaml_safe_load() -> None:
+    """Make yaml safe load print the file contents before parsing"""
+    old_impl = yaml.safe_load
+
+    def safe_load(file):  # type: ignore
+        if isinstance(file, str):
+            data = file
+        else:
+            data = f"#{file.name}\n{Path(file.name).read_text()}"
+        print(f"yaml.safe_load: got input: {data}")
+        try:
+            print(old_impl(data))
+        except YAMLError as e:
+            logger.error(e)
+        return old_impl(file)
+
+    yaml.safe_load = safe_load
+
+
+patch_yaml_safe_load()
 
 
 def patch_config_template() -> None:
