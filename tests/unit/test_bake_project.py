@@ -8,7 +8,7 @@ import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
 from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
-from pytest_cookies import plugin as cookies_plugin
+from pytest_cookies import plugin as cookies_plugin  # type: ignore
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
 
