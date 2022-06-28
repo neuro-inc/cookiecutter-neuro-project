@@ -1,5 +1,5 @@
 -r base.txt
-black==22.1.0
+black==22.6.0
 flake8==4.0.1
 git+https://github.com/andriihomiak/pytest-cookies.git@fix/quotes_in_user_config # pytest-cookies==0.6.1
 isort==5.10.1
