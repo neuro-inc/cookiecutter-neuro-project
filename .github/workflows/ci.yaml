@@ -57,6 +57,7 @@ jobs:
       - name: Configure environment
         run: |
           neuro config login-with-token ${{ secrets.NEURO_TOKEN }} ${{ secrets.NEURO_STAGING_URL }}
+          neuro config switch-cluster green-a4000-1
           neuro --color=no config show
 
       - name: Lint
