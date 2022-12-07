@@ -59,6 +59,9 @@ jobs:
           neuro config login-with-token ${{ secrets.NEURO_TOKEN }} ${{ secrets.NEURO_STAGING_URL }}
           neuro config switch-cluster revenuegrid-aws
           neuro --color=no config show
+          git --version
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
 
       - name: Lint
         run: |
