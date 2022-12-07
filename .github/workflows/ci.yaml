@@ -65,6 +65,7 @@ jobs:
         # Y.S. key is used
         with:
           ssh-private-key: ${{ secrets.GH_NF_ACTIONS_SSH_PRIVATE }}
+          log-public-key: false
 
       - name: Lint
         run: |
