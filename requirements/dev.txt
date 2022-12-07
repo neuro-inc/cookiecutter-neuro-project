@@ -1,9 +1,6 @@
 -r base.txt
-black==22.6.0
-flake8==4.0.1
 git+https://github.com/andriihomiak/pytest-cookies.git@fix/quotes_in_user_config # pytest-cookies==0.6.1
-isort==5.10.1
-mypy==0.971
+mypy==0.991
 pipx==1.1.0
 pre-commit==2.20.0
 PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
@@ -12,5 +9,5 @@ pytest-asyncio==0.19.0
 git+https://github.com/man-group/pytest-plugins@c2bc068#egg=pytest-virtualenv&subdirectory=pytest-virtualenv
 pytest-xdist==2.5.0
 PyYAML==6.0
-towncrier==21.9.0
+towncrier==22.8.0
 types-PyYAML==6.0.11

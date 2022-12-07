@@ -1,6 +1,5 @@
 import logging
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -22,13 +21,6 @@ def test_project_tree(cookies: Cookies) -> None:
     assert result.exception is None
     assert result.exit_code == 0
     assert result.project_path.name == "test-project"
-
-
-def test_run_flake8(cookies: Cookies) -> None:
-    result = cookies.bake(extra_context={"project_dir": "flake8-compat"})
-    assert result.exception is None
-    with inside_dir(str(result.project_path)):
-        subprocess.check_call(["flake8"])
 
 
 def test_project_dir_hook(cookies: Cookies) -> None:
