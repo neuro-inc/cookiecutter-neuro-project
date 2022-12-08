@@ -3,7 +3,7 @@ git+https://github.com/andriihomiak/pytest-cookies.git@fix/quotes_in_user_config
 mypy==0.991
 pipx==1.1.0
 pre-commit==2.20.0
-PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
+PyGithub==1.57  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
 pytest==6.2.5
 pytest-asyncio==0.20.2
 git+https://github.com/man-group/pytest-plugins@c2bc068#egg=pytest-virtualenv&subdirectory=pytest-virtualenv
