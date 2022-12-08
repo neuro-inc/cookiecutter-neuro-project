@@ -6,7 +6,7 @@ VERSION_FILE := version.txt
 .PHONY: setup init
 setup init:
 	pip install -r requirements/dev.txt
-	cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f
+	cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f --verbose
 	pre-commit install
 
 .PHONY: get-version
