@@ -5,7 +5,7 @@ pipx==1.1.0
 pre-commit==2.20.0
 PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
 pytest==6.2.5
-pytest-asyncio==0.19.0
+pytest-asyncio==0.20.3
 git+https://github.com/man-group/pytest-plugins@c2bc068#egg=pytest-virtualenv&subdirectory=pytest-virtualenv
 pytest-xdist==2.5.0
 PyYAML==6.0
