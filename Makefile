@@ -6,7 +6,6 @@ VERSION_FILE := version.txt
 .PHONY: setup init
 setup init:
 	pip install -r requirements/dev.txt
-	cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f
 	pre-commit install
 
 .PHONY: get-version
@@ -36,8 +35,8 @@ test:
 
 .PHONY: changelog-draft
 changelog-draft: update-version $(VERSION_FILE)
-	towncrier --draft --name "Neuro Platform Project Template" --version `cat version.txt`
+	towncrier --draft --name "Neuro Platform Flow Template" --version `cat version.txt`
 
 .PHONY: changelog
 changelog: update-version $(VERSION_FILE)
-	towncrier --name "Neuro Platform Project Template" --version `cat version.txt` --yes
+	towncrier --name "Neuro Platform Flow Template" --version `cat version.txt` --yes

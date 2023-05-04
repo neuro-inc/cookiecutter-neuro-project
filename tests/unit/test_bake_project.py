@@ -156,8 +156,6 @@ def test_user_role_added(
         )
 
         if venv_install_packages:
-            assert "owner" in proj_yml
-            assert "role" in proj_yml
+            assert "project_name" in proj_yml
         else:
-            assert "owner" not in proj_yml
-            assert "role" not in proj_yml
+            assert "project_name" not in proj_yml

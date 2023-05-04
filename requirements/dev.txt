@@ -1,7 +1,8 @@
 -r base.txt
 git+https://github.com/andriihomiak/pytest-cookies.git@fix/quotes_in_user_config # pytest-cookies==0.6.1
 mypy==0.991
-pipx==1.1.0
+neuro-cli @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/
+neuro-sdk @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/
 pre-commit==2.20.0
 PyGithub==1.55  # Bump also {{cookiecutter.project_dir}}/.github/workflows/update-neuro-flow-actions.yml:15
 pytest==6.2.5

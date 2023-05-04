@@ -4,18 +4,18 @@ import sys
 from pathlib import Path
 
 
-# >>> Handling project owner
-USERNAME = ""
+# >>> Handling project name
+PROJECT_NAME = ""
 try:
     import asyncio
 
     import neuro_sdk
 
-    async def get_username() -> str:
+    async def get_project_name() -> str:
         async with await neuro_sdk.get() as client:
-            return client.username
+            return client.config.project_name_or_raise
 
-    USERNAME = asyncio.run(get_username())
+    PROJECT_NAME = asyncio.run(get_project_name())
 
 except Exception:
     import subprocess
@@ -27,22 +27,21 @@ except Exception:
         if result.returncode == 0:
             cli_output = result.stdout.decode().splitlines()
             for line in cli_output:
-                if "user name" in line.lower():
-                    USERNAME = line.split()[2]
-if USERNAME:
+                if "current project" in line.lower():
+                    PROJECT_NAME = line.split()[2]
+if PROJECT_NAME:
     proj_file = Path("./.neuro/project.yml")
     content = proj_file.read_text()
-    content = content.replace("# owner: {ownername}", f"owner: {USERNAME}")
     content = content.replace(
-        "# role: {rolename}", f"role: {USERNAME}/projects/{{ cookiecutter.project_id }}"
+        "# project_name: {project_name}", f"project_name: {PROJECT_NAME}"
     )
     proj_file.write_text("".join(content))
 else:
     live_file = Path("./.neuro/live.yml")
     content = live_file.read_text()
-    content = content.replace("/$[[ project.owner ]]/", "")
+    content = content.replace("/$[[ project.project_name ]]/", "")
     live_file.write_text("".join(content))
-# <<< Handling project owner
+# <<< Handling project name
 
 
 # >>> Optionally clearing comments

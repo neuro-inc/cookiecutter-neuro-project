@@ -1,7 +1,7 @@
-# {{ cookiecutter.project_name }}
+# {{ cookiecutter.flow_name }}
 
-{% if cookiecutter.project_description %}## Project description{%- endif %}
-{{ cookiecutter.project_description }}
+{% if cookiecutter.flow_description %}## Flow description{%- endif %}
+{{ cookiecutter.flow_description }}
 
 ## Quick Start
 
@@ -10,7 +10,8 @@ Sign up at [neu.ro](https://neu.ro) and setup your local machine according to [i
 Then run:
 
 ```shell
-pip install -U neuro-cli neuro-flow
+pip install -U pipx
+pipx install neuro-all
 neuro login
 neuro-flow build train
 neuro-flow run jupyter

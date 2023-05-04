@@ -3,31 +3,31 @@ import sys
 from pathlib import Path
 
 
-PROJECT_DIR = "{{ cookiecutter.project_dir }}"
+FLOW_DIR = "{{ cookiecutter.flow_dir }}"
 
-FULL_PROJECT_DIR = Path(".").resolve().with_name(PROJECT_DIR)
+FULL_FLOW_DIR = Path(".").resolve().with_name(FLOW_DIR)
 FORBIDDEN_CHARS = r'<>:"\/|?*'
 
-forbidden_chars_in_dir_name = set(PROJECT_DIR) & set(FORBIDDEN_CHARS)
+forbidden_chars_in_dir_name = set(FLOW_DIR) & set(FORBIDDEN_CHARS)
 
 if forbidden_chars_in_dir_name:
-    print(f"ERROR: '{PROJECT_DIR}' contains forbidden chars ({FORBIDDEN_CHARS})")
+    print(f"ERROR: '{FLOW_DIR}' contains forbidden chars ({FORBIDDEN_CHARS})")
     sys.exit(1)
-elif not FULL_PROJECT_DIR.exists():
+elif not FULL_FLOW_DIR.exists():
     try:
-        FULL_PROJECT_DIR.mkdir(parents=True)
-        FULL_PROJECT_DIR.rmdir()
+        FULL_FLOW_DIR.mkdir(parents=True)
+        FULL_FLOW_DIR.rmdir()
     except Exception:
         print(
-            f"ERROR: '{FULL_PROJECT_DIR}' is not a valid project directory name "
+            f"ERROR: '{FULL_FLOW_DIR}' is not a valid flow directory name "
             "since OS cannot create it."
         )
         sys.exit(1)
 
-project_id = "{{ cookiecutter.project_id }}"
-if not project_id.isidentifier():
+flow_id = "{{ cookiecutter.flow_id }}"
+if not flow_id.isidentifier():
     print(
-        f"ERROR: '{project_id}' is not a valid project identifier. "
+        f"ERROR: '{flow_id}' is not a valid flow identifier. "
         "It can only contain alphanumeric letters (a-zA-Z0-9), or underscores (_), "
         "and cannot start with a number, or contain any spaces."
     )
