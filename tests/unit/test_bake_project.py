@@ -9,20 +9,21 @@ from cookiecutter.exceptions import FailedHookException
 from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
+
 from tests.utils import inside_dir
 
 
 logger = logging.getLogger(__name__)
 
 
-def test_project_tree(cookies: Cookies) -> None:
+def test_flow_tree(cookies: Cookies) -> None:
     result = cookies.bake(extra_context={"flow_dir": "test-flow"})
     assert result.exception is None
     assert result.exit_code == 0
     assert result.project_path.name == "test-flow"
 
 
-def test_project_dir_hook(cookies: Cookies) -> None:
+def test_flow_dir_hook(cookies: Cookies) -> None:
     result = cookies.bake(extra_context={"flow_dir": "myflow"})
     assert result.exit_code == 0
     result = cookies.bake(extra_context={"flow_dir": "my-flow"})
@@ -41,7 +42,7 @@ def test_project_dir_hook(cookies: Cookies) -> None:
     assert result.exit_code != 0
 
 
-def test_project_id_hook(cookies: Cookies) -> None:
+def test_flow_id_hook(cookies: Cookies) -> None:
     wrong_ids = [
         "qwe/qwe",
         "qwe?qwe",
@@ -76,7 +77,7 @@ def test_project_id_hook(cookies: Cookies) -> None:
 
 
 @pytest.mark.parametrize("preserve_comments", ["yes", "no"])
-def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) -> None:
+def test_flow_config_with_comments(cookies: Cookies, preserve_comments: str) -> None:
     result = cookies.bake(
         extra_context={
             "flow_dir": "flow-with-comments",
@@ -103,7 +104,7 @@ def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) 
             )
 
 
-def test_project_description(cookies: Cookies) -> None:
+def test_flow_description(cookies: Cookies) -> None:
     descriptions = [
         # " ",
         "Descrition!",
@@ -120,8 +121,15 @@ def test_project_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-@pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
-def test_project_name(
+@pytest.mark.parametrize(
+    "venv_install_packages",
+    [
+        "",
+        "git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/",  # noqa
+        "git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/",  # noqa
+    ],
+)
+def test_flow_name(
     tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     cwd = Path(os.getcwd())
@@ -151,10 +159,12 @@ def test_project_name(
             capture=True,
         )
         proj_yml = yaml.safe_load(
-            Path(tmp_path / "neuro project" / ".neuro" / "project.yml").read_text()
+            Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
         )
 
         if venv_install_packages:
-            assert "project_name" in proj_yml
+            assert proj_yml["id"] == "my_flow"
+            assert proj_yml["project_name"] is not None
         else:
+            assert proj_yml["id"] == "my_flow"
             assert "project_name" not in proj_yml
