@@ -14,11 +14,11 @@ neuro login
 
 | Local directory | Description | Storage URI | Environment mounting point |
 |:--------------- |:----------- |:----------- |:-------------------------- |
-| `data/` | Data | `storage:{{ cookiecutter.project_id }}/data/` | `/{{ cookiecutter.project_id }}/data/` |
-| `{{ cookiecutter.code_directory }}/` | Python modules | `storage:{{ cookiecutter.project_id }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.project_id }}/{{ cookiecutter.code_directory }}/` |
-| `config/` | Configuration files | `storage:{{ cookiecutter.project_id }}/config/` | `/{{ cookiecutter.project_id }}/config/` |
-| `notebooks/` | Jupyter notebooks | `storage:{{ cookiecutter.project_id }}/notebooks/` | `/{{ cookiecutter.project_id }}/notebooks/` |
-| `results/` | Logs and results | `storage:{{ cookiecutter.project_id }}/results/` | `/{{ cookiecutter.project_id }}/results/` |
+| `data/` | Data | `storage:{{ cookiecutter.flow_id }}/data/` | `/{{ cookiecutter.flow_id }}/data/` |
+| `{{ cookiecutter.code_directory }}/` | Python modules | `storage:{{ cookiecutter.flow_id }}/{{ cookiecutter.code_directory }}/` | `/{{ cookiecutter.flow_id }}/{{ cookiecutter.code_directory }}/` |
+| `config/` | Configuration files | `storage:{{ cookiecutter.flow_id }}/config/` | `/{{ cookiecutter.flow_id }}/config/` |
+| `notebooks/` | Jupyter notebooks | `storage:{{ cookiecutter.flow_id }}/notebooks/` | `/{{ cookiecutter.flow_id }}/notebooks/` |
+| `results/` | Logs and results | `storage:{{ cookiecutter.flow_id }}/results/` | `/{{ cookiecutter.flow_id }}/results/` |
 
 ## Development
 
@@ -111,7 +111,7 @@ Through a simple file explorer interface, you can upload test images and perform
 
 On a local machine, run `neuro-flow mkvolumes`. This command creates storage folders for all defined volumes. You only need to run this once.
 
-After the storage folders have been created, run `neuro-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.project_id }}/data` volume mounted to your development environment's `/project/data`.
+After the storage folders have been created, run `neuro-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.flow_id }}/data` volume mounted to your development environment's `/project/data`.
 
 You can upload (or download) every folder for which the `local` parameter is specified in the [live.yml file](./.neuro/live.yml).
 

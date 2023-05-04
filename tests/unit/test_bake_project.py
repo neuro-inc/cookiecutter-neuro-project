@@ -9,7 +9,6 @@ from cookiecutter.exceptions import FailedHookException
 from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
-
 from tests.utils import inside_dir
 
 
@@ -17,18 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 def test_project_tree(cookies: Cookies) -> None:
-    result = cookies.bake(extra_context={"project_dir": "test-project"})
+    result = cookies.bake(extra_context={"flow_dir": "test-flow"})
     assert result.exception is None
     assert result.exit_code == 0
-    assert result.project_path.name == "test-project"
+    assert result.project_path.name == "test-flow"
 
 
 def test_project_dir_hook(cookies: Cookies) -> None:
-    result = cookies.bake(extra_context={"project_dir": "myproject"})
+    result = cookies.bake(extra_context={"flow_dir": "myflow"})
     assert result.exit_code == 0
-    result = cookies.bake(extra_context={"project_dir": "my-project"})
+    result = cookies.bake(extra_context={"flow_dir": "my-flow"})
     assert result.exit_code == 0
-    result = cookies.bake(extra_context={"project_dir": "my?project"})
+    result = cookies.bake(extra_context={"flow_dir": "my?flow"})
     assert result.exit_code != 0
     if sys.platform == "win32":
         # Unfortunately, pre_gen hook is called before cookiecutter copies the template
@@ -38,7 +37,7 @@ def test_project_dir_hook(cookies: Cookies) -> None:
         assert isinstance(result.exception, OSError)
     else:
         assert isinstance(result.exception, FailedHookException)
-    result = cookies.bake(extra_context={"project_dir": "t" * 256})
+    result = cookies.bake(extra_context={"flow_dir": "t" * 256})
     assert result.exit_code != 0
 
 
@@ -68,11 +67,11 @@ def test_project_id_hook(cookies: Cookies) -> None:
         "qwe" * 20,
     ]
     for id_ in wrong_ids:
-        result = cookies.bake(extra_context={"project_id": id_})
+        result = cookies.bake(extra_context={"flow_id": id_})
         assert result.exit_code != 0, id_
         assert isinstance(result.exception, FailedHookException)
     for id_ in correct_ids:
-        result = cookies.bake(extra_context={"project_id": id_})
+        result = cookies.bake(extra_context={"flow_id": id_})
         assert result.exit_code == 0, id_
 
 
@@ -80,7 +79,7 @@ def test_project_id_hook(cookies: Cookies) -> None:
 def test_project_config_with_comments(cookies: Cookies, preserve_comments: str) -> None:
     result = cookies.bake(
         extra_context={
-            "project_dir": "project-with-comments",
+            "flow_dir": "flow-with-comments",
             "preserve Neuro Flow template hints": preserve_comments,
         }
     )
@@ -112,17 +111,17 @@ def test_project_description(cookies: Cookies) -> None:
         "https://github.com/neuro-inc/cookiecutter-neuro-project/",
     ]
     for descr in descriptions:
-        result = cookies.bake(extra_context={"project_description": descr})
+        result = cookies.bake(extra_context={"flow_description": descr})
         assert result.exit_code == 0, descr
         with inside_dir(str(result.project_path)):
             readme_content = Path("README.md").read_text()
             if descr:
-                assert "## Project description" in readme_content
+                assert "## Flow description" in readme_content
                 assert descr in readme_content
 
 
 @pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
-def test_user_role_added(
+def test_project_name(
     tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     cwd = Path(os.getcwd())

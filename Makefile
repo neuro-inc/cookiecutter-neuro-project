@@ -6,6 +6,7 @@ VERSION_FILE := version.txt
 .PHONY: setup init
 setup init:
 	pip install -r requirements/dev.txt
+	cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f
 	pre-commit install
 
 .PHONY: get-version
@@ -28,7 +29,7 @@ format:
 test:
 	 export TMP_DIR=$$(mktemp -d) && \
 	   cookiecutter --no-input --config-file ./tests/cookiecutter.yaml --output-dir $$TMP_DIR . && \
-	   ls -d "$$TMP_DIR/test project/.neuro/"
+	   ls -d "$$TMP_DIR/test flow/.neuro/"
 	 pytest -v -n auto tests/unit
 	 pytest -v -n auto tests/e2e
 	 @echo -e "OK\n"
