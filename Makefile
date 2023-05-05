@@ -6,7 +6,12 @@ VERSION_FILE := version.txt
 .PHONY: setup init
 setup init:
 	pip install -r requirements/dev.txt
-	cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f
+	# cat requirements/pipx.txt | xargs -rn 1 -- pipx install -f
+	# tmp work-around awaiting for the release of sdk. afterwards - rm belov pipx commands and uncomment above
+	pipx install git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/
+	pipx runpip neuro-cli uninstall neuro-sdk -y
+	pipx inject neuro-cli git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/
+	pipx inject neuro-cli git+https://github.com/neuro-inc/neuro-flow.git@248d39f7cbfdeeb9cdc079d9d793664b0060be46
 	pre-commit install
 
 .PHONY: get-version

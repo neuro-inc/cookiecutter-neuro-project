@@ -126,7 +126,6 @@ def test_flow_description(cookies: Cookies) -> None:
     [
         "",
         "git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/",  # noqa
-        "git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/",  # noqa
     ],
 )
 def test_flow_name(
