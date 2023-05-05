@@ -1,1 +1,2 @@
 git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/
+git+https://github.com/neuro-inc/neuro-flow.git@248d39f7cbfdeeb9cdc079d9d793664b0060be46
