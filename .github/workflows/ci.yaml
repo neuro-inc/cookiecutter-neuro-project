@@ -71,5 +71,7 @@ jobs:
           make lint
 
       - name: Run tests
+        env:
+          NEURO_USER: ${{ secrets.CLIENT_TEST_E2E_USER_NAME }}
         run: |
           make test

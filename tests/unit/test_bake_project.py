@@ -125,7 +125,10 @@ def test_flow_description(cookies: Cookies) -> None:
     "venv_install_packages",
     [
         "",
-        "git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/",  # noqa
+        (
+            "'neuro-sdk @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/' "  # noqa
+            "'neuro-cli @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/'"  # noqa
+        ),
     ],
 )
 def test_flow_name(
@@ -145,6 +148,9 @@ def test_flow_name(
     with VirtualEnv() as venv:
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
+            venv.run(
+                "neuro config login-with-token $NEURO_USER https://dev.neu.ro/api/v1"
+            )
 
         venv.run(
             (
@@ -163,7 +169,7 @@ def test_flow_name(
 
         if venv_install_packages:
             assert proj_yml["id"] == "my_flow"
-            assert proj_yml["project_name"] is not None
+            assert proj_yml["project_name"] is not None, proj_yml
         else:
             assert proj_yml["id"] == "my_flow"
             assert "project_name" not in proj_yml
