@@ -15,9 +15,9 @@ Instructions:
 2. Test `master` manually:
     ```
     $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
-    project_name [Neuro Project]:
-    project_dir [neuro project]:
-    project_id [neuro_project]:
+    flow_name [My flow]:
+    flow_dir [neuro project]:
+    flow_id [neuro_project]:
     code_directory [modules]:
     preserve Neuro Flow template hints [yes]:
     $ cd neuro project

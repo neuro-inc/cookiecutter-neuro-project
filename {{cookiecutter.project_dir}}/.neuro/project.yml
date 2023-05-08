@@ -1,9 +1,0 @@
-## Check our full reference documentation at https://neu-ro.gitbook.io/neuro-flow/reference/project-configuration-syntax
-id: {{ cookiecutter.project_id }}
-## Could be referenced as $[[ project.id ]] or $[[ flow.project_id ]] contexts.
-## Default value: name of the folder containing `.neuro`
-# owner: {ownername}
-## Optional platform user that owns the project, referenced via $[[ project.owner ]]
-# role: {rolename}
-## Optional platform role which can be used to share the project
-##   with other platform users via `neuro acl grant <role> <user> {read|write|manage}`

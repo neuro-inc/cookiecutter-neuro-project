@@ -1,8 +1,8 @@
 {
-    "project_name": "Neuro Project",
-    "project_description": "",
-    "project_dir": "{{ cookiecutter.project_name.lower() }}",
-    "project_id": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "flow_name": "My flow",
+    "flow_description": "",
+    "flow_dir": "{{ cookiecutter.flow_name.lower() }}",
+    "flow_id": "{{ cookiecutter.flow_name.lower().replace(' ', '_').replace('-', '_') }}",
     "code_directory": "modules",
     "preserve Neuro Flow template hints": "yes",
     "_copy_without_render": [

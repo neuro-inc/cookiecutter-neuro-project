@@ -5,7 +5,7 @@ kind: live
 # id: <id>
 ## Optional. Identifier of the workflow. By default, the id is 'live'. It's available as $[[ flow.flow_id ]] in experssions.
 ## Note: Not to be confused with $[[ flow.project_id ]], which is a different context defined in the `project.yml` file.
-title: {{ cookiecutter.project_name }}
+title: {{ cookiecutter.flow_name }}
 ## Optional. Workflow title. Can be any valid string and is accessible as $[[ flow.title ]]
 
 defaults:
@@ -48,7 +48,7 @@ images:
   train:
   ## `neuro-flow build train` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
   ## The $[[ images.img_id.ref ]] expression can be used for pointing to an image from jobs.<job-id>.image.
-    ref: image:/$[[ project.owner ]]/$[[ flow.project_id ]]:v1
+    ref: image:/$[[ project.project_name ]]/$[[ flow.project_id ]]:v1
     ## Required. Image reference, can be of two types:
     ##  - Platform-hosted image - its reference should start with the 'image:' prefix. `neuro-flow build <img_id>` will work in this case.
     ##  - Image hosted on DockerHub - without the 'image:' prefix. In this case, `neuro-flow build <img_id>` will not work.
@@ -57,7 +57,7 @@ images:
     ## Hint: You can use the embedded `hash_files()` function to generate a built image's tag based on its content.
     ## Example:
     ##  train:
-    ##    ref: image:$[[ flow.project_id ]]:$[[ hash_files('Dockerfile', 'requirements.txt', '{{cookiecutter.project_dir}}/**/*.py')]]
+    ##    ref: image:$[[ flow.project_id ]]:$[[ hash_files('Dockerfile', 'requirements.txt', '{{cookiecutter.flow_dir}}/**/*.py')]]
     dockerfile: $[[ flow.workspace ]]/Dockerfile
     ## An optional Docker file path used for building images, `Dockerfile` by default. The path should be relative to the context's root.
     context: $[[ flow.workspace ]]/
@@ -99,7 +99,7 @@ volumes:
   ## The key 'volume-id' (data in this case) is a string and its value is a map of the volume's configuration data.
   ## You must replace 'volume-id' with a string that is unique to the volumes object.
   ## The 'volume-id' must start with a letter and contain only alphanumeric characters or underscore symbols.
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]/data
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/data
     ## Required. The volume URI on the Neu.ro Storage ('storage:path/on/storage') or disk id ('disk:disk-id-or-name').
     ## Learn more about Neu.ro Storage and Neu.ro Disks at
     ##  https://docs.neu.ro/core/platform-storage/storage and https://docs.neu.ro/core/platform-storage/disks respectively.
@@ -113,23 +113,23 @@ volumes:
     # read-only: true
     ## The volume is mounted as read-only by default if this attribute is set, read-write mode is used otherwise.
   code:
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]/{{ cookiecutter.code_directory }}
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/{{ cookiecutter.code_directory }}
     mount: /project/{{ cookiecutter.code_directory }}
     local: {{ cookiecutter.code_directory }}
   config:
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]/config
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/config
     mount: /project/config
     local: config
   notebooks:
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]/notebooks
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/notebooks
     mount: /project/notebooks
     local: notebooks
   results:
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]/results
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/results
     mount: /project/results
     local: results
   project:
-    remote: storage:/$[[ project.owner ]]/$[[ flow.project_id ]]
+    remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]
     mount: /project
     local: .
 

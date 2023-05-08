@@ -10,8 +10,8 @@ from tests.utils import inside_dir
 def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
     result = cookies.bake(
         extra_context={
-            "project_dir": "test-project",
-            "project_id": "awesome_project",
+            "flow_dir": "test-flow",
+            "flow_id": "awesome_flow",
             "preserve Neuro Flow template hints": preserve_comments,
         }
     )
@@ -24,8 +24,8 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
 
         proc = exec("neuro-flow --show-traceback run --dry-run train")
         assert "neuro run" in proc.stdout, proc
-        assert "--tag=project:awesome-project" in proc.stdout, proc
+        assert "--tag=project:awesome-flow" in proc.stdout, proc
 
         proc = exec("neuro-flow --show-traceback run --dry-run remote_debug")
         assert "neuro run" in proc.stdout, proc
-        assert "--tag=project:awesome-project" in proc.stdout, proc
+        assert "--tag=project:awesome-flow" in proc.stdout, proc

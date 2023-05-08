@@ -56,8 +56,7 @@ jobs:
 
       - name: Configure environment
         run: |
-          neuro config login-with-token ${{ secrets.NEURO_TOKEN }} ${{ secrets.NEURO_STAGING_URL }}
-          neuro config switch-cluster revenuegrid-aws
+          neuro config login-with-token ${{ secrets.CLIENT_TEST_E2E_USER_NAME }} https://dev.neu.ro/api/v1
           neuro --color=no config show
 
       - uses: webfactory/ssh-agent@v0.7.0
@@ -72,5 +71,7 @@ jobs:
           make lint
 
       - name: Run tests
+        env:
+          NEURO_USER: ${{ secrets.CLIENT_TEST_E2E_USER_NAME }}
         run: |
           make test
