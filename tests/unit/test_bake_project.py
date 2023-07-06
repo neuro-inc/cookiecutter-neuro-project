@@ -121,16 +121,7 @@ def test_flow_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-@pytest.mark.parametrize(
-    "venv_install_packages",
-    [
-        "",
-        (
-            "'neuro-sdk @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-sdk/' "  # noqa
-            "'neuro-cli @ git+https://github.com/neuro-inc/neuro-cli.git@0ff55bb299b85c6c0052ed4fc8954a0cf8500119#subdirectory=neuro-cli/'"  # noqa
-        ),
-    ],
-)
+@pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
 def test_flow_name(
     tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
