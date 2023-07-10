@@ -4,6 +4,13 @@
 
 [comment]: # (towncrier release notes start)
 
+Neuro Platform Flow Template v23.07.10 (2023-07-10)
+===================================================
+
+
+No significant changes.
+
+
 Neuro Platform Project Template v22.12.07 (2022-12-07)
 ======================================================
 
