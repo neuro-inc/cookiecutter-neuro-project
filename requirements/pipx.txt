@@ -1,1 +1,1 @@
-neuro-all==23.7.0
+neuro-all
