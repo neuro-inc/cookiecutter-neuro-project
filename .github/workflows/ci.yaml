@@ -59,7 +59,7 @@ jobs:
           neuro config login-with-token ${{ secrets.CLIENT_TEST_E2E_USER_NAME }} https://dev.neu.ro/api/v1
           neuro --color=no config show
 
-      - uses: webfactory/ssh-agent@v0.7.0
+      - uses: webfactory/ssh-agent@v0.9.0
         # Authenticates ssh on worker to pull repos under github.com/neuro-actions via ssh
         # Y.S. key is used
         with:
