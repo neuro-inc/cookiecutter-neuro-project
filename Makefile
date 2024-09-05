@@ -1,12 +1,12 @@
 LINTER_DIRS := tests
-NEURO_COMMAND=neuro --verbose --show-traceback --color=no
+APOLO_COMMAND=apolo --verbose --show-traceback --color=no
 TMP_DIR := $(shell mktemp -d)
 VERSION_FILE := version.txt
 
 .PHONY: setup init
 setup init:
 	pip install -r requirements/dev.txt
-	pipx install neuro-all
+	pipx install apolo-all
 	pre-commit install
 
 .PHONY: get-version
@@ -36,8 +36,8 @@ test:
 
 .PHONY: changelog-draft
 changelog-draft: update-version $(VERSION_FILE)
-	towncrier --draft --name "Neuro Platform Flow Template" --version `cat version.txt`
+	towncrier --draft --name "Apolo Platform Flow Template" --version `cat version.txt`
 
 .PHONY: changelog
 changelog: update-version $(VERSION_FILE)
-	towncrier --name "Neuro Platform Flow Template" --version `cat version.txt` --yes
+	towncrier --name "Apolo Platform Flow Template" --version `cat version.txt` --yes

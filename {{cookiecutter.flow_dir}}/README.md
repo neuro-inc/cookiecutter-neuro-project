@@ -5,16 +5,16 @@
 
 ## Quick Start
 
-Sign up at [neu.ro](https://neu.ro) and setup your local machine according to [instructions](https://docs.neu.ro/).
+Sign up at [apolo](https://console.apolo.us) and setup your local machine according to [instructions](https://docs.apolo.us/).
 
 Then run:
 
 ```shell
 pip install -U pipx
-pipx install neuro-all
-neuro login
-neuro-flow build train
-neuro-flow run jupyter
+pipx install apolo-all
+apolo login
+apolo-flow build train
+apolo-flow run jupyter
 ```
 
-See [Help.md](HELP.md) for the detailed Neuro Project Template Reference.
+See [Help.md](HELP.md) for the detailed flow template reference.

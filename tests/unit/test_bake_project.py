@@ -140,7 +140,7 @@ def test_flow_name(
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
             venv.run(
-                "neuro config login-with-token $NEURO_USER https://dev.neu.ro/api/v1"
+                "neuro config login-with-token $APOLO_USER https://dev.neu.ro/api/v1"
             )
 
         venv.run(

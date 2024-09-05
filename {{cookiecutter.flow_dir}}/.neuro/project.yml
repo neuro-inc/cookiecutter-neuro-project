@@ -1,4 +1,4 @@
-## Check our full reference documentation at https://neu-ro.gitbook.io/neuro-flow/reference/project-configuration-syntax
+## Check our full reference documentation at https://docs.apolo.us/apolo-flow-reference/workflow-syntax/project-configuration-syntax
 id: {{ cookiecutter.flow_id }}
 ## Could be referenced as $[[ project.id ]] or $[[ flow.project_id ]] contexts.
 ## Default value: name of the folder containing `.neuro`

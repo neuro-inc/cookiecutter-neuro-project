@@ -9,10 +9,10 @@ PROJECT_NAME = ""
 try:
     import asyncio
 
-    import neuro_sdk
+    import apolo_sdk
 
     async def get_project_name() -> str:
-        async with await neuro_sdk.get() as client:
+        async with await apolo_sdk.get() as client:
             return client.config.project_name_or_raise
 
     PROJECT_NAME = asyncio.run(get_project_name())
@@ -20,15 +20,16 @@ try:
 except Exception:
     import subprocess
 
-    if shutil.which("neuro"):
+    if shutil.which("apolo"):
         result = subprocess.run(
-            ["neuro", "config", "show"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["apolo", "config", "show"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         if result.returncode == 0:
             cli_output = result.stdout.decode().splitlines()
             for line in cli_output:
                 if "current project" in line.lower():
                     PROJECT_NAME = line.split()[2]
+                    break
 if PROJECT_NAME:
     proj_file = Path("./.neuro/project.yml")
     content = proj_file.read_text()
@@ -58,7 +59,7 @@ PRESERVE_HINTS_VARIANS = {
     "false": False,
 }
 PRESERVE_HINTS_ANSWER = (
-    "{{ cookiecutter['preserve Neuro Flow template hints'] | lower }}"
+    "{{ cookiecutter['preserve Apolo Flow template hints'] | lower }}"
 )
 if PRESERVE_HINTS_ANSWER not in PRESERVE_HINTS_VARIANS:
     print(

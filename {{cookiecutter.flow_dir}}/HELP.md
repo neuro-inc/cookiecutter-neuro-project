@@ -1,13 +1,13 @@
-# Neuro Project Template Reference
+# Apolo Flow Template Reference
 
 ## Development environment
 
-This template runs on the [Neuro Platform](https://neu.ro).
+This template runs on the [Apolo Platform](https://apolo.us).
 
-To dive into problem solving, you need to sign up at the [Neuro Platform](https://neu.ro) website, set up your local machine according to the [instructions](https://neu.ro/docs), and login to Neuro CLI:
+To dive into problem solving, you need to sign up at the [Apolo Platform](https://neu.ro) website, set up your local machine according to the [instructions](https://neu.ro/docs), and login to Apolo CLI:
 
 ```shell
-neuro login
+apolo login
 ```
 
 ## Directory structure
@@ -22,24 +22,24 @@ neuro login
 
 ## Development
 
-Follow the instructions below to set up the environment on Neuro and start a Jupyter development session.
+Follow the instructions below to set up the environment on the platform and start a Jupyter development session.
 
 ### Setting up the development environment
 
 ```shell
-neuro-flow build myimage
+apolo-flow build myimage
 ```
 Command results:
 
 * The `requirements.txt`, `apt.txt`, and `setup.cfg` files from the local project are uploaded to the platform storage.
-* A new job is started in our [base environment](https://hub.docker.com/r/neuromation/base).
+* A new job is started in our [base environment](https://github.com/neuro-inc/neuro-base-environment/pkgs/container/base).
 * Pip requirements from `requirements.txt` and `apt` applications from `apt.txt` are installed in the same environment.
 * The updated environment is saved under a new project-dependent name to be used further on.
 
 ### Running Jupyter with GPU
 
 ```shell
-neuro-flow run jupyter
+apolo-flow run jupyter
 ```
 
 Command results:
@@ -50,16 +50,16 @@ Command results:
 ### Killing Jupyter
 
 ```shell
-neuro-flow kill jupyter
+apolo-flow kill jupyter
 ```
 
 Command results:
 
-* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage. You may run `neuro-flow download notebooks` to download them to the local `notebooks/` directory.
+* The job with Jupyter Notebooks is terminated. The notebooks are saved on the platform storage. You may run `apolo-flow download notebooks` to download them to the local `notebooks/` directory.
 
 ### Memory management
 
-If you're not using the default `neuromation/base` base image, you may want to protect the main processes in your jobs from being killed when there's not enough memory for them.
+If you're not using the default base image, you may want to protect the main processes in your jobs from being killed when there's not enough memory for them.
 
 You can do this in two steps:
 
@@ -92,7 +92,7 @@ This will ensure the script from step 1 is executed every minute.
 ### Help
 
 ```shell
-neuro-flow ps
+apolo-flow ps
 ```
 
 Command results:
@@ -104,14 +104,14 @@ Command results:
 
 ### Uploading to the Storage via Web UI
 
-On a local machine, run `neuro-flow run filebrowser` and open the job's URL on your mobile device or desktop.
+On a local machine, run `apolo-flow run filebrowser` and open the job's URL on your mobile device or desktop.
 Through a simple file explorer interface, you can upload test images and perform various file operations.
 
 ### Uploading to the Storage via CLI
 
-On a local machine, run `neuro-flow mkvolumes`. This command creates storage folders for all defined volumes. You only need to run this once.
+On a local machine, run `apolo-flow mkvolumes`. This command creates storage folders for all defined volumes. You only need to run this once.
 
-After the storage folders have been created, run `neuro-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.flow_id }}/data` volume mounted to your development environment's `/project/data`.
+After the storage folders have been created, run `apolo-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.flow_id }}/data` volume mounted to your development environment's `/project/data`.
 
 You can upload (or download) every folder for which the `local` parameter is specified in the [live.yml file](./.neuro/live.yml).
 
@@ -129,21 +129,10 @@ Feel free to refer to the [documentation](https://docs.neu.ro/toolbox/accessing-
 
 ### Running a development job
 
-If you want to debug your code on GPU, you can run a sleeping job via `neuro-flow run remote_debug` which will also open a shell to the job. You can also see job logs via `neuro-flow logs remote_debug`. The job forwards your local port 2211 to its port 22 for remote debugging.
+If you want to debug your code on GPU, you can run a sleeping job via `apolo-flow run remote_debug` which will also open a shell to the job. You can also see job logs via `apolo-flow logs remote_debug`. The job forwards your local port 2211 to its port 22 for remote debugging.
 You can find the instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm).
 
-Please don't forget to kill your job via `neuro-flow kill remote_debug` to not waste your quota!
-
-### Weights & Biases integration
-
-The Neuro Platform offers easy integration with [Weights & Biases](https://www.wandb.com), an experiment tracking tool for deep learning.
-
-Here you can find [documentation](https://docs.neu.ro/toolbox/experiment-tracking-with-weights-and-biases) for using W&B for experiment tracking with the template.
-
-You can also refer to instructions on using Weights & Biases in your code in the [W&B documentation](https://docs.wandb.com/library/api/examples).
-There are also [W&B example projects](https://github.com/wandb/examples) or an example of a Neuro Project Template-based
-[ML Recipe that uses W&B as a part of the workflow](https://neu.ro/docs/cookbook/ml-recipe-hier-attention).
-
+Please don't forget to kill your job via `apolo-flow kill remote_debug` to not waste your quota!
 
 ### Training machine types
 
@@ -152,7 +141,7 @@ defaults:
   preset: gpu-small-p
 ```
 
-There are several machine types available on the platform. Run `neuro config show` to see the full list. You can also override default presets for each job:
+There are several machine types available on the platform. Run `apolo config show` to see the full list. You can also override default presets for each job:
 
 ```yaml
 jobs:
@@ -173,7 +162,7 @@ args:
 
 ### Storage uploads
 
-Running `neuro-flow upload ALL` from a local machine will upload all of your code, configs, and notebooks to the storage so that these folders can be used by your jobs.
+Running `apolo-flow upload ALL` from a local machine will upload all of your code, configs, and notebooks to the storage so that these folders can be used by your jobs.
 
 ### The training command
 
@@ -197,27 +186,21 @@ To tweak the training command, change the last line in this section of `live.yam
         python -u $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]]
 ```
 
-After this, just run `neuro-flow run train`.
+After this, just run `apolo-flow run train`.
 
 ### Multiple training jobs
 
 You can run multiple training experiments simultaneously.
 
 ```shell
-neuro-flow run multitrain -s myidea-1
+apolo-flow run multitrain -s myidea-1
 ```
 
-Note that this label becomes a suffix of the job name which can only contain alphanumeric characters and hyphens `-`, cannot end with a hyphen, and cannot be longer than 40 characters. You can use suffixed job names to access jobs: `neuro-flow status multitrain myidea-1`, `neuro-flow logs multitrain myidea-1`, and so on.
+Note that this label becomes a suffix of the job name which can only contain alphanumeric characters and hyphens `-`, cannot end with a hyphen, and cannot be longer than 40 characters. You can use suffixed job names to access jobs: `apolo-flow status multitrain myidea-1`, `apolo-flow logs multitrain myidea-1`, and so on.
 
 Please don't forget to kill the jobs you started:
-- `neuro-flow kill train` to kill the training job started via `neuro-flow run train`,
-- `neuro-flow kill multitrain` to kill the training job started via `neuro-flow run multitrain`,
-- `neuro-flow kill jupyter` to kill the job started via `neuro-flow run jupyter`,
+- `apolo-flow kill train` to kill the training job started via `apolo-flow run train`,
+- `apolo-flow kill multitrain` to kill the training job started via `apolo-flow run multitrain`,
+- `apolo-flow kill jupyter` to kill the job started via `apolo-flow run jupyter`,
 - ...
-- `neuro-flow kill ALL` to kill all jobs started in the current project.
-
-### Multi-threaded hyperparameter tuning
-
-The Neuro Platform supports hyperparameter tuning via [Weights & Biases](https://www.wandb.com/articles/running-hyperparameter-sweeps-to-pick-the-best-model-using-w-b).
-
-Please refer to the corresponding [documentation](https://docs.neu.ro/toolbox/hyperparameter-tuning-with-weights-and-biases) for more information.
+- `apolo-flow kill ALL` to kill all jobs started in the current project.
