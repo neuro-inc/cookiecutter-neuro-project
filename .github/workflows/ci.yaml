@@ -12,6 +12,7 @@ jobs:
   test:
     name: All checks are passed
     uses: ./.github/workflows/test.yaml
+    secrets: inherit
 
   approve:
     name: Approve bot PR
