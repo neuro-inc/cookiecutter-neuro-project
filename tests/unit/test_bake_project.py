@@ -1,13 +1,11 @@
 import logging
 import os
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
-from path import Path as PPath
 from pipx.paths import DEFAULT_PIPX_BIN_DIR, DEFAULT_PIPX_GLOBAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
@@ -126,7 +124,6 @@ def test_flow_description(cookies: Cookies) -> None:
 @pytest.mark.parametrize("venv_install_packages", ["", "apolo-cli", "apolo-all"])
 def test_flow_name(tmp_path: Path, venv_install_packages: str) -> None:
     cwd = Path(os.getcwd())
-    logging.basicConfig(level=logging.DEBUG)
 
     # This 'hides' apolo-cli installed via pipx
     cur_path = os.environ["PATH"].split(os.pathsep)
@@ -138,7 +135,7 @@ def test_flow_name(tmp_path: Path, venv_install_packages: str) -> None:
 
     with VirtualEnv(
         env={**dict(os.environ), "PATH": os.pathsep.join(filtered_path)},
-        workspace=PPath(tempfile.mkdtemp()),
+        # workspace=PPath(tempfile.mkdtemp()),
         # delete_workspace=True,
     ) as venv:
         if venv_install_packages:
