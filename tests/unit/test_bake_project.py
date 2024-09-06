@@ -8,7 +8,7 @@ import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
 from path import Path as PPath
-from pipx.paths import DEFAULT_PIPX_BIN_DIR
+from pipx.paths import DEFAULT_PIPX_BIN_DIR, DEFAULT_PIPX_HOME, FALLBACK_PIPX_HOMES
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
 
@@ -131,7 +131,11 @@ def test_flow_name(
 
     # This 'hides' apolo-cli installed via pipx
     cur_path = os.environ["PATH"].split(os.pathsep)
-    avoid_paths = (str(DEFAULT_PIPX_BIN_DIR),)
+    avoid_paths = (
+        str(DEFAULT_PIPX_BIN_DIR),
+        str(DEFAULT_PIPX_HOME),
+        str(FALLBACK_PIPX_HOMES),
+    )
     filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
     monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
 
