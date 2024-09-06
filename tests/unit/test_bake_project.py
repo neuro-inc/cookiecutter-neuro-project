@@ -1,11 +1,13 @@
 import logging
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
+from path import Path as PPath
 from pipx.paths import DEFAULT_PIPX_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
@@ -133,7 +135,7 @@ def test_flow_name(
     filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
     monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
 
-    with VirtualEnv() as venv:
+    with VirtualEnv(workspace=PPath(tempfile.mkdtemp())) as venv:
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
             venv.run(
