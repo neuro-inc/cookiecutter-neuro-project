@@ -12,20 +12,20 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
         extra_context={
             "flow_dir": "test-flow",
             "flow_id": "awesome_flow",
-            "preserve Neuro Flow template hints": preserve_comments,
+            "preserve Apolo Flow template hints": preserve_comments,
         }
     )
     with inside_dir(str(result.project_path)):
-        proc = exec("neuro-flow --show-traceback ps")
+        proc = exec("apolo-flow --show-traceback ps")
         assert "JOB" in proc.stdout, proc
 
-        proc = exec("neuro-flow --show-traceback status train", assert_exit_code=False)
+        proc = exec("apolo-flow --show-traceback status train", assert_exit_code=False)
         assert "is not running" in proc.stdout, proc
 
-        proc = exec("neuro-flow --show-traceback run --dry-run train")
-        assert "neuro run" in proc.stdout, proc
+        proc = exec("apolo-flow --show-traceback run --dry-run train")
+        assert "apolo run" in proc.stdout, proc
         assert "--tag=project:awesome-flow" in proc.stdout, proc
 
-        proc = exec("neuro-flow --show-traceback run --dry-run remote_debug")
-        assert "neuro run" in proc.stdout, proc
+        proc = exec("apolo-flow --show-traceback run --dry-run remote_debug")
+        assert "apolo run" in proc.stdout, proc
         assert "--tag=project:awesome-flow" in proc.stdout, proc

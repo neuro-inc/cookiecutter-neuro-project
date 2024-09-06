@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
-from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
+from pipx.paths import DEFAULT_PIPX_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 from pytest_virtualenv import VirtualEnv
 
@@ -81,7 +81,7 @@ def test_flow_config_with_comments(cookies: Cookies, preserve_comments: str) -> 
     result = cookies.bake(
         extra_context={
             "flow_dir": "flow-with-comments",
-            "preserve Neuro Flow template hints": preserve_comments,
+            "preserve Apolo Flow template hints": preserve_comments,
         }
     )
     assert result.exit_code == 0
@@ -121,18 +121,15 @@ def test_flow_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-@pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
+@pytest.mark.parametrize("venv_install_packages", ["", "apolo-cli", "apolo-all"])
 def test_flow_name(
     tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     cwd = Path(os.getcwd())
 
-    # This 'hides' neuro-cli installed via pipx
+    # This 'hides' apolo-cli installed via pipx
     cur_path = os.environ["PATH"].split(os.pathsep)
-    avoid_paths = (
-        str(LOCAL_BIN_DIR),
-        str(DEFAULT_PIPX_BIN_DIR),
-    )
+    avoid_paths = (str(DEFAULT_PIPX_BIN_DIR),)
     filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
     monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
 
@@ -140,7 +137,7 @@ def test_flow_name(
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
             venv.run(
-                "neuro config login-with-token $APOLO_USER https://dev.neu.ro/api/v1"
+                "apolo config login-with-token $APOLO_USER https://dev.neu.ro/api/v1"
             )
 
         venv.run(
