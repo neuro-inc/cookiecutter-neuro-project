@@ -124,9 +124,7 @@ def test_flow_description(cookies: Cookies) -> None:
 
 
 @pytest.mark.parametrize("venv_install_packages", ["", "apolo-cli", "apolo-all"])
-def test_flow_name(
-    tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_flow_name(tmp_path: Path, venv_install_packages: str) -> None:
     cwd = Path(os.getcwd())
 
     # This 'hides' apolo-cli installed via pipx
@@ -136,9 +134,12 @@ def test_flow_name(
         str(DEFAULT_PIPX_GLOBAL_BIN_DIR),
     )
     filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
-    monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
 
-    with VirtualEnv(workspace=PPath(tempfile.mkdtemp())) as venv:
+    with VirtualEnv(
+        env={**dict(os.environ), "PATH": os.pathsep.join(filtered_path)},
+        workspace=PPath(tempfile.mkdtemp()),
+        delete_workspace=True,
+    ) as venv:
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
             venv.run(
