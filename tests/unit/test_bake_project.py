@@ -126,6 +126,7 @@ def test_flow_description(cookies: Cookies) -> None:
 @pytest.mark.parametrize("venv_install_packages", ["", "apolo-cli", "apolo-all"])
 def test_flow_name(tmp_path: Path, venv_install_packages: str) -> None:
     cwd = Path(os.getcwd())
+    logging.basicConfig(level=logging.DEBUG)
 
     # This 'hides' apolo-cli installed via pipx
     cur_path = os.environ["PATH"].split(os.pathsep)
@@ -138,7 +139,7 @@ def test_flow_name(tmp_path: Path, venv_install_packages: str) -> None:
     with VirtualEnv(
         env={**dict(os.environ), "PATH": os.pathsep.join(filtered_path)},
         workspace=PPath(tempfile.mkdtemp()),
-        delete_workspace=True,
+        # delete_workspace=True,
     ) as venv:
         if venv_install_packages:
             venv.install_package(venv_install_packages, installer="pip")
