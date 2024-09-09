@@ -9,7 +9,7 @@ updates:
   reviewers:
     - neuro-inc/mlops
 - package-ecosystem: docker
-  directory: "/{{cookiecutter.project_dir}}"
+  directory: "/{{cookiecutter.flow_dir}}"
   schedule:
     interval: daily
   reviewers:
