@@ -126,4 +126,4 @@ def test_flow_name(tmp_path: Path) -> None:
         Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
     )
     assert proj_yml["id"] == "my_flow"
-    assert "project_name" not in proj_yml
+    assert "project_name" in proj_yml
