@@ -122,10 +122,11 @@ def test_flow_description(cookies: Cookies) -> None:
 def test_flow_name(tmp_path: Path) -> None:
     proc = exec(f"cookiecutter . -o {str(tmp_path)} --no-input --default-config")
 
-    proj_yml = yaml.safe_load(
-        Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
-    )
+    project_yml = Path(tmp_path / "my flow" / ".neuro" / "project.yml")
+    assert project_yml.exists(), tmp_path.rglob("project.yml")
+
+    proj_yml_content = yaml.safe_load(project_yml.read_text())
     print(proc.stdout)
     print(proc.stderr)
-    assert proj_yml["id"] == "my_flow", proc.stdout
-    assert "project_name" in proj_yml, proc.stdout
+    assert proj_yml_content["id"] == "my_flow", proc.stdout
+    assert "project_name" in proj_yml_content, proc.stdout
