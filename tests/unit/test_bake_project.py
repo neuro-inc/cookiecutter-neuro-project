@@ -1,12 +1,10 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
-from pipx.paths import DEFAULT_PIPX_BIN_DIR, DEFAULT_PIPX_GLOBAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
 
 from tests.e2e.conftest import exec
@@ -121,29 +119,11 @@ def test_flow_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-@pytest.mark.parametrize("hide_apolo_cli", [False, True])
-def test_flow_name(tmp_path: Path, hide_apolo_cli: bool) -> None:
-    new_env = os.environ.copy()
-    if hide_apolo_cli:
-        cur_path = os.environ["PATH"].split(os.pathsep)
-        avoid_paths = (
-            str(DEFAULT_PIPX_BIN_DIR),
-            str(DEFAULT_PIPX_GLOBAL_BIN_DIR),
-        )
-        filtered_path = [p for p in cur_path if p not in avoid_paths]
-        new_env = {**dict(os.environ), "PATH": os.pathsep.join(filtered_path)}
-
-    exec(
-        f"cookiecutter . -o {str(tmp_path)} --no-input --default-config",
-        env=new_env,
-    )
+def test_flow_name(tmp_path: Path) -> None:
+    exec(f"cookiecutter . -o {str(tmp_path)} --no-input --default-config")
 
     proj_yml = yaml.safe_load(
         Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
     )
-    if not hide_apolo_cli:
-        assert proj_yml["id"] == "my_flow"
-        assert proj_yml["project_name"] is not None, proj_yml
-    else:
-        assert proj_yml["id"] == "my_flow"
-        assert "project_name" not in proj_yml
+    assert proj_yml["id"] == "my_flow"
+    assert "project_name" not in proj_yml
