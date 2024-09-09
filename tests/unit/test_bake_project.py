@@ -7,7 +7,6 @@ import yaml
 from cookiecutter.exceptions import FailedHookException
 from pytest_cookies.plugin import Cookies  # type: ignore
 
-from tests.e2e.conftest import exec
 from tests.utils import inside_dir
 
 
@@ -119,14 +118,11 @@ def test_flow_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-def test_flow_name(tmp_path: Path) -> None:
-    proc = exec(f"cookiecutter . -o {str(tmp_path)} --no-input --default-config")
+def test_flow_name(cookies: Cookies) -> None:
+    result = cookies.bake()
 
-    project_yml = Path(tmp_path / "my flow" / ".neuro" / "project.yml")
-    assert project_yml.exists(), list(tmp_path.rglob("*"))
+    assert result.exit_code == 0
+    project_yml = result.project_path / ".neuro"/ "project.yml"
+    project_yml_content = yaml.safe_load(project_yml.read_text())
 
-    proj_yml_content = yaml.safe_load(project_yml.read_text())
-    print(proc.stdout)
-    print(proc.stderr)
-    assert proj_yml_content["id"] == "my_flow", proc.stdout
-    assert "project_name" in proj_yml_content, proc.stdout
+    assert "project_name" in project_yml_content

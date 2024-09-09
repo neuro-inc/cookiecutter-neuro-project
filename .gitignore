@@ -1,5 +1,6 @@
 .env
 venv
+.venv
 pip-wheel-metadata
 .pytest_cache
 *.swo
