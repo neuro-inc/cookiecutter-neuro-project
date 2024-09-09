@@ -125,5 +125,7 @@ def test_flow_name(tmp_path: Path) -> None:
     proj_yml = yaml.safe_load(
         Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
     )
+    print(proc.stdout)
+    print(proc.stderr)
     assert proj_yml["id"] == "my_flow", proc.stdout
     assert "project_name" in proj_yml, proc.stdout
