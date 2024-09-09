@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -121,10 +120,10 @@ def test_flow_description(cookies: Cookies) -> None:
 
 
 def test_flow_name(tmp_path: Path) -> None:
-    exec(f"cookiecutter {os.getcwd()} -o {str(tmp_path)} --no-input --default-config")
+    proc = exec(f"cookiecutter . -o {str(tmp_path)} --no-input --default-config")
 
     proj_yml = yaml.safe_load(
         Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
     )
-    assert proj_yml["id"] == "my_flow"
-    assert "project_name" in proj_yml
+    assert proj_yml["id"] == "my_flow", proc.stdout
+    assert "project_name" in proj_yml, proc.stdout
