@@ -1,7 +1,7 @@
 Release instructions
 ====================
 
-Neuro CLI [uses `release` branch](https://github.com/neuro-inc/platform-client-python/blob/d00a75504d665acdbcdda24f3999ee4b2223054d/neuromation/cli/project.py#L43-L48) to scaffold projects, so to do a release we need to update `release` branch.
+Apolo CLI uses `release` branch to scaffold flow configuration and structure.
 
 
 Instructions:
@@ -16,16 +16,16 @@ Instructions:
     ```
     $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
     flow_name [My flow]:
-    flow_dir [neuro project]:
-    flow_id [neuro_project]:
+    flow_dir [my flow]:
+    flow_id [my_flow]:
     code_directory [modules]:
-    preserve Neuro Flow template hints [yes]:
-    $ cd neuro project
+    preserve Apolo Flow template hints [yes]:
+    $ cd my project
     $ ls
     Dockerfile  HELP.md  README.md  apt.txt  config  data  modules  notebooks  requirements.txt  results  setup.cfg  update_actions.py
-    $ neuro-flow build train
-    $ neuro-flow upload ALL
-    $ neuro-flow run jupyter
+    $ apolo-flow build train
+    $ apolo-flow upload ALL
+    $ apolo-flow run jupyter
     ...
     ```
 3. Generate changelog:

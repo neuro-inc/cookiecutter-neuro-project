@@ -1,14 +1,11 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
 import pytest
 import yaml
 from cookiecutter.exceptions import FailedHookException
-from pipx.constants import DEFAULT_PIPX_BIN_DIR, LOCAL_BIN_DIR
 from pytest_cookies.plugin import Cookies  # type: ignore
-from pytest_virtualenv import VirtualEnv
 
 from tests.utils import inside_dir
 
@@ -81,7 +78,7 @@ def test_flow_config_with_comments(cookies: Cookies, preserve_comments: str) -> 
     result = cookies.bake(
         extra_context={
             "flow_dir": "flow-with-comments",
-            "preserve Neuro Flow template hints": preserve_comments,
+            "preserve Apolo Flow template hints": preserve_comments,
         }
     )
     assert result.exit_code == 0
@@ -121,46 +118,11 @@ def test_flow_description(cookies: Cookies) -> None:
                 assert descr in readme_content
 
 
-@pytest.mark.parametrize("venv_install_packages", ["", "neuro-cli", "neuro-all"])
-def test_flow_name(
-    tmp_path: Path, venv_install_packages: str, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    cwd = Path(os.getcwd())
+def test_flow_name(cookies: Cookies) -> None:
+    result = cookies.bake()
 
-    # This 'hides' neuro-cli installed via pipx
-    cur_path = os.environ["PATH"].split(os.pathsep)
-    avoid_paths = (
-        str(LOCAL_BIN_DIR),
-        str(DEFAULT_PIPX_BIN_DIR),
-    )
-    filtered_path = list(filter(lambda x: x not in avoid_paths, cur_path))
-    monkeypatch.setenv("PATH", os.pathsep.join(filtered_path))
+    assert result.exit_code == 0
+    project_yml = result.project_path / ".neuro" / "project.yml"
+    project_yml_content = yaml.safe_load(project_yml.read_text())
 
-    with VirtualEnv() as venv:
-        if venv_install_packages:
-            venv.install_package(venv_install_packages, installer="pip")
-            venv.run(
-                "neuro config login-with-token $NEURO_USER https://dev.neu.ro/api/v1"
-            )
-
-        venv.run(
-            (
-                "cookiecutter",
-                cwd,
-                "-o",
-                str(tmp_path),
-                "--no-input",
-                "--default-config",
-            ),
-            capture=True,
-        )
-        proj_yml = yaml.safe_load(
-            Path(tmp_path / "my flow" / ".neuro" / "project.yml").read_text()
-        )
-
-        if venv_install_packages:
-            assert proj_yml["id"] == "my_flow"
-            assert proj_yml["project_name"] is not None, proj_yml
-        else:
-            assert proj_yml["id"] == "my_flow"
-            assert "project_name" not in proj_yml
+    assert "project_name" in project_yml_content

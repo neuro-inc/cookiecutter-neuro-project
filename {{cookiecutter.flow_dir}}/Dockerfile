@@ -1,4 +1,4 @@
-FROM ghcr.io/neuro-inc/base:v22.12.0-runtime
+FROM ghcr.io/neuro-inc/base:v23.8.0-runtime
 
 COPY apt.txt .
 RUN export DEBIAN_FRONTEND=noninteractive && \
@@ -13,4 +13,4 @@ COPY setup.cfg .
 COPY requirements.txt .
 RUN pip install --progress-bar=off -U --no-cache-dir -r requirements.txt
 
-RUN ssh-keygen -f /id_rsa -t rsa -N neuro -q
+RUN ssh-keygen -f /id_rsa -t rsa -N apolo -q

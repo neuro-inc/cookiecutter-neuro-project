@@ -1,7 +1,7 @@
-Neu.ro Platform Project Template
+Apolo Platform Flow Template
 ===============================
 
-Base template for the [Neu.ro](https://neu.ro) platform projects based on [cookiecutter project](https://github.com/cookiecutter/cookiecutter).
+Base template for the [apolo.us](https://apolo.us) platform projects based on [cookiecutter template](https://github.com/cookiecutter/cookiecutter).
 
 Usage
 -----

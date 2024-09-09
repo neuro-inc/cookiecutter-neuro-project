@@ -1,0 +1,63 @@
+on:
+  workflow_call: {}
+
+jobs:
+  test:
+    name: Run tests
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        os: [ubuntu, macos, windows]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Python and its deps
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
+          path: ${{ env.pythonLocation }}
+
+      - name: Install GNU libraries for MacOS
+        if: matrix.os == 'macos'
+        shell: bash
+        run: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install findutils
+          echo PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH" >> $GITHUB_ENV
+
+      - name: Install python dependencies
+        run: |
+          make setup
+
+      - name: Configure environment
+        run: |
+          apolo config login-with-token ${{ secrets.CLIENT_TEST_E2E_USER_NAME }} https://dev.neu.ro/api/v1
+          apolo --color=no config show
+
+      - uses: webfactory/ssh-agent@v0.7.0
+        # Authenticates ssh on worker to pull repos under github.com/neuro-actions via ssh
+        # Y.S. key is used
+        with:
+          ssh-private-key: ${{ secrets.GH_NF_ACTIONS_SSH_PRIVATE }}
+          log-public-key: false
+
+      - name: Lint
+        run: |
+          make lint
+
+      - name: Run tests
+        env:
+          APOLO_USER: ${{ secrets.CLIENT_TEST_E2E_USER_NAME }}
+        run: |
+          make test

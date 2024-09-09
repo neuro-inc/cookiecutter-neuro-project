@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
         "patterns",
         metavar="PATTERN",
         nargs="+",
-        help="Neuro-flow workflow file, which should be scanned for action updates.",
+        help="Apolo-flow workflow file, which should be scanned for action updates.",
     )
     parser.add_argument("--token", nargs="?", help="GitHub token to use.")
     parser.add_argument(

@@ -1,7 +1,7 @@
 kind: live
 ## Required. Type of workflow, might be one of the following:
-## - 'live' -- full reference at https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax
-## - 'batch' -- full reference at https://neu-ro.gitbook.io/neuro-flow/reference/batch-workflow-syntax
+## - 'live' -- full reference at https://docs.apolo.us/apolo-flow-reference/workflow-syntax/live-workflow-syntax
+## - 'batch' -- full reference at https://docs.apolo.us/apolo-flow-reference/workflow-syntax/batch-workflow-syntax
 # id: <id>
 ## Optional. Identifier of the workflow. By default, the id is 'live'. It's available as $[[ flow.flow_id ]] in experssions.
 ## Note: Not to be confused with $[[ flow.project_id ]], which is a different context defined in the `project.yml` file.
@@ -25,7 +25,7 @@ defaults:
   #   key2: value2
   ## A mapping of environment variables that will be set in all jobs of the workflow.
   ## When two or more environment variables are defined with the same name,
-  ##  `neuro-flow` uses the most specific environment variable.
+  ##  `apolo-flow` uses the most specific environment variable.
   ## For example, an environment variable defined in a job will override the workflow's default.
   # volumes:
   #   - storage:some/path:/path/in/job
@@ -46,14 +46,14 @@ defaults:
 images:
   ## Optional section, a mapping of image definitions used by the workflow.
   train:
-  ## `neuro-flow build train` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
+  ## `apolo-flow build train` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
   ## The $[[ images.img_id.ref ]] expression can be used for pointing to an image from jobs.<job-id>.image.
     ref: image:/$[[ project.project_name ]]/$[[ flow.project_id ]]:v1
     ## Required. Image reference, can be of two types:
-    ##  - Platform-hosted image - its reference should start with the 'image:' prefix. `neuro-flow build <img_id>` will work in this case.
-    ##  - Image hosted on DockerHub - without the 'image:' prefix. In this case, `neuro-flow build <img_id>` will not work.
+    ##  - Platform-hosted image - its reference should start with the 'image:' prefix. `apolo-flow build <img_id>` will work in this case.
+    ##  - Image hosted on DockerHub - without the 'image:' prefix. In this case, `apolo-flow build <img_id>` will not work.
     ## Check ./neuro/project.yaml to configure the $[[ flow.project_id ]] part.
-    ## During job execution, the '$[[ flow.project_id ]]' part will be replaced with its string value by the Neuro-Flow engine.
+    ## During job execution, the '$[[ flow.project_id ]]' part will be replaced with its string value by the Apolo-Flow engine.
     ## Hint: You can use the embedded `hash_files()` function to generate a built image's tag based on its content.
     ## Example:
     ##  train:
@@ -109,7 +109,7 @@ volumes:
     ## Optional. Volumes can also be assotiated with folders on a local machine.
     ## A local path should be relative to the project's root.
     ## If this parameter is specified, the volume content can be synchronized between the local machine and a storage folder (but not a disk!)
-    ##  with the help of `neuro-flow upload` and `neuro-flow download` commands.
+    ##  with the help of `apolo-flow upload` and `apolo-flow download` commands.
     # read-only: true
     ## The volume is mounted as read-only by default if this attribute is set, read-write mode is used otherwise.
   code:
@@ -134,14 +134,17 @@ volumes:
     local: .
 
 jobs:
-## A live workflow can run jobs by their identifiers ('job-id') using the `neuro-flow run <job-id>` command.
+## A live workflow can run jobs by their identifiers ('job-id') using the `apolo-flow run <job-id>` command.
 ## Each job runs remotely on the Neu.ro Platform.
 ## Jobs could be defined in two different ways:
 ##  1. Directly in this file;
-##  2. In a separate file (on a local machine or in a Git repository) and reused as an 'action';
+##  2. In a separate file (on a local machine or in a Git repository) and reused as an 'action' or 'module'.
+##  3. Inheriting some attributes from the mixins
 ## Checkout full documentation at the respective pages:
-##  1. https://neu-ro.gitbook.io/neuro-flow/reference/live-workflow-syntax#jobs
-##  2. https://neu-ro.gitbook.io/neuro-flow/reference/actions-syntax
+##  1. https://docs.apolo.us/apolo-flow-reference/workflow-syntax/live-workflow-syntax#jobs
+##  2. https://docs.apolo.us/apolo-flow-reference/workflow-syntax/actions-syntax and https://docs.apolo.us/apolo-flow-reference/modules
+##  3. https://docs.apolo.us/apolo-flow-reference/mixins
+##  4.
   remote_debug:
   ## Each job must have an associated Job ID (a.k.a. job name) within the project.
   ## The key 'job-id' is a string and its value is a map of the job's configuration data or action call.
@@ -154,7 +157,7 @@ jobs:
     ## - `workspace:` or `ws:` for action files that are stored locally
     ## - `github:` or `gh:` for actions that are bound to a GitHub repository
     ## In this particular case, we are using a GitHub repository https://github.com/neuro-actions/remote_debug under the `@1.0.0` tag.
-    ## To run this job, Neuro-Flow will fetch the 'action.yaml' file from the repository and execute the job defined in it.
+    ## To run this job, Apolo-Flow will fetch the 'action.yaml' file from the repository and execute the job defined in it.
     args:
     ## Optional action-specific mapping of values that will be passed to the actions as arguments.
     ## They should correspond to inputs defined in the action file.
@@ -178,11 +181,11 @@ jobs:
     #   name2: ~        # None by default
     #   name3: ""       # Empty string by default
     ## Optional. Params is a mapping of key-value pairs that have default values and can be overridden
-    ##   from the command line by using `neuro-flow run <job-id> --param name1 val1 --param name2 val2`.
+    ##   from the command line by using `apolo-flow run <job-id> --param name1 val1 --param name2 val2`.
     ## Parameters can be specified in 'short' and 'long' forms - the example above is in a short form.
     ## The short form is compact, but only allows to specify the parameter's name and default value.
     ## The long form allows to additionally specify parameter descriptions.
-    ## This can be useful for `neuro-flow run` command introspection, shell autocompletion,
+    ## This can be useful for `apolo-flow run` command introspection, shell autocompletion,
     ##  and generation of more detailed error messages. Example:
     # params:
     #   name1:
@@ -196,7 +199,7 @@ jobs:
     # browse: true
     ## Whether to open the job's HTTP URI in a browser after job startup. `False` by default.
     # detach: true
-    ## By default, 'neuro-flow run <job-id>' keeps the terminal attached to the spawned job.
+    ## By default, 'apolo-flow run <job-id>' keeps the terminal attached to the spawned job.
     ## This can help with viewing the job's logs and running commands in its embedded bash session.
     ## Enable the `detach` attribute to disable this behavior.
     # entrypoint: sh -c "echo $HOME"
@@ -218,17 +221,17 @@ jobs:
     # name: my-job-name
     ## Specifies an optional job name.
     ## This name becomes a part of the job's internal hostname and exposed HTTP URL.
-    ##  The job can then be controlled by its name through the low-level `neuro` tool.
+    ##  The job can then be controlled by its name through the low-level `apolo` CLI.
     ## If the name is not specified in the `name` attribute, the default one will be generated as follows:
     ## '<PROJECT-ID>-<JOB-ID>[-<MULTI_SUFFIX>]'.
     # multi: true
     ## By default, a job can only have one running instance at a time.
-    ## Calling 'neuro-flow run <job-id>' with the same job ID for a second time
+    ## Calling 'apolo-flow run <job-id>' with the same job ID for a second time
     ##  will attach to the already running job instead of creating a new one.
     ## This can be optionally overridden by enabling the 'multi' attribute.
     # pass_config: true
     ## Attach your Neu.ro authentication data and config into the job.
-    ## Can be usefull if you want to use Neuro CLI inside the running job.
+    ## Can be usefull if you want to use Apolo CLI inside the running job.
     ## Note: the lifetime of passed credentials is bound to the job's lifetime.
     ## It will be impossible to use them when the job is terminated.
     # port_forward:
@@ -239,7 +242,7 @@ jobs:
     ## You can use this feature, for instance, to access a DB running in the job for debugging.
     # preset: cpu-small
     ## A resource preset used to run the job.
-    ## This overwrites the system-default (first in the 'neuro config show' list) and workflow-default configurations.
+    ## This overwrites the system-default (first in the 'apolo config show' list) and workflow-default configurations.
     ## Consider selecting the resource preset separately for each job according to your needs.
     # schedule_timeout: 1d
     ## Set an optional schedule timeout to the specified value.
@@ -264,9 +267,9 @@ jobs:
     ## You can specify a plain string for the volume reference and use $[[ volumes.<volume-id>.ref ]] expressions.
       - $[[ volumes.data.ref_ro ]]
       - $[[ upload(volumes.code).ref_ro ]]
-      ## upload() - is an expression function which performs `neuro-flow upload code` before each run of this job
+      ## upload() - is an expression function which performs `apolo-flow upload code` before each run of this job
       ## Check this list of magic functions and their use-cases under
-      ##  https://neu-ro.gitbook.io/neuro-flow/reference/expression-functions
+      ##  https://docs.apolo.us/apolo-flow-reference/expression-functions
       - $[[ volumes.config.ref_ro ]]
       - $[[ volumes.results.ref_rw ]]
     # workdir: /users/my_user
