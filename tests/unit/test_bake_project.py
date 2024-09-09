@@ -122,7 +122,7 @@ def test_flow_name(cookies: Cookies) -> None:
     result = cookies.bake()
 
     assert result.exit_code == 0
-    project_yml = result.project_path / ".neuro"/ "project.yml"
+    project_yml = result.project_path / ".neuro" / "project.yml"
     project_yml_content = yaml.safe_load(project_yml.read_text())
 
     assert "project_name" in project_yml_content
