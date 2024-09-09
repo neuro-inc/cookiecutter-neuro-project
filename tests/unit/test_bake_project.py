@@ -123,7 +123,7 @@ def test_flow_name(tmp_path: Path) -> None:
     proc = exec(f"cookiecutter . -o {str(tmp_path)} --no-input --default-config")
 
     project_yml = Path(tmp_path / "my flow" / ".neuro" / "project.yml")
-    assert project_yml.exists(), list(tmp_path.rglob("*.yml"))
+    assert project_yml.exists(), list(tmp_path.rglob("*"))
 
     proj_yml_content = yaml.safe_load(project_yml.read_text())
     print(proc.stdout)
