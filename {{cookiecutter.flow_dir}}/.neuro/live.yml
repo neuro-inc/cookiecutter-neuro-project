@@ -46,7 +46,7 @@ defaults:
 images:
   ## Optional section, a mapping of image definitions used by the workflow.
   train:
-  ## `apolo-flow build train` creates an image from the passed Dockerfile and uploads it to the Neu.ro Registry.
+  ## `apolo-flow build train` creates an image from the passed Dockerfile and uploads it to the Apolo Registry.
   ## The $[[ images.img_id.ref ]] expression can be used for pointing to an image from jobs.<job-id>.image.
     ref: image:/$[[ project.project_name ]]/$[[ flow.project_id ]]:v1
     ## Required. Image reference, can be of two types:
@@ -93,16 +93,16 @@ images:
 
 volumes:
 ## Optional section.
-## A volume defines a link between the Neu.ro storage folder or disk, and a local folder within the job.
+## A volume defines a link between the Apolo storage folder or disk, and a local folder within the job.
 ## A volume can be mounted to a job by using the `jobs.<job-id>.volumes` attribute.
   data:
   ## The key 'volume-id' (data in this case) is a string and its value is a map of the volume's configuration data.
   ## You must replace 'volume-id' with a string that is unique to the volumes object.
   ## The 'volume-id' must start with a letter and contain only alphanumeric characters or underscore symbols.
     remote: storage:/$[[ project.project_name ]]/$[[ flow.project_id ]]/data
-    ## Required. The volume URI on the Neu.ro Storage ('storage:path/on/storage') or disk id ('disk:disk-id-or-name').
-    ## Learn more about Neu.ro Storage and Neu.ro Disks at
-    ##  https://docs.neu.ro/core/platform-storage/storage and https://docs.neu.ro/core/platform-storage/disks respectively.
+    ## Required. The volume URI on the Apolo Storage ('storage:path/on/storage') or disk id ('disk:disk-id-or-name').
+    ## Learn more about Apolo Storage and Apolo Disks at
+    ##  https://docs.apolo.us
     mount: /project/data
     ## Required. The mount path inside a job.
     local: data
@@ -135,7 +135,7 @@ volumes:
 
 jobs:
 ## A live workflow can run jobs by their identifiers ('job-id') using the `apolo-flow run <job-id>` command.
-## Each job runs remotely on the Neu.ro Platform.
+## Each job runs remotely on the Apolo Platform.
 ## Jobs could be defined in two different ways:
 ##  1. Directly in this file;
 ##  2. In a separate file (on a local machine or in a Git repository) and reused as an 'action' or 'module'.
@@ -205,12 +205,12 @@ jobs:
     # entrypoint: sh -c "echo $HOME"
     ## Optional. You can override a Docker image ENTRYPOINT if needed.
     # http_auth: false
-    ## Control whether the HTTP port exposed by the job requires Neu.ro Platform authentication for access.
+    ## Control whether the HTTP port exposed by the job requires Apolo Platform authentication for access.
     ## You may want to disable the authentication to allow everybody to access your job's exposed web resource.
     ## True by default.
     # http_port: 8080
     ## The job's HTTP port number that will be exposed on the platform.
-    ## By default, the Neu.ro Platform exposes the job's internal 80 port as an HTTPS-protected resource.
+    ## By default, the Apolo Platform exposes the job's internal 80 port as an HTTPS-protected resource.
     ## Use 0 to disable the feature entirely.
     ## Note: only HTTP traffic is allowed. The platform encapsulates it into TLS automatically to provide an HTTPS connection.
     life_span: 10d
@@ -230,7 +230,7 @@ jobs:
     ##  will attach to the already running job instead of creating a new one.
     ## This can be optionally overridden by enabling the 'multi' attribute.
     # pass_config: true
-    ## Attach your Neu.ro authentication data and config into the job.
+    ## Attach your Apolo authentication data and config into the job.
     ## Can be usefull if you want to use Apolo CLI inside the running job.
     ## Note: the lifetime of passed credentials is bound to the job's lifetime.
     ## It will be impossible to use them when the job is terminated.

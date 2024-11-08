@@ -1,4 +1,4 @@
-name: Update neuro-flow action tags
+name: Update apolo-flow action tags
 on:
   schedule:
   - cron: 0 0 * * *
@@ -10,7 +10,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.11
     - name: Install dependencies
       run: make setup
     - id: run_updater
@@ -29,5 +29,5 @@ jobs:
         title: Auto-update actions tags
         commit-message: Auto-update neuro-flow actions tags
         body: |
-          Updated neuro-flow action version tags in the following
+          Updated apolo-flow action version tags in the following
           files: ${{ steps.run_updater.outputs.updated_files }}

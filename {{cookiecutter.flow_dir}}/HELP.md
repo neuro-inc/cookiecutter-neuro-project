@@ -4,7 +4,7 @@
 
 This template runs on the [Apolo Platform](https://apolo.us).
 
-To dive into problem solving, you need to sign up at the [Apolo Platform](https://neu.ro) website, set up your local machine according to the [instructions](https://neu.ro/docs), and login to Apolo CLI:
+To dive into problem solving, you need to sign up at the [Apolo Platform](https://apolo.us/) website, set up your local machine according to the [instructions](https://neu.ro/docs), and login to Apolo CLI:
 
 ```shell
 apolo login
@@ -111,7 +111,7 @@ Through a simple file explorer interface, you can upload test images and perform
 
 On a local machine, run `apolo-flow mkvolumes`. This command creates storage folders for all defined volumes. You only need to run this once.
 
-After the storage folders have been created, run `apolo-flow upload data` from the a local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.flow_id }}/data` volume mounted to your development environment's `/project/data`.
+After the storage folders have been created, run `apolo-flow upload data` from the local machine as well. This command pushes local files stored in `./data` into the `storage:{{ cookiecutter.flow_id }}/data` volume mounted to your development environment's `/project/data`.
 
 You can upload (or download) every folder for which the `local` parameter is specified in the [live.yml file](./.neuro/live.yml).
 
@@ -119,18 +119,18 @@ You can upload (or download) every folder for which the `local` parameter is spe
 
 Google Cloud SDK is pre-installed on all jobs produced from the base image.
 
-Feel free to refer to the [documentation](https://docs.neu.ro/toolbox/accessing-object-storage-in-gcp) explaining how to start using GCP with the template.
+Feel free to refer to the [documentation](https://docs.apolo.us) explaining how to start using GCP with the template.
 
 ### Uploading data from AWS S3 to a job
 
 AWS CLI is pre-installed on all jobs produced from the base image.
 
-Feel free to refer to the [documentation](https://docs.neu.ro/toolbox/accessing-object-storage-in-aws) explaining how to start using AWS with the template.
+Feel free to refer to the [documentation](https://docs.apolo.us) explaining how to start using AWS with the template.
 
 ### Running a development job
 
 If you want to debug your code on GPU, you can run a sleeping job via `apolo-flow run remote_debug` which will also open a shell to the job. You can also see job logs via `apolo-flow logs remote_debug`. The job forwards your local port 2211 to its port 22 for remote debugging.
-You can find the instructions on remote debugging via PyCharm Pro in the [documentation](https://neu.ro/docs/remote_debugging_pycharm).
+You can find the instructions on remote debugging via PyCharm Pro in the [documentation](https://docs.apolo.us).
 
 Please don't forget to kill your job via `apolo-flow kill remote_debug` to not waste your quota!
 
