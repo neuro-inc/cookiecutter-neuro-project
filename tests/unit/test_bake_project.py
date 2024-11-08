@@ -106,7 +106,7 @@ def test_flow_description(cookies: Cookies) -> None:
         # " ",
         "Descrition!",
         "123",
-        "https://github.com/neuro-inc/cookiecutter-neuro-project/",
+        "https://github.com/neuro-inc/flow-template/",
     ]
     for descr in descriptions:
         result = cookies.bake(extra_context={"flow_description": descr})
