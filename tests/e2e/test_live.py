@@ -29,4 +29,3 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
         proc = exec("apolo-flow --show-traceback run --dry-run remote_debug")
         assert "apolo run" in proc.stdout, proc
         assert "--tag=project:awesome-flow" in proc.stdout, proc
-
