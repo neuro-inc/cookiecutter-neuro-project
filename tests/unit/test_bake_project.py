@@ -125,4 +125,4 @@ def test_flow_name(cookies: Cookies) -> None:
     project_yml = result.project_path / ".neuro" / "project.yml"
     project_yml_content = yaml.safe_load(project_yml.read_text())
 
-    assert "project_name" in project_yml_content
+    assert "id" in project_yml_content
