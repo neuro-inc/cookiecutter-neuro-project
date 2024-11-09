@@ -60,5 +60,4 @@ jobs:
         env:
           APOLO_USER: ${{ secrets.CLIENT_TEST_E2E_USER_NAME }}
         run: |
-          apolo config login-with-token ${{ secrets.CLIENT_TEST_E2E_USER_NAME }} https://api.dev.apolo.us/api/v1
           make test
