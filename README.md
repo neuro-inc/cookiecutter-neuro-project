@@ -5,9 +5,9 @@ Base template for the [apolo.us](https://apolo.us) platform projects based on [c
 
 Usage
 -----
-- `cookiecutter gh:neuro-inc/cookiecutter-neuro-project --checkout release` and follow interactive instractions in CLI.
+- `cookiecutter gh:neuro-inc/flow-template --checkout release` and follow interactive instractions in CLI.
 
-- `cookiecutter gh:neuro-inc/cookiecutter-neuro-project` to initialize project using master branch with the latest updates (might be unstable).
+- `cookiecutter gh:neuro-inc/flow-template` to initialize project using master branch with the latest updates (might be unstable).
 
 Release
 -------

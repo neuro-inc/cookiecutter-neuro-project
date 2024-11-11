@@ -1,6 +1,6 @@
 default_context:
     flow_description: ""
-    full_name: "Neu.ro Test"
-    email: "test@neu.ro"
+    full_name: "Apolo Test"
+    email: "test@apolo.us"
     github_username: "neuro-inc"
     flow_name: Test Flow

@@ -14,7 +14,7 @@ Instructions:
     ```
 2. Test `master` manually:
     ```
-    $ cookiecutter gh:neuro-inc/cookiecutter-neuro-project -c master
+    $ cookiecutter gh:neuro-inc/flow-template -c master
     flow_name [My flow]:
     flow_dir [my flow]:
     flow_id [my_flow]:
@@ -43,7 +43,7 @@ Instructions:
     $ git reset --hard master
     $ git push  # no need to push --force since `release` will move only forward
     ```
-5. Once `release` is green, test it via `cookiecutter gh:neuro-inc/cookiecutter-neuro-project --checkout release`, and if everything's fine,
+5. Once `release` is green, test it via `cookiecutter gh:neuro-inc/flow-template --checkout release`, and if everything's fine,
     publish new release to Slack: `#platform-feedback`.
 
 Notes:

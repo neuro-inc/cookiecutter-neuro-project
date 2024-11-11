@@ -18,7 +18,6 @@ def test_neuro_flow_live(cookies: Cookies, preserve_comments: str) -> None:
     with inside_dir(str(result.project_path)):
         proc = exec("apolo-flow --show-traceback ps")
         assert "JOB" in proc.stdout, proc
-
         proc = exec("apolo-flow --show-traceback status train", assert_exit_code=False)
         assert "is not running" in proc.stdout, proc
 
