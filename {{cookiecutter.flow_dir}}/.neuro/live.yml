@@ -150,13 +150,13 @@ jobs:
   ## The key 'job-id' is a string and its value is a map of the job's configuration data or action call.
   ## 'job-id' must start with a letter and contain only alphanumeric characters or underscore symbols `_`.
   ## Dashes `-` are not allowed.
-    action: gh:neuro-actions/remote_debug@v1.0.0
+    action: gh:apolo-actions/remote_debug@v1.0.0
     ## The type of this particular job is an 'action'.
     ## 'action' is a URL that specifies the location of the job's description.
     ## Two schemes exist:
     ## - `workspace:` or `ws:` for action files that are stored locally
     ## - `github:` or `gh:` for actions that are bound to a GitHub repository
-    ## In this particular case, we are using a GitHub repository https://github.com/neuro-actions/remote_debug under the `@1.0.0` tag.
+    ## In this particular case, we are using a GitHub repository https://github.com/apolo-actions/remote_debug under the `@1.0.0` tag.
     ## To run this job, Apolo-Flow will fetch the 'action.yaml' file from the repository and execute the job defined in it.
     args:
     ## Optional action-specific mapping of values that will be passed to the actions as arguments.
@@ -317,7 +317,7 @@ jobs:
         python $[[ volumes.code.mount ]]/train.py --data $[[ volumes.data.mount ]] $[[ multi.args ]]
 
   jupyter:
-    action: gh:neuro-actions/jupyter@v1.1.2
+    action: gh:apolo-actions/jupyter@v1.1.2
     args:
       image: $[[ images.train.ref ]]
       multi_args: $[[ multi.args ]]
@@ -328,11 +328,11 @@ jobs:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
   tensorboard:
-    action: gh:neuro-actions/tensorboard@v1.0.0
+    action: gh:apolo-actions/tensorboard@v1.0.0
     args:
       volumes_results_remote: $[[ volumes.results.remote ]]
 
   filebrowser:
-    action: gh:neuro-actions/filebrowser@v22.9.0
+    action: gh:apolo-actions/filebrowser@v22.9.0
     args:
       volumes_project_remote: $[[ volumes.project.remote ]]
