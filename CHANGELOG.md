@@ -4,6 +4,17 @@
 
 [comment]: # (towncrier release notes start)
 
+Apolo Platform Flow Template v24.11.12 (2024-11-26)
+===================================================
+
+
+Misc
+--------
+
+
+- Moved apolo-flow actions to a new organization. ([#698](https://github.com/neuro-inc/flow-template/pull/698))
+
+
 Apolo Platform Flow Template v24.11.11 (2024-11-11)
 ===================================================
 
