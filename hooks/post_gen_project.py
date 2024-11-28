@@ -47,8 +47,8 @@ else:
 
 # >>> Optionally clearing comments
 COMMENTS_STRUCTURE = {
-    "./.neuro/live.yml": r"(\s*#.*)",
-    "./.neuro/project.yml": r"(\s*#.*)",
+    "./.neuro/live.yml": r"(\s*#(?! yaml-language-server).*)",
+    "./.neuro/project.yml": r"(\s*#(?! yaml-language-server).*)",
 }
 PRESERVE_HINTS_VARIANS = {
     "yes": True,
