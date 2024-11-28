@@ -88,8 +88,18 @@ def test_flow_config_with_comments(cookies: Cookies, preserve_comments: str) -> 
         live_file_content = Path(".neuro/live.yml").read_text()
         project_file_content = Path(".neuro/project.yml").read_text()
 
-        l_com_exists = any([comment_regex.match(line) is not None for line in live_file_content.splitlines()])
-        p_com_exists = any([comment_regex.match(line) is not None for line in project_file_content.splitlines()])
+        l_com_exists = any(
+            [
+                comment_regex.match(line) is not None
+                for line in live_file_content.splitlines()
+            ]
+        )
+        p_com_exists = any(
+            [
+                comment_regex.match(line) is not None
+                for line in project_file_content.splitlines()
+            ]
+        )
         if preserve_comments == "yes":
             assert l_com_exists, ".neuro/live.yml file does not contain comments"
             assert p_com_exists, ".neuro/project.yml file does not contain comments"
