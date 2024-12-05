@@ -1,4 +1,4 @@
-FROM ghcr.io/neuro-inc/base:v23.8.0-runtime
+FROM ghcr.io/neuro-inc/base:v24.12.0-runtime
 
 COPY apt.txt .
 RUN export DEBIAN_FRONTEND=noninteractive && \
